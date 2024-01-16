@@ -1,0 +1,40 @@
+stats = {
+    0: {'name': 'AbilityPower', 'icon': '%i:scaleAP%', 'openingTag': '<scaleAP>', 'closingTag': '</scaleAP>'},
+    1: {'name': 'Armor', 'icon': '%i:scaleArmor%', 'openingTag': '<scalearmor>', 'closingTag': '</scalearmor>'},
+    2: {'name': 'Attack', 'icon': '%i:scaleAD%', 'openingTag': '<scaleAD>', 'closingTag': '</scaleAD>'},
+    3: {'name': 'AttackSpeed', 'icon': '%i:scaleAS%', 'openingTag': '<tag>', 'closingTag': '</tag>'},
+    4: {'name': 'AttackWindupTime', 'icon': '%i:scaleMR%', 'openingTag': '<scaleMR>', 'closingTag': '</scaleMR>'},
+    5: {'name': 'MagicResist', 'icon': '%i:scaleMR%', 'openingTag': '<scaleMR>', 'closingTag': '</scaleMR>'},
+    6: {'name': 'MoveSpeed', 'icon': '%i:scaleMS%', 'openingTag': '<tag>', 'closingTag': '</tag>'},
+    7: {'name': 'CritChance', 'icon': '%i:scaleCrit%', 'openingTag': '<attention>', 'closingTag': '</attention>'},
+    8: {'name': 'CritDamage', 'icon': '%i:?%', 'openingTag': '<tag>', 'closingTag': '</tag>'},
+    9: {'name': 'CooldownReduction', 'icon': '%i:cooldown%', 'openingTag': '<tag>', 'closingTag': '</tag>'},
+    10: {'name': 'AbilityHaste', 'icon': '%i:scaleHealth%', 'openingTag': '<scalehealth>', 'closingTag': '</scalehealth>'},
+    11: {'name': 'MaxHealth', 'icon': '%i:scaleHealth%', 'openingTag': '<scalehealth>', 'closingTag': '</scalehealth>'},
+    12: {'name': 'CurrentHealth', 'icon': '%i:scaleHealth%', 'openingTag': '<scalehealth>', 'closingTag': '</scalehealth>'},
+    13: {'name': 'PercentMissingHealth', 'icon': '%i:scaleHealth%', 'openingTag': '<scalehealth>', 'closingTag': '</scalehealth>'},
+    14: {'name': 'Unknown14', 'icon': '%i:?%', 'openingTag': '<tag>', 'closingTag': '</tag>'},
+    15: {'name': 'LifeSteal', 'icon': '%i:scaleLS%', 'openingTag': '<tag>', 'closingTag': '</tag>'},
+    17: {'name': 'OmniVamp', 'icon': '%i:?%', 'openingTag': '<tag>', 'closingTag': '</tag>'},
+    18: {'name': 'PhysicalVamp', 'icon': '%i:?%', 'openingTag': '<tag>', 'closingTag': '</tag>'},
+    19: {'name': 'MagicPenetrationFlat', 'icon': '%i:?%', 'openingTag': '<tag>', 'closingTag': '</tag>'},
+    20: {'name': 'MagicPenetrationPercent', 'icon': '%i:?%', 'openingTag': '<tag>', 'closingTag': '</tag>'},
+    21: {'name': 'BonusMagicPenetrationPercent', 'icon': '%i:?%', 'openingTag': '<tag>', 'closingTag': '</tag>'},
+    22: {'name': 'MagicLethality', 'icon': '%i:?%', 'openingTag': '<tag>', 'closingTag': '</tag>'},
+    23: {'name': 'ArmorPenetrationFlat', 'icon': '%i:?%', 'openingTag': '<tag>', 'closingTag': '</tag>'},
+    24: {'name': 'ArmorPenetrationPercent', 'icon': '%i:?%', 'openingTag': '<tag>', 'closingTag': '</tag>'},
+    25: {'name': 'BonusArmorPenetrationPercent', 'icon': '%i:?%', 'openingTag': '<tag>', 'closingTag': '</tag>'},
+    26: {'name': 'PhysicalLethality', 'icon': '%i:scaleAPen%', 'openingTag': '<scaleAPen>', 'closingTag': '</scaleAPen>'},
+    27: {'name': 'Tenacity', 'icon': '%i:?%', 'openingTag': '<tag>', 'closingTag': '</tag>'},
+    28: {'name': 'AttackRange', 'icon': '%i:?%', 'openingTag': '<tag>', 'closingTag': '</tag>'},
+    29: {'name': 'HealthRegenRate', 'icon': '%i:?%', 'openingTag': '<tag>', 'closingTag': '</tag>'},
+    30: {'name': 'ResourceRegenRate', 'icon': '%i:?%', 'openingTag': '<tag>', 'closingTag': '</tag>'},
+    31: {'name': 'Unknown31', 'icon': '%i:?%', 'openingTag': '<tag>', 'closingTag': '</tag>'},
+    32: {'name': 'Unknown32', 'icon': '%i:?%', 'openingTag': '<tag>', 'closingTag': '</tag>'},
+    33: {'name': 'DodgeChance', 'icon': '%i:?%', 'openingTag': '<tag>', 'closingTag': '</tag>'}
+}
+
+stat_types = {
+    1: 'base',
+    2: 'bonus'
+}
