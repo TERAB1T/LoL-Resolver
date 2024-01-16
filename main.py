@@ -6,7 +6,7 @@ from items.items_generator import generate_items
 
 def main():
     output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), f"export")
-    generate_items("pbe", output_dir, True, True)
+    generate_items("pbe", output_dir, False, True)
 
     # argParser = argparse.ArgumentParser()
     # argParser.add_argument("-i", "--items", default="pbe", metavar="VERSION", help="Generates items using the # specified version of the game.")

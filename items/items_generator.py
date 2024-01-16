@@ -43,13 +43,14 @@ def generate_version(inputVersion, output_dir):
 
 def generate_items(input_version, output_dir, cache = False, atlas = False):
     redis_cache = {}
+    redis_con = None
 
     try:
         if cache:
             redis_con = redis.Redis(host='localhost', port=6379, decode_responses=True)
             redis_con.ping()
     except:
-        redis_con = None
+        pass
 
     item_urls = ["items.cdtb.bin.json", "global/items/items.bin.json"]
 
