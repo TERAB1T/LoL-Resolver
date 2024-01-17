@@ -50,7 +50,7 @@ def generate_items(input_version, output_dir, cache = False, atlas = False):
             redis_con = redis.Redis(host='localhost', port=6379, decode_responses=True)
             redis_con.ping()
     except:
-        pass
+        redis_con = None
 
     item_urls = ["items.cdtb.bin.json", "global/items/items.bin.json"]
 
