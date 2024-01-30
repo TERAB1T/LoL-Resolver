@@ -3,6 +3,7 @@ import requests
 from io import BytesIO
 from PIL import Image
 import struct
+from utils import *
 
 class AtlasProcessor:
     def __init__(self):
@@ -72,6 +73,37 @@ class AtlasProcessor:
         except Exception as e:
             print(f"An error occurred: {e}")
 
+    def split_staticons_from_atlas(self, atlas_file, parsed_data):
+        try:
+            response = requests.get(atlas_file)
+            if response.status_code != 200:
+                print("Failed to fetch the PNG atlas file.")
+                return
+            
+            atlas_image = Image.open(BytesIO(response.content))
+
+            for icon_key, icon_data in parsed_data.items():
+                x_start, y_start = 0, 0
+                width, height = 20, 20
+
+                if "wh" in icon_data:
+                    width = int(icon_data['wh'][0])
+                    height = int(icon_data['wh'][1])
+
+                if "xy" in icon_data:
+                    x_start = int(icon_data['xy'][0])
+                    y_start = int(icon_data['xy'][1])
+
+                x_end = x_start + width
+                y_end = y_start + height
+                
+                icon_image = atlas_image.crop((x_start, y_start, x_end, y_end))
+                output_file = os.path.join(self.output_dir, f"{icon_key}.png")
+                    
+                icon_image.save(output_file, 'PNG')
+        except Exception as e:
+            print(f"An error occurred: {e}")
+
     def process_icons(self, version, output_dir):
         self.output_dir = os.path.join(output_dir, f"items/{version}/icons")
         os.makedirs(self.output_dir, exist_ok=True)
@@ -87,3 +119,27 @@ class AtlasProcessor:
         parsed_data = self.parse_struct(binary_data)
         atlas_file = f"https://raw.communitydragon.org/{version}/game/assets/items/icons2d/autoatlas/largeicons/atlas_0.png"
         self.split_icons_from_atlas(atlas_file, parsed_data)
+
+    def process_staticons(self, version, output_dir):
+        self.output_dir = os.path.join(output_dir, f"stats")
+        os.makedirs(self.output_dir, exist_ok=True)
+
+        urls = ["ux/fonts.cdtb.bin.json", "ux/fonts.bin.json"]
+        final_url = get_final_url(version, urls)
+
+        response = requests.get(final_url)
+        
+        if response.status_code != 200:
+            print(f"Atlas file not found: {version}")
+            return
+        
+        fonts_json = response.json()
+        
+        if not "{9c87124a}" in fonts_json or not "iconTexture" in fonts_json["{9c87124a}"] or not "icons" in fonts_json["{9c87124a}"]:
+            print(f"Atlas definitions not found: {version}")
+            return
+        
+        fonts_json_def = fonts_json["{9c87124a}"]
+
+        atlas_file = f"https://raw.communitydragon.org/{version}/game/" + re.sub(r'(\.tex|\.dds)$', '.png', fonts_json_def["iconTexture"].lower())
+        self.split_staticons_from_atlas(atlas_file, fonts_json_def["icons"])
