@@ -55,7 +55,7 @@ def get_items_file(version):
         return
 
 def get_strings_file(version, lang):
-    urls = [f"data/menu/main_{lang}.stringtable.json", f"data/menu/fontconfig_{lang}.txt.json"]
+    urls = [f"{lang}/data/menu/en_us/main.stringtable.json", f"data/menu/main_{lang}.stringtable.json", f"data/menu/fontconfig_{lang}.txt.json"]
     final_url = get_final_url(version, urls)
 
     if not final_url:

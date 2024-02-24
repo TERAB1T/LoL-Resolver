@@ -8,11 +8,22 @@ from items.items_processor import ItemsProcessor
 from utils import *
 
 def get_languages(version):
-    url = f"https://raw.communitydragon.org/json/{version}/game/data/menu/"
+    url = f"https://raw.communitydragon.org/json/{version}/game/"
     response = requests.get(url)
 
     if response.status_code == 200:
         langs_raw = response.json()
+        languages = [file.get('name') for file in langs_raw if file.get('type') == 'directory' and re.match(r'^[a-z]{2}_[a-z]{2}$', file.get('name'))]
+        if len(languages) != 0:
+            if 'ar_ae' in languages:
+                languages.remove('ar_ae')
+            return languages
+
+    url2 = f"https://raw.communitydragon.org/json/{version}/game/data/menu/"
+    response2 = requests.get(url2)
+
+    if response2.status_code == 200:
+        langs_raw = response2.json()
         languages = [re.search(r'(?<=_)([a-z]{2}_[a-z]{2})(?=\.(stringtable|txt)\.json)', file.get('name'), re.IGNORECASE).group(0) for file in langs_raw if file.get('name').endswith('.json')]
         if 'ar_ae' in languages:
             languages.remove('ar_ae')
@@ -82,7 +93,34 @@ def generate_items(input_version, output_dir, cache = False, atlas = False):
                     processor.process_icons(version_name, output_dir)
             else:
                 print(f"Version {version_name} is up to date. Skipping...")
+            
+    elif re.match(r'^\d+\.\d+$', input_version):
+        versions = get_versions()
+        version = next((element for element in versions if element['name'] == input_version), None)
 
+        if version:
+            version_name = version.get('name')
+            items_last_modified = version.get('mtime')
+
+            if version_name not in redis_cache:
+                redis_cache[version_name] = {
+                    "itemsLastModified": ''
+                }
+
+            if redis_cache[version_name]["itemsLastModified"] != items_last_modified:
+                generate_version(version_name, output_dir)
+
+                if redis_con:
+                    redis_cache[version_name]["itemsLastModified"] = items_last_modified
+                    redis_con.set("items", json.dumps(redis_cache))
+
+                if atlas:
+                    processor = AtlasProcessor()
+                    processor.process_icons(version_name, output_dir)
+            else:
+                print(f"Version {version_name} is up to date. Skipping...")
+        else:
+            print(f"Version {input_version} not found.")
     elif input_version in ['latest', 'pbe']: # re.match(r'^\d+\.\d+$', input_version) or
         if input_version not in redis_cache:
             redis_cache[input_version] = {

@@ -15,7 +15,7 @@ def main():
     parser_items.add_argument("--itemicons", action=argparse.BooleanOptionalAction, default=False, help="Determines whether to generate item icons.")
 
     parser_staticons = subparsers.add_parser("staticons", help="Generates stat icons used in tooltips for abilities, items, etc.")
-    parser_staticons.add_argument("-v", "--version", metavar="VERSION", default="pbe", help="Version of the game (currently supported: latest/pbe/all).")
+    parser_staticons.add_argument("-v", "--version", metavar="VERSION", default="pbe", help="Version of the game (currently supported: >=11.1 and latest/pbe/all).")
     parser_staticons.add_argument("-o", "--output", metavar="PATH", default="export", help="Defines the output path.")
 
     args = arg_parser.parse_args()
