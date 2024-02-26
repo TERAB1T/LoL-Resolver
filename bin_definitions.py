@@ -11,63 +11,34 @@ class BinDefinitions:
         return get_string(self.strings_raw, string)
     
     def parse_values(self, current_block, key=0):
-        return_value = ""
-
         if not isinstance(current_block, (list, dict)):
-            return_value = current_block
+            return current_block
+        
+        block_type = current_block['__type']
 
-        elif current_block['__type'] == 'GameCalculation':
-            return_value = self._GameCalculation(current_block, key)
-
-        elif current_block['__type'] == 'ByCharLevelInterpolationCalculationPart':
-            return_value = self._ByCharLevelInterpolationCalculationPart(current_block, key)
-
-        elif current_block['__type'] == 'NamedDataValueCalculationPart':
-            return_value = self._NamedDataValueCalculationPart(current_block, key)
-
-        elif current_block['__type'] == 'NumberCalculationPart':
-            return_value = self._NumberCalculationPart(current_block, key)
-
-        elif current_block['__type'] == 'EffectValueCalculationPart':
-            return_value = self._EffectValueCalculationPart(current_block, key)
-
-        elif current_block['__type'] == 'StatByNamedDataValueCalculationPart':
-            return_value = self._StatByNamedDataValueCalculationPart(current_block, key)
-
-        elif current_block['__type'] == 'StatByCoefficientCalculationPart':
-            return_value = self._StatByCoefficientCalculationPart(current_block, key)
-
-        elif current_block['__type'] == 'StatBySubPartCalculationPart':
-            return_value = self._StatBySubPartCalculationPart(current_block, key)
-
-        elif current_block['__type'] == 'AbilityResourceByCoefficientCalculationPart':
-            return_value = self._AbilityResourceByCoefficientCalculationPart(current_block, key)
-
-        elif current_block['__type'] == 'ByCharLevelBreakpointsCalculationPart':
-            return_value = self._ByCharLevelBreakpointsCalculationPart(current_block, key)
-
-        elif current_block['__type'] == 'ProductOfSubPartsCalculationPart':
-            return_value = self._ProductOfSubPartsCalculationPart(current_block, key)
-
-        elif current_block['__type'] == 'SumOfSubPartsCalculationPart':
-            return_value = self._SumOfSubPartsCalculationPart(current_block, key)
-
-        elif current_block['__type'] == 'GameCalculationModified':
-            return_value = self._GameCalculationModified(current_block, key)
-
-        elif current_block['__type'] == '{f3cbe7b2}':
-            return_value = self._f3cbe7b2(current_block, key)
-
-        elif current_block['__type'] == 'BuffCounterByCoefficientCalculationPart' or current_block['__type'] == 'BuffCounterByNamedDataValueCalculationPart' or current_block['__type'] == '{803dae4c}' or current_block['__type'] == '{663d5e00}':
-            return_value = 0
-
+        if block_type in [
+            'GameCalculation',
+            'ByCharLevelInterpolationCalculationPart',
+            'NamedDataValueCalculationPart',
+            'NumberCalculationPart',
+            'EffectValueCalculationPart',
+            'StatByNamedDataValueCalculationPart',
+            'StatByCoefficientCalculationPart',
+            'StatBySubPartCalculationPart',
+            'AbilityResourceByCoefficientCalculationPart',
+            'ByCharLevelBreakpointsCalculationPart',
+            'ProductOfSubPartsCalculationPart',
+            'SumOfSubPartsCalculationPart',
+            'GameCalculationModified',
+            '{f3cbe7b2}'
+        ]:
+            return getattr(self, f'_BinDefinitions__{block_type.strip("{}")}')(current_block, key)
+        elif block_type in ['BuffCounterByCoefficientCalculationPart', 'BuffCounterByNamedDataValueCalculationPart', '{803dae4c}', '{663d5e00}']:
+            return 0
         else:
-            return_value = current_block
-
-        return return_value
+            return current_block
     
-    def _GameCalculation(self, current_block, key=0):
-        return_value = ""
+    def __GameCalculation(self, current_block, key=0):
         mFormulaParts = {}
 
         for i, value in enumerate(current_block['mFormulaParts']):
@@ -99,7 +70,7 @@ class BinDefinitions:
 
         return return_value
     
-    def _ByCharLevelInterpolationCalculationPart(self, current_block, key=0):
+    def __ByCharLevelInterpolationCalculationPart(self, current_block, key=0):
         return_value = ""
 
         if 'mStartValue' not in current_block:
@@ -118,7 +89,7 @@ class BinDefinitions:
 
         return return_value
     
-    def _NamedDataValueCalculationPart(self, current_block, key=0):
+    def __NamedDataValueCalculationPart(self, current_block, key=0):
         return_value = 0
 
         if key == 0:
@@ -139,13 +110,13 @@ class BinDefinitions:
 
         return return_value
     
-    def _NumberCalculationPart(self, current_block, key=0):
+    def __NumberCalculationPart(self, current_block, key=0):
         return current_block['mNumber']
     
-    def _EffectValueCalculationPart(self, current_block, key=0):
+    def __EffectValueCalculationPart(self, current_block, key=0):
         return self.var_values['effect' + str(current_block['mEffectIndex']) + 'amount']
     
-    def _StatByNamedDataValueCalculationPart(self, current_block, key=0):
+    def __StatByNamedDataValueCalculationPart(self, current_block, key=0):
         return_value = ""
         current_stat = not_none(current_block.get('mStat'), 0)
 
@@ -173,7 +144,7 @@ class BinDefinitions:
 
         return return_value
     
-    def _StatByCoefficientCalculationPart(self, current_block, key=0):
+    def __StatByCoefficientCalculationPart(self, current_block, key=0):
         return_value = ""
         current_stat = not_none(current_block.get('mStat'), 0)
 
@@ -201,7 +172,7 @@ class BinDefinitions:
 
         return return_value
     
-    def _StatBySubPartCalculationPart(self, current_block, key=0):
+    def __StatBySubPartCalculationPart(self, current_block, key=0):
         return_value = ""
         current_stat = not_none(current_block.get('mStat'), 0)
 
@@ -229,7 +200,7 @@ class BinDefinitions:
 
         return return_value
     
-    def _AbilityResourceByCoefficientCalculationPart(self, current_block, key=0):
+    def __AbilityResourceByCoefficientCalculationPart(self, current_block, key=0):
         return_value = ""
 
         if key == 0:
@@ -256,7 +227,7 @@ class BinDefinitions:
 
         return return_value
     
-    def _ByCharLevelBreakpointsCalculationPart(self, current_block, key=0):
+    def __ByCharLevelBreakpointsCalculationPart(self, current_block, key=0):
         return_value = ""
 
         if key == 0:
@@ -288,7 +259,7 @@ class BinDefinitions:
 
         return return_value
     
-    def _ProductOfSubPartsCalculationPart(self, current_block, key=0):
+    def __ProductOfSubPartsCalculationPart(self, current_block, key=0):
         return_value = ""
 
         m_part1 = self.parse_values(current_block['mPart1'])
@@ -307,7 +278,7 @@ class BinDefinitions:
 
         return return_value
     
-    def _SumOfSubPartsCalculationPart(self, current_block, key=0):
+    def __SumOfSubPartsCalculationPart(self, current_block, key=0):
         return_value = ""
 
         if len(current_block['mSubparts']) == 1:
@@ -328,7 +299,7 @@ class BinDefinitions:
 
         return return_value
     
-    def _GameCalculationModified(self, current_block, key=0):
+    def __GameCalculationModified(self, current_block, key=0):
         return_value = ""
 
         multiplier = self.parse_values(current_block['mMultiplier'])
@@ -352,5 +323,5 @@ class BinDefinitions:
 
         return return_value
     
-    def _f3cbe7b2(self, current_block, key=0):
+    def __f3cbe7b2(self, current_block, key=0):
         return self.parse_values(self.all_calculations[current_block['{88536426}']])
