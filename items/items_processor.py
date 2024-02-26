@@ -9,9 +9,8 @@ class ItemsProcessor:
     def __init__(self, version, output_dir, lang, items, strings):
         self.lang = lang
         self.items = items
-        self.stringsRaw = strings
+        self.strings_raw = strings
         self.strings = strings
-        self.bin_definitions = BinDefinitions()
 
         self.output_dir = os.path.join(output_dir, f"items/{version}")
 
@@ -35,7 +34,7 @@ class ItemsProcessor:
             output_file.write(output_json)
     
     def __get_string(self, string):
-        return get_string(self.stringsRaw, string)
+        return get_string(self.strings_raw, string)
 
     def __filter_array(self, arr, pattern, is_string=False):
         def recursive_replace(input_string):
@@ -100,234 +99,6 @@ class ItemsProcessor:
 
         for key in keys_to_remove_from_array2:
             del self.strings[key]
-
-    def __parse_item_values(self, var_values, all_calculations, current_block, key=0):
-        return_value = ""
-
-        if not isinstance(current_block, (list, dict)):
-            return_value = current_block
-        elif current_block['__type'] == 'GameCalculation':
-            mFormulaParts = {}
-            for i, value in enumerate(current_block['mFormulaParts']):
-                mFormulaParts[i] = str(round_number(self.__parse_item_values(var_values, all_calculations, value, i), 5, True))
-
-            return_value = ' '.join(mFormulaParts.values())
-
-            if 'mMultiplier' in current_block:
-                mMultiplier = self.__parse_item_values(var_values, all_calculations, current_block['mMultiplier'])
-
-                try:
-                    mMultiplier = float(mMultiplier)
-                    return_value = float(return_value)
-                except:
-                    pass
-
-                if isinstance(return_value, (int, float)):
-                    return_value = round_number(return_value * mMultiplier, 5)
-
-            if 'mDisplayAsPercent' in current_block:
-                if isinstance(return_value, (int, float)):
-                    return_value = str_ireplace('@NUMBER@', round_number(return_value * 100, not_none(current_block.get('mPrecision'), 5)), self.__get_string('number_formatting_percentage_format'))
-                else:
-                    def callback_for_numbers(matches):
-                        number = float(matches.group(1))
-                        return str_ireplace('@NUMBER@', round_number(number * 100, 5, True), self.__get_string('number_formatting_percentage_format'))
-
-                    return_value = re.sub(r'^([0-9]+(\.[0-9]+)*)', callback_for_numbers, return_value)
-
-        elif current_block['__type'] == 'ByCharLevelInterpolationCalculationPart':
-            if 'mStartValue' not in current_block:
-                return_value = not_none(current_block.get('mEndValue'), '0')
-            else:
-                if key == 0:
-                    return_value = self.__get_string("tooltip_statsuidata_formulapartrangestyle")
-                else:
-                    return_value = self.__get_string("tooltip_statsuidata_formulapartrangestylebonus")
-
-                return_value = str_ireplace('@OpeningTag@', '<scaleLevel>', return_value)
-                return_value = str_ireplace('@RangeStart@', round_number(float(current_block['mStartValue']), 5), return_value)
-                return_value = str_ireplace('@RangeEnd@', round_number(float(current_block['mEndValue']), 5), return_value)
-                return_value = str_ireplace('@Icon@', '%i:scaleLevel%', return_value)
-                return_value = str_ireplace('@ClosingTag@', '</scaleLevel>', return_value)
-
-        elif current_block['__type'] == 'NamedDataValueCalculationPart':
-            return_value = 0
-
-            if key == 0:
-                return_value = self.__get_string("tooltip_statsuidata_formulapartstyle")
-            else:
-                return_value = self.__get_string("tooltip_statsuidata_formulapartstylebonus")
-
-            return_value = str_ireplace('@OpeningTag@', "", return_value)
-            return_value = str_ireplace('@IconModifier@', '', return_value)
-            return_value = str_ireplace('@Icon@', "", return_value)
-            return_value = str_ireplace('@ClosingTag@', "", return_value)
-
-            data_value = current_block['mDataValue'].lower()
-            if data_value in var_values:
-                return_value = str_ireplace('@Value@', round_number(var_values[data_value], 5), return_value)
-            else:
-                return_value = str_ireplace('@Value@', 0, return_value)
-        
-        elif current_block['__type'] == 'NumberCalculationPart':
-            return_value = current_block['mNumber']
-
-        elif current_block['__type'] == 'EffectValueCalculationPart':
-            return_value = var_values['effect' + str(current_block['mEffectIndex']) + 'amount']
-
-        elif current_block['__type'] == 'StatByNamedDataValueCalculationPart' or current_block['__type'] == 'StatByCoefficientCalculationPart' or current_block['__type'] == 'StatBySubPartCalculationPart':
-            current_stat = not_none(current_block.get('mStat'), 0)
-
-            if key == 0:
-                return_value = self.__get_string("tooltip_statsuidata_formulapartstylepercent")
-            else:
-                return_value = self.__get_string("tooltip_statsuidata_formulapartstylebonuspercent")
-
-            if 'mStatFormula' in current_block:
-                return_value = str_ireplace('@IconModifier@', self.__get_string('tooltip_statsuidata_' + stat_types[current_block['mStatFormula']] + 'iconmodifier'), return_value)
-            else:
-                return_value = str_ireplace('@IconModifier@', '', return_value)
-
-            return_value = str_ireplace('@OpeningTag@', stats[current_stat]['openingTag'], return_value)
-
-            if current_block['__type'] == 'StatByNamedDataValueCalculationPart':
-                value = var_values[current_block['mDataValue'].lower()]
-                try:
-                    value = float(value) * 100
-                except:
-                    pass
-                return_value = str_ireplace('@Value@', round_number(value, 5), return_value)
-            elif current_block['__type'] == 'StatByCoefficientCalculationPart':
-                value = current_block['mCoefficient']
-                try:
-                    value = float(value) * 100
-                except:
-                    pass
-                return_value = str_ireplace('@Value@', round_number(value, 5), return_value)
-            elif current_block['__type'] == 'StatBySubPartCalculationPart':
-                value = self.__parse_item_values(var_values, all_calculations, current_block['mSubpart'], key)
-                try:
-                    value = float(value) * 100
-                except:
-                    pass
-                return_value = str_ireplace('@Value@', round_number(value, 5), return_value)
-
-            return_value = str_ireplace('@Icon@', stats[current_stat]['icon'], return_value)
-            return_value = str_ireplace('@ClosingTag@', stats[current_stat]['closingTag'], return_value)
-
-        elif current_block['__type'] == 'AbilityResourceByCoefficientCalculationPart':
-            if key == 0:
-                return_value = self.__get_string("tooltip_statsuidata_formulapartstylepercent")
-            else:
-                return_value = self.__get_string("tooltip_statsuidata_formulapartstylebonuspercent")
-
-            if 'mStatFormula' in current_block:
-                return_value = str_ireplace('@IconModifier@', self.__get_string('tooltip_statsuidata_' + stat_types[current_block['mStatFormula']] + 'iconmodifier'), return_value)
-            else:
-                return_value = str_ireplace('@IconModifier@', '', return_value)
-
-            return_value = str_ireplace('@OpeningTag@', '<scalemana>', return_value)
-
-            value = current_block['mCoefficient']
-            try:
-                value = float(value) * 100
-            except:
-                pass
-
-            return_value = str_ireplace('@Value@', round_number(value, 5), return_value)
-            return_value = str_ireplace('@Icon@', '%i:scaleMana%', return_value)
-            return_value = str_ireplace('@ClosingTag@', '</scalemana>', return_value)
-
-        elif current_block['__type'] == 'ByCharLevelBreakpointsCalculationPart':
-            if key == 0:
-                return_value = self.__get_string("tooltip_statsuidata_formulapartrangestyle")
-            else:
-                return_value = self.__get_string("tooltip_statsuidata_formulapartrangestylebonus")
-
-            if 'mLevel1Value' not in current_block:
-                current_block['mLevel1Value'] = 0
-
-            return_value = str_ireplace('@OpeningTag@', '<scaleLevel>', return_value)
-            return_value = str_ireplace('@RangeStart@', round_number(float(current_block['mLevel1Value']), 5), return_value)
-            return_value = str_ireplace('@Icon@', '%i:scaleLevel%', return_value)
-            return_value = str_ireplace('@ClosingTag@', '</scaleLevel>', return_value)
-
-            if 'mBreakpoints' in current_block:
-                last_level = 18
-                end_value = current_block['mLevel1Value']
-
-                for m_breakpoint in reversed(current_block['mBreakpoints']):
-                    current_value = not_none(m_breakpoint.get('{d5fd07ed}'), not_none(m_breakpoint.get('{57fdc438}'), 0))
-                    diff = last_level - m_breakpoint['mLevel'] + 1
-                    end_value += diff * current_value
-                    last_level -= diff
-
-                return_value = str_ireplace('@RangeEnd@', round_number(end_value, 5), return_value)
-            else:
-                return_value = str_ireplace('@RangeEnd@', round_number(current_block['{02deb550}'] * 17 + current_block['mLevel1Value'], 5), return_value)
-
-        elif current_block['__type'] == 'ProductOfSubPartsCalculationPart':
-            m_part1 = self.__parse_item_values(var_values, all_calculations, current_block['mPart1'])
-            m_part2 = self.__parse_item_values(var_values, all_calculations, current_block['mPart2'])
-
-            try:
-                m_part1 = float(m_part1)
-                m_part2 = float(m_part2)
-            except:
-                pass
-
-            if isinstance(m_part1, (int, float)) and isinstance(m_part2, (int, float)):
-                return_value = round_number(m_part1 * m_part2, 5)
-            else:
-                return_value = 0
-
-        elif current_block['__type'] == 'SumOfSubPartsCalculationPart':
-            if len(current_block['mSubparts']) == 1:
-                return_value = self.__parse_item_values(var_values, all_calculations, current_block['mSubparts'][0])
-            else:
-                summ = 0
-
-                for value in current_block['mSubparts']:
-                    current_value = self.__parse_item_values(var_values, all_calculations, value)
-
-                    if not isinstance(current_value, (int, float)):
-                        summ = 0
-                        break
-                    else:
-                        summ += current_value
-
-                return_value = summ
-
-        elif current_block['__type'] == 'GameCalculationModified':
-            multiplier = self.__parse_item_values(var_values, all_calculations, current_block['mMultiplier'])
-            modified_block = self.__parse_item_values(var_values, all_calculations, all_calculations[current_block['mModifiedGameCalculation']])
-
-            try:
-                multiplier = float(multiplier)
-            except:
-                matches = re.match(r"^([0-9\.]+)", multiplier)
-                if matches:
-                    multiplier = float(matches.group(1))
-                else:
-                    multiplier = 1
-
-            def callback_for_numbers(matches):
-                number = float(matches.group(1))
-                result = number * multiplier
-                return round_number(result, 5, True)
-
-            return_value = re.sub(r'([0-9]+(\.[0-9]+)*)', callback_for_numbers, str(modified_block), flags=re.IGNORECASE)
-
-        elif current_block['__type'] == '{f3cbe7b2}':
-            return_value = self.__parse_item_values(var_values, all_calculations, all_calculations[current_block['{88536426}']])
-
-        elif current_block['__type'] == 'BuffCounterByCoefficientCalculationPart' or current_block['__type'] == 'BuffCounterByNamedDataValueCalculationPart' or current_block['__type'] == '{803dae4c}' or current_block['__type'] == '{663d5e00}':
-            return_value = 0
-
-        else:
-            return_value = current_block
-
-        return return_value
     
     def __process_values(self):
         def recursive_replace(key, input_string):
@@ -409,7 +180,8 @@ class ItemsProcessor:
                 for mItemCalculations_key, mItemCalculations_value in itemValues['mItemCalculations'].items():
                     # if mItemCalculations_key not in ['MythicPassiveBonus', 'ChampRange', 'ChampLevelReached', 'CurrentMythicBonus']:
 
-                    self.var_values[itemID][mItemCalculations_key.lower()] = self.__parse_item_values(self.var_values[itemID], itemValues['mItemCalculations'], mItemCalculations_value)
+                    bin_definitions = BinDefinitions(self.strings_raw, self.var_values[itemID], itemValues['mItemCalculations'])
+                    self.var_values[itemID][mItemCalculations_key.lower()] = bin_definitions.parse_values(mItemCalculations_value)
             
             #if itemID == 223084:
             #    print("Values: " + str(self.var_values[itemID]))
