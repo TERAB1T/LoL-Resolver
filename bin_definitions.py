@@ -22,18 +22,26 @@ class BinDefinitions:
             'NamedDataValueCalculationPart',
             'NumberCalculationPart',
             'EffectValueCalculationPart',
-            'StatByNamedDataValueCalculationPart',
-            'StatByCoefficientCalculationPart',
-            'StatBySubPartCalculationPart',
             'AbilityResourceByCoefficientCalculationPart',
             'ByCharLevelBreakpointsCalculationPart',
             'ProductOfSubPartsCalculationPart',
             'SumOfSubPartsCalculationPart',
             'GameCalculationModified',
             '{f3cbe7b2}'
-        ]:
+            ]:
             return getattr(self, f'_BinDefinitions__{block_type.strip("{}")}')(current_block, key)
-        elif block_type in ['BuffCounterByCoefficientCalculationPart', 'BuffCounterByNamedDataValueCalculationPart', '{803dae4c}', '{663d5e00}']:
+        elif block_type in [
+            'StatByNamedDataValueCalculationPart',
+            'StatByCoefficientCalculationPart',
+            'StatBySubPartCalculationPart'
+            ]:
+            return self.__StatByNamedDataValueCalculationPart(current_block, key)
+        elif block_type in [
+            'BuffCounterByCoefficientCalculationPart',
+            'BuffCounterByNamedDataValueCalculationPart',
+            '{803dae4c}',
+            '{663d5e00}'
+            ]:
             return 0
         else:
             return current_block
@@ -71,42 +79,42 @@ class BinDefinitions:
         return return_value
     
     def __ByCharLevelInterpolationCalculationPart(self, current_block, key=0):
-        return_value = ""
-
         if 'mStartValue' not in current_block:
-            return_value = not_none(current_block.get('mEndValue'), '0')
-        else:
-            if key == 0:
-                return_value = self.__get_string("tooltip_statsuidata_formulapartrangestyle")
-            else:
-                return_value = self.__get_string("tooltip_statsuidata_formulapartrangestylebonus")
+            return not_none(current_block.get('mEndValue'), '0')
 
-            return_value = str_ireplace('@OpeningTag@', '<scaleLevel>', return_value)
-            return_value = str_ireplace('@RangeStart@', round_number(float(current_block['mStartValue']), 5), return_value)
-            return_value = str_ireplace('@RangeEnd@', round_number(float(current_block['mEndValue']), 5), return_value)
-            return_value = str_ireplace('@Icon@', '%i:scaleLevel%', return_value)
-            return_value = str_ireplace('@ClosingTag@', '</scaleLevel>', return_value)
+        formula_part_style_key = "tooltip_statsuidata_formulapartrangestyle" if key == 0 else "tooltip_statsuidata_formulapartrangestylebonus"
+        return_value = self.__get_string(formula_part_style_key)
+
+        placeholders = {
+            '@OpeningTag@': '<scaleLevel>',
+            '@RangeStart@': round_number(float(current_block['mStartValue']), 5),
+            '@RangeEnd@': round_number(float(current_block['mEndValue']), 5),
+            '@Icon@': '%i:scaleLevel%',
+            '@ClosingTag@': '</scaleLevel>'
+        }
+
+        for placeholder, value in placeholders.items():
+            return_value = str_ireplace(placeholder, value, return_value)
 
         return return_value
     
     def __NamedDataValueCalculationPart(self, current_block, key=0):
-        return_value = 0
+        formula_part_style_key = "tooltip_statsuidata_formulapartstyle" if key == 0 else "tooltip_statsuidata_formulapartstylebonus"
+        return_value = self.__get_string(formula_part_style_key)
 
-        if key == 0:
-            return_value = self.__get_string("tooltip_statsuidata_formulapartstyle")
-        else:
-            return_value = self.__get_string("tooltip_statsuidata_formulapartstylebonus")
+        value = self.var_values.get(current_block['mDataValue'].lower(), 0)
+        formatted_value = round_number(value, 5) if isinstance(value, (int, float)) else 0
 
-        return_value = str_ireplace('@OpeningTag@', "", return_value)
-        return_value = str_ireplace('@IconModifier@', '', return_value)
-        return_value = str_ireplace('@Icon@', "", return_value)
-        return_value = str_ireplace('@ClosingTag@', "", return_value)
+        placeholders = {
+            '@OpeningTag@': '',
+            '@IconModifier@': '',
+            '@Icon@': '',
+            '@ClosingTag@': '',
+            '@Value@': formatted_value
+        }
 
-        data_value = current_block['mDataValue'].lower()
-        if data_value in self.var_values:
-            return_value = str_ireplace('@Value@', round_number(self.var_values[data_value], 5), return_value)
-        else:
-            return_value = str_ireplace('@Value@', 0, return_value)
+        for placeholder, replacement in placeholders.items():
+            return_value = str_ireplace(placeholder, replacement, return_value)
 
         return return_value
     
@@ -114,106 +122,56 @@ class BinDefinitions:
         return current_block['mNumber']
     
     def __EffectValueCalculationPart(self, current_block, key=0):
-        return self.var_values['effect' + str(current_block['mEffectIndex']) + 'amount']
+        effect_key = f"effect{current_block['mEffectIndex']}amount"
+        return self.var_values.get(effect_key, 0)
     
     def __StatByNamedDataValueCalculationPart(self, current_block, key=0):
-        return_value = ""
-        current_stat = not_none(current_block.get('mStat'), 0)
+        formula_part_style_key = "tooltip_statsuidata_formulapartstylepercent" if key == 0 else "tooltip_statsuidata_formulapartstylebonuspercent"
+        return_value = self.__get_string(formula_part_style_key)
 
-        if key == 0:
-            return_value = self.__get_string("tooltip_statsuidata_formulapartstylepercent")
-        else:
-            return_value = self.__get_string("tooltip_statsuidata_formulapartstylebonuspercent")
+        current_stat = current_block.get('mStat', 0)
 
-        if 'mStatFormula' in current_block:
-            return_value = str_ireplace('@IconModifier@', self.__get_string('tooltip_statsuidata_' + stat_types[current_block['mStatFormula']] + 'iconmodifier'), return_value)
-        else:
-            return_value = str_ireplace('@IconModifier@', '', return_value)
+        icon_modifier = ''
+        stat_formula = current_block.get('mStatFormula')
 
-        return_value = str_ireplace('@OpeningTag@', stats[current_stat]['openingTag'], return_value)
+        if stat_formula:
+            icon_modifier = self.__get_string(f'tooltip_statsuidata_{stat_types[stat_formula]}iconmodifier')
 
-        value = self.var_values[current_block['mDataValue'].lower()]
+        value = 0
+
+        if current_block['__type'] == 'StatByNamedDataValueCalculationPart':
+            value = self.var_values.get(current_block['mDataValue'].lower())
+        elif current_block['__type'] == 'StatByCoefficientCalculationPart':
+            value = current_block['mCoefficient']
+        elif current_block['__type'] == 'StatBySubPartCalculationPart':
+            value = self.parse_values(current_block['mSubpart'], key)
+
         try:
             value = float(value) * 100
         except:
             pass
-        return_value = str_ireplace('@Value@', round_number(value, 5), return_value)
 
-        return_value = str_ireplace('@Icon@', stats[current_stat]['icon'], return_value)
-        return_value = str_ireplace('@ClosingTag@', stats[current_stat]['closingTag'], return_value)
+        placeholders = {
+            '@IconModifier@': icon_modifier,
+            '@OpeningTag@': stats[current_stat]['openingTag'],
+            '@Icon@': stats[current_stat]['icon'],
+            '@ClosingTag@': stats[current_stat]['closingTag'],
+            '@Value@': round_number(value, 5)
+        }
 
-        return return_value
-    
-    def __StatByCoefficientCalculationPart(self, current_block, key=0):
-        return_value = ""
-        current_stat = not_none(current_block.get('mStat'), 0)
-
-        if key == 0:
-            return_value = self.__get_string("tooltip_statsuidata_formulapartstylepercent")
-        else:
-            return_value = self.__get_string("tooltip_statsuidata_formulapartstylebonuspercent")
-
-        if 'mStatFormula' in current_block:
-            return_value = str_ireplace('@IconModifier@', self.__get_string('tooltip_statsuidata_' + stat_types[current_block['mStatFormula']] + 'iconmodifier'), return_value)
-        else:
-            return_value = str_ireplace('@IconModifier@', '', return_value)
-
-        return_value = str_ireplace('@OpeningTag@', stats[current_stat]['openingTag'], return_value)
-
-        value = current_block['mCoefficient']
-        try:
-            value = float(value) * 100
-        except:
-            pass
-        return_value = str_ireplace('@Value@', round_number(value, 5), return_value)
-
-        return_value = str_ireplace('@Icon@', stats[current_stat]['icon'], return_value)
-        return_value = str_ireplace('@ClosingTag@', stats[current_stat]['closingTag'], return_value)
-
-        return return_value
-    
-    def __StatBySubPartCalculationPart(self, current_block, key=0):
-        return_value = ""
-        current_stat = not_none(current_block.get('mStat'), 0)
-
-        if key == 0:
-            return_value = self.__get_string("tooltip_statsuidata_formulapartstylepercent")
-        else:
-            return_value = self.__get_string("tooltip_statsuidata_formulapartstylebonuspercent")
-
-        if 'mStatFormula' in current_block:
-            return_value = str_ireplace('@IconModifier@', self.__get_string('tooltip_statsuidata_' + stat_types[current_block['mStatFormula']] + 'iconmodifier'), return_value)
-        else:
-            return_value = str_ireplace('@IconModifier@', '', return_value)
-
-        return_value = str_ireplace('@OpeningTag@', stats[current_stat]['openingTag'], return_value)
-
-        value = self.parse_values(current_block['mSubpart'], key)
-        try:
-            value = float(value) * 100
-        except:
-            pass
-        return_value = str_ireplace('@Value@', round_number(value, 5), return_value)
-
-        return_value = str_ireplace('@Icon@', stats[current_stat]['icon'], return_value)
-        return_value = str_ireplace('@ClosingTag@', stats[current_stat]['closingTag'], return_value)
+        for placeholder, replacement in placeholders.items():
+            return_value = str_ireplace(placeholder, replacement, return_value)
 
         return return_value
     
     def __AbilityResourceByCoefficientCalculationPart(self, current_block, key=0):
-        return_value = ""
+        formula_part_style_key = "tooltip_statsuidata_formulapartstylepercent" if key == 0 else "tooltip_statsuidata_formulapartstylebonuspercent"
+        return_value = self.__get_string(formula_part_style_key)
 
-        if key == 0:
-            return_value = self.__get_string("tooltip_statsuidata_formulapartstylepercent")
-        else:
-            return_value = self.__get_string("tooltip_statsuidata_formulapartstylebonuspercent")
-
-        if 'mStatFormula' in current_block:
-            return_value = str_ireplace('@IconModifier@', self.__get_string('tooltip_statsuidata_' + stat_types[current_block['mStatFormula']] + 'iconmodifier'), return_value)
-        else:
-            return_value = str_ireplace('@IconModifier@', '', return_value)
-
-        return_value = str_ireplace('@OpeningTag@', '<scalemana>', return_value)
+        icon_modifier = ''
+        stat_formula = current_block.get('mStatFormula')
+        if stat_formula:
+            icon_modifier = self.__get_string(f'tooltip_statsuidata_{stat_types[stat_formula]}iconmodifier')
 
         value = current_block['mCoefficient']
         try:
@@ -221,31 +179,28 @@ class BinDefinitions:
         except:
             pass
 
-        return_value = str_ireplace('@Value@', round_number(value, 5), return_value)
-        return_value = str_ireplace('@Icon@', '%i:scaleMana%', return_value)
-        return_value = str_ireplace('@ClosingTag@', '</scalemana>', return_value)
+        placeholders = {
+            '@IconModifier@': icon_modifier,
+            '@OpeningTag@': '<scalemana>',
+            '@Icon@': '%i:scaleMana%',
+            '@ClosingTag@': '</scalemana>',
+            '@Value@': round_number(value, 5)
+        }
+
+        for placeholder, replacement in placeholders.items():
+            return_value = str_ireplace(placeholder, replacement, return_value)
 
         return return_value
     
     def __ByCharLevelBreakpointsCalculationPart(self, current_block, key=0):
-        return_value = ""
+        formula_part_style_key = "tooltip_statsuidata_formulapartrangestyle" if key == 0 else "tooltip_statsuidata_formulapartrangestylebonus"
+        return_value = self.__get_string(formula_part_style_key)
 
-        if key == 0:
-            return_value = self.__get_string("tooltip_statsuidata_formulapartrangestyle")
-        else:
-            return_value = self.__get_string("tooltip_statsuidata_formulapartrangestylebonus")
-
-        if 'mLevel1Value' not in current_block:
-            current_block['mLevel1Value'] = 0
-
-        return_value = str_ireplace('@OpeningTag@', '<scaleLevel>', return_value)
-        return_value = str_ireplace('@RangeStart@', round_number(float(current_block['mLevel1Value']), 5), return_value)
-        return_value = str_ireplace('@Icon@', '%i:scaleLevel%', return_value)
-        return_value = str_ireplace('@ClosingTag@', '</scaleLevel>', return_value)
+        level1_value = current_block.get('mLevel1Value', 0)
 
         if 'mBreakpoints' in current_block:
             last_level = 18
-            end_value = current_block['mLevel1Value']
+            end_value = level1_value
 
             for m_breakpoint in reversed(current_block['mBreakpoints']):
                 current_value = not_none(m_breakpoint.get('{d5fd07ed}'), not_none(m_breakpoint.get('{57fdc438}'), 0))
@@ -253,15 +208,24 @@ class BinDefinitions:
                 end_value += diff * current_value
                 last_level -= diff
 
-            return_value = str_ireplace('@RangeEnd@', round_number(end_value, 5), return_value)
+            range_end = round_number(end_value, 5)
         else:
-            return_value = str_ireplace('@RangeEnd@', round_number(current_block['{02deb550}'] * 17 + current_block['mLevel1Value'], 5), return_value)
+            range_end = round_number(current_block['{02deb550}'] * 17 + level1_value, 5)
+
+        placeholders = {
+            '@OpeningTag@': '<scaleLevel>',
+            '@RangeStart@': round_number(float(level1_value), 5),
+            '@Icon@': '%i:scaleLevel%',
+            '@RangeEnd@': range_end,
+            '@ClosingTag@': '</scaleLevel>'
+        }
+
+        for placeholder, replacement in placeholders.items():
+            return_value = str_ireplace(placeholder, replacement, return_value)
 
         return return_value
     
     def __ProductOfSubPartsCalculationPart(self, current_block, key=0):
-        return_value = ""
-
         m_part1 = self.parse_values(current_block['mPart1'])
         m_part2 = self.parse_values(current_block['mPart2'])
 
@@ -272,36 +236,26 @@ class BinDefinitions:
             pass
 
         if isinstance(m_part1, (int, float)) and isinstance(m_part2, (int, float)):
-            return_value = round_number(m_part1 * m_part2, 5)
+            return round_number(m_part1 * m_part2, 5)
         else:
-            return_value = 0
-
-        return return_value
+            return 0
     
     def __SumOfSubPartsCalculationPart(self, current_block, key=0):
-        return_value = ""
-
         if len(current_block['mSubparts']) == 1:
-            return_value = self.parse_values(current_block['mSubparts'][0])
-        else:
-            summ = 0
+            return self.parse_values(current_block['mSubparts'][0])
+        
+        total_sum = 0
+        for subpart in current_block['mSubparts']:
+            parsed_value = self.parse_values(subpart)
 
-            for value in current_block['mSubparts']:
-                current_value = self.parse_values(value)
+            if isinstance(parsed_value, (int, float)):
+                total_sum += parsed_value
+            else:
+                return 0
 
-                if not isinstance(current_value, (int, float)):
-                    summ = 0
-                    break
-                else:
-                    summ += current_value
+        return total_sum
 
-            return_value = summ
-
-        return return_value
-    
     def __GameCalculationModified(self, current_block, key=0):
-        return_value = ""
-
         multiplier = self.parse_values(current_block['mMultiplier'])
         modified_block = self.parse_values(self.all_calculations[current_block['mModifiedGameCalculation']])
 
@@ -309,19 +263,14 @@ class BinDefinitions:
             multiplier = float(multiplier)
         except:
             matches = re.match(r"^([0-9\.]+)", multiplier)
-            if matches:
-                multiplier = float(matches.group(1))
-            else:
-                multiplier = 1
+            multiplier = float(matches.group(1)) if matches else 1
 
         def callback_for_numbers(matches):
             number = float(matches.group(1))
             result = number * multiplier
             return round_number(result, 5, True)
 
-        return_value = re.sub(r'([0-9]+(\.[0-9]+)*)', callback_for_numbers, str(modified_block), flags=re.IGNORECASE)
-
-        return return_value
+        return re.sub(r'([0-9]+(\.[0-9]+)*)', callback_for_numbers, str(modified_block), flags=re.IGNORECASE)
     
     def __f3cbe7b2(self, current_block, key=0):
         return self.parse_values(self.all_calculations[current_block['{88536426}']])
