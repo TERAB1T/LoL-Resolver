@@ -6,50 +6,33 @@ import os
 from items.atlas_processor import AtlasProcessor
 from items.items_processor import ItemsProcessor
 from utils import *
-
-def get_languages(version):
-    url = f"https://raw.communitydragon.org/json/{version}/game/"
-    response = requests.get(url)
-
-    if response.status_code == 200:
-        langs_raw = response.json()
-        languages = [file.get('name') for file in langs_raw if file.get('type') == 'directory' and re.match(r'^[a-z]{2}_[a-z]{2}$', file.get('name'))]
-        if len(languages) != 0:
-            if 'ar_ae' in languages:
-                languages.remove('ar_ae')
-            return languages
-
-    url2 = f"https://raw.communitydragon.org/json/{version}/game/data/menu/"
-    response2 = requests.get(url2)
-
-    if response2.status_code == 200:
-        langs_raw = response2.json()
-        languages = [re.search(r'(?<=_)([a-z]{2}_[a-z]{2})(?=\.(stringtable|txt)\.json)', file.get('name'), re.IGNORECASE).group(0) for file in langs_raw if file.get('name').endswith('.json')]
-        if 'ar_ae' in languages:
-            languages.remove('ar_ae')
-        return languages
     
-def get_versions():
-    url = "https://raw.communitydragon.org/json/"
-    response = requests.get(url)
+def get_items_file(version):
+    urls = ["items.cdtb.bin.json", "global/items/items.bin.json"]
+    final_url = get_final_url(version, urls)
 
-    if response.status_code == 200:
-        versions_raw = response.json()
-        versions = [file for file in versions_raw if re.match(r'^\d+\.\d+$', file.get('name')) and float(file.get('name').split(".")[0]) > 10]
-        versions = sorted(versions, key = lambda version: float(re.sub(r'\.(\d)$', r'.0\1', version['name'])))
-        return versions
+    if not final_url:
+        print(f"Items file not found: {version}.")
+        return
+    
+    try:
+        items_response = requests.get(final_url)
+        return items_response.json()
+    except requests.RequestException as e:
+        print(f"An error occurred (item file): {e}")
+        return
     
 def generate_version(inputVersion, output_dir):
     print(f"Generating version {inputVersion}...")
     items = get_items_file(inputVersion)
-    languages = get_languages(inputVersion)
+    languages = cd_get_languages(inputVersion)
 
     if not items:
         return
 
     for lang in languages:
         print(f"  {lang}")
-        strings = get_strings_file(inputVersion, lang)
+        strings = cd_get_strings_file(inputVersion, lang)
         processor = ItemsProcessor(inputVersion, output_dir, lang, items, strings)
 
 def generate_items(input_version, output_dir, cache = False, atlas = False):
@@ -70,7 +53,7 @@ def generate_items(input_version, output_dir, cache = False, atlas = False):
         # print(redis_con.get("items"))
 
     if input_version == 'all':
-        versions = get_versions()
+        versions = cd_get_versions()
 
         for version in versions:
             version_name = version.get('name')
@@ -95,7 +78,7 @@ def generate_items(input_version, output_dir, cache = False, atlas = False):
                 print(f"Version {version_name} is up to date. Skipping...")
             
     elif re.match(r'^\d+\.\d+$', input_version):
-        versions = get_versions()
+        versions = cd_get_versions()
         version = next((element for element in versions if element['name'] == input_version), None)
 
         if version:
