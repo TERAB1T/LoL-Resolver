@@ -7,6 +7,12 @@ from tft.units_processor import TFTUnitsProcessor
 from utils import *
 
 def get_tftmap_file(version):
+
+    ###
+    with open(r"C:\Users\Alex\Desktop\tft-test\map22.bin.json", 'r', encoding='utf-8') as file:
+        return json.load(file)
+    ###
+
     urls = ["data/maps/shipping/map22/map22.bin.json"]
     final_url = get_final_url(version, urls)
 
@@ -24,6 +30,14 @@ def get_tftmap_file(version):
 def generate_version(inputVersion, output_dir):
     print(f"Generating version {inputVersion}...")
     tft_data = get_tftmap_file(inputVersion)
+
+    ###
+    with open(r"C:\Users\Alex\Desktop\tft-test\main.stringtable.json", 'r', encoding='utf-8') as file:
+        strings = json.load(file)["entries"]
+        processor = TFTUnitsProcessor(inputVersion, output_dir, "ru_ru", tft_data, strings)
+    return
+    ###
+
     languages = cd_get_languages(inputVersion)
 
     if not tft_data:
