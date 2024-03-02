@@ -138,6 +138,11 @@ class BinDefinitions:
         if self.needs_calculation:
             current_stat = self.champion_stats[current_block.get('mStat', 0)]
             current_value = self.var_values.get(current_block['mDataValue'].lower(), 0)
+            stat_formula = current_block.get('mStatFormula', 1)
+
+            if stat_formula == 2:
+                return 0
+            
             return current_stat * current_value
 
         formula_part_style_key = "tooltip_statsuidata_formulapartstylepercent" if key == 0 else "tooltip_statsuidata_formulapartstylebonuspercent"
@@ -217,6 +222,12 @@ class BinDefinitions:
         if self.needs_calculation:
             current_stat = self.champion_stats[current_block.get('mStat', 0)]
             current_value = self.parse_values(current_block['mSubpart'])
+
+            stat_formula = current_block.get('mStatFormula', 1)
+
+            if stat_formula == 2:
+                return 0
+
             return current_stat * current_value
         
         formula_part_style_key = "tooltip_statsuidata_formulapartstylepercent" if key == 0 else "tooltip_statsuidata_formulapartstylebonuspercent"
