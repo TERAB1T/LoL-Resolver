@@ -138,11 +138,11 @@ class TFTUnitsProcessor:
 
             if not style:
                 values = [str(round_number(var_values[element["type"].lower()][i], 2)) for i in range(1, 4)]
-                current_string += f'<scalingblock>[{'/'.join(values)}]</scalingblock>'
+                current_string += f'<scalingblock>[{"/".join(values)}]</scalingblock>'
             elif style == 1:
                 multiplier = element.get("multiplier", 1)
                 values = [str(round_number(var_values[element["type"].lower()][i] * multiplier, 2)) for i in range(1, 4)]
-                current_string += f'<scalingblock>[{'/'.join(values)}%]</scalingblock>'
+                current_string += f'<scalingblock>[{"/".join(values)}%]</scalingblock>'
 
             return_array.append(current_string + '</scalingcontainer>')
 
