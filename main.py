@@ -28,7 +28,7 @@ def main():
     if args.cmd == "items":
         output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), args.output)
         generate_items(args.version, output_dir, args.cache, args.itemicons)
-    if args.cmd == "tft-units":
+    elif args.cmd == "tft-units":
         output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), args.output)
         generate_tft_units(args.version, output_dir, args.cache)
     elif args.cmd == "staticons":

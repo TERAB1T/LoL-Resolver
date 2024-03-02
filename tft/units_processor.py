@@ -6,24 +6,23 @@ from stats import *
 from bin_definitions import BinDefinitions
 
 class TFTUnitsProcessor:
-    def __init__(self, version, output_dir, lang, tft_data, strings):
+    def __init__(self, version, output_dir, lang, tft_data, champion_list, unit_properties, strings):
         self.lang = lang
         self.tft_data = tft_data
+        self.unit_properties = unit_properties
         self.hp_coef = [0.7, 1, 1.8, 3.24, 5.832]
         self.ad_coef = [0.5, 1, 1.5, 2.25, 3.375]
         self.strings_raw = strings
-        self.strings = strings
-        self.champion_list = self.__get_champion_list()
+        self.strings = {}
+        self.champion_list = champion_list
 
-        self.output_dir = os.path.join(output_dir, f"tft_units/{version}")
+        self.output_dir = os.path.join(output_dir, f"tft-units/{version}")
 
         self.output_filepath = f"{self.output_dir}/{lang}.json"
         self.var_values = {}
 
-
-        for id in self.champion_list:
-            self.__get_champion(id)
-
+        for key, value in self.champion_list.items():
+            self.__get_champion(key, value)
 
         success_return = {
             'status': 1,
@@ -35,24 +34,17 @@ class TFTUnitsProcessor:
         with open(self.output_filepath, 'w', encoding='utf-8') as output_file:
             output_file.write(output_json)
 
+
     def __get_string(self, string):
         return get_string(self.strings_raw, string)
     
-    def __get_champion_list(self):
-        current_set_id = self.tft_data["{9fcfd7a6}"]["{0d43af66}"]
-        character_list_id = self.tft_data[current_set_id]["tftCharacterLists"][0]
-        return self.tft_data[character_list_id]['characters']
-    
-    def __get_champion(self, champion_id):
-        #if champion_id != 'Characters/TFT10_Jax':
+    def __get_champion(self, champion_id, champion_data):
+        #if champion_id != 'Characters/TFT10_Lucian':
         #    return
 
-        print(champion_id)
+        #print(champion_id)
         
-        champion_data_url = f'https://raw.communitydragon.org/latest/game/{champion_id.lower()}.cdtb.bin.json'
-        champion_data_response = requests.get(champion_data_url)
-        champion_data = champion_data_response.json()
-
+        champion_id_trimmed = champion_id.split("/")[1].lower()
         root_record = champion_data[f'{champion_id}/CharacterRecords/Root']
 
         if not root_record.get("spellNames"):
@@ -66,8 +58,16 @@ class TFTUnitsProcessor:
         spell_desc_main_raw = spell_record["mSpell"]["mClientData"]["mTooltipData"]["mLocKeys"]["keyTooltip"]
         spell_desc_main = self.__get_string(spell_desc_main_raw)
 
+        if '@TFTUnitProperty.:TFT10_Headliner_TRA@' in spell_desc_main or '@TFTUnitProperty.unit:TFT10_Headliner_TRA@' in spell_desc_main:
+            headliner_id = f'tft10_headliner_{champion_id_trimmed}'
+            spell_desc_main = str_ireplace('@TFTUnitProperty.:TFT10_Headliner_TRA@', self.__get_string(headliner_id), spell_desc_main)
+            spell_desc_main = str_ireplace('@TFTUnitProperty.unit:TFT10_Headliner_TRA@', self.__get_string(headliner_id), spell_desc_main)
+
+        if '@TFTUnitProperty.' in spell_desc_main:
+            spell_desc_main = str_ireplace('@TFTUnitProperty.unit:', '@', spell_desc_main)
+            spell_desc_main = str_ireplace('@TFTUnitProperty.:', '@', spell_desc_main)
+
         spell_desc_scaling_raw = spell_record["mSpell"]["mClientData"]["mTooltipData"]["mLists"]["LevelUp"]
-        spell_desc_scaling = self.__process_spell_scaling(spell_desc_scaling_raw)
 
         var_values = {}
 
@@ -92,23 +92,32 @@ class TFTUnitsProcessor:
         spell_calculations_raw = spell_record["mSpell"].get("mSpellCalculations")
         spell_calculations = {}
 
+        for key, value in var_values.items():
+            spell_calculations[key.lower()] = self.__process_value_array([value[i] for i in range(1, 4)])
+
+        spell_calculations.update(self.unit_properties)
+
         if spell_calculations_raw:
             for spell_calculations_key, spell_calculations_value in spell_calculations_raw.items():
-                spell_calculations[spell_calculations_key] = []
+                spell_calculations[spell_calculations_key.lower()] = []
                 for i in range(1, 4):
                     current_var_values = {key: value[i] for key, value in var_values.items()}
                     current_champion_stats = {key: value[i] for key, value in champion_stats.items()}
                     bin_definitions = BinDefinitions(self.strings_raw, current_var_values, spell_calculations_raw, current_champion_stats, True)
                     calculated_value = bin_definitions.parse_values(spell_calculations_value)
-                    spell_calculations[spell_calculations_key].append(calculated_value if not isinstance(calculated_value, (int, float)) and '%' in calculated_value else float(calculated_value))
-                spell_calculations[spell_calculations_key] = self.__process_value_array(spell_calculations[spell_calculations_key])
+                    spell_calculations[spell_calculations_key.lower()].append(calculated_value if not isinstance(calculated_value, (int, float)) and '%' in calculated_value else float(calculated_value))
+                spell_calculations[spell_calculations_key.lower()] = self.__process_value_array(spell_calculations[spell_calculations_key.lower()])
+                spell_calculations[hash_fnv1a(spell_calculations_key.lower())] = spell_calculations[spell_calculations_key.lower()]
+
+        spell_desc_scaling = self.__process_spell_scaling(spell_desc_scaling_raw, var_values)
+        self.strings[champion_id_trimmed] = self.__generate_champion_tooltip(f"{spell_desc_main}{spell_desc_scaling}", spell_calculations)
         
         #print(champion_stats)
-        print(spell_calculations)
+        #print(spell_calculations)
 
         #print(champion_stats)
         #print(data_values)
-        #print(spell_desc_main)
+        #print(self.strings[champion_id_trimmed])
         #print(spell_desc_scaling_raw)
 
         #with open(r"C:/Users/Alex/Desktop/tft-test/" + id.lower() + '.cdtb.bin.json', 'w') as file:
@@ -116,13 +125,77 @@ class TFTUnitsProcessor:
 
         #print(champion_data.json())
     
-    def __process_spell_scaling(self, spell_desc_main_raw):
-        pass
+    def __process_spell_scaling(self, spell_desc_main_raw, var_values):
+        scaling_elements = spell_desc_main_raw.get("elements")
+        if not scaling_elements:
+            return ""
+        
+        return_array = []
+
+        for element in scaling_elements:
+            style = element.get("Style")
+            current_string = '<scalingcontainer><scalingblock>' + self.__get_string(element["nameOverride"]) + '</scalingblock>'
+
+            if not style:
+                values = [str(round_number(var_values[element["type"].lower()][i], 2)) for i in range(1, 4)]
+                current_string += f'<scalingblock>[{'/'.join(values)}]</scalingblock>'
+            elif style == 1:
+                multiplier = element.get("multiplier", 1)
+                values = [str(round_number(var_values[element["type"].lower()][i] * multiplier, 2)) for i in range(1, 4)]
+                current_string += f'<scalingblock>[{'/'.join(values)}%]</scalingblock>'
+
+            return_array.append(current_string + '</scalingcontainer>')
+
+        return '<hr>' + ''.join(return_array)
 
     def __process_value_array(self, arr):
-        arr = [round_number(x, 0, True) for x in arr]
+        arr = [round_number(x, 5, True) for x in arr]
 
         if all(x == arr[0] for x in arr):
+            try:
+                arr[0] = float(arr[0])
+            except:
+                pass
+
             return arr[0]
         else:
             return '/'.join(arr)
+        
+    def __generate_champion_tooltip(self, spell_desc_main, spell_calculations):
+        def replace_callback(matches):
+            replacement = '@' + matches.group(2) + '@'
+
+            var_name = matches.group(2).lower().split('*')[0].split('.')[0]
+            var_mod = matches.group(2).split('*')[1] if '*' in matches.group(2) else '1'
+
+            if var_mod == '100%':
+                var_mod = 100
+
+            try:
+                var_mod = float(var_mod)
+            except:
+                var_mod = 1
+
+            if var_name in spell_calculations:
+                decimal_places = 2
+
+                if 'damage' in var_name:
+                    decimal_places = 0
+
+                if isinstance(spell_calculations[var_name], (int, float)):
+                    replacement = round_number(float(spell_calculations[var_name]) * var_mod, decimal_places, True)
+                else:
+                    if '/' in spell_calculations[var_name] and not '%' in spell_calculations[var_name]:
+                        replacement = '/'.join([round_number(float(x) * var_mod, decimal_places, True) for x in spell_calculations[var_name].split('/')])
+                    elif '/' in spell_calculations[var_name] and '%' in spell_calculations[var_name]:
+                        replacement = re.sub('%/', '/', spell_calculations[var_name])
+                    else:
+                        replacement = spell_calculations[var_name]
+
+            if var_name == 'value' and var_name not in spell_calculations:
+                replacement = '0'
+
+            #print(matches.group(2), spell_calculations.get(var_name), replacement)
+            return replacement
+        
+        return re.sub(r'(@)(.*?)(@)', replace_callback, spell_desc_main, flags=re.IGNORECASE)
