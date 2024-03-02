@@ -2,10 +2,12 @@ from utils import *
 from stats import *
 
 class BinDefinitions:
-    def __init__(self, strings, var_values, all_calculations):
+    def __init__(self, strings, var_values, all_calculations, champion_stats = {}, needs_calculation = False):
         self.strings_raw = strings
         self.var_values = var_values
         self.all_calculations = all_calculations
+        self.champion_stats = champion_stats
+        self.needs_calculation = needs_calculation
 
     def __get_string(self, string):
         return get_string(self.strings_raw, string)
@@ -27,19 +29,17 @@ class BinDefinitions:
             'ProductOfSubPartsCalculationPart',
             'SumOfSubPartsCalculationPart',
             'GameCalculationModified',
-            '{f3cbe7b2}'
+            'StatByNamedDataValueCalculationPart',
+            'StatByCoefficientCalculationPart',
+            'StatBySubPartCalculationPart',
+            '{f3cbe7b2}',
+            '{803dae4c}',
+            'SubPartScaledProportionalToStat'
             ]:
             return getattr(self, f'_BinDefinitions__{block_type.strip("{}")}')(current_block, key)
         elif block_type in [
-            'StatByNamedDataValueCalculationPart',
-            'StatByCoefficientCalculationPart',
-            'StatBySubPartCalculationPart'
-            ]:
-            return self.__StatByNamedDataValueCalculationPart(current_block, key)
-        elif block_type in [
             'BuffCounterByCoefficientCalculationPart',
             'BuffCounterByNamedDataValueCalculationPart',
-            '{803dae4c}',
             '{663d5e00}'
             ]:
             return 0
@@ -50,9 +50,15 @@ class BinDefinitions:
         mFormulaParts = {}
 
         for i, value in enumerate(current_block['mFormulaParts']):
-            mFormulaParts[i] = str(round_number(self.parse_values(value, i), 5, True))
+            if self.needs_calculation:
+                mFormulaParts[i] = float(round_number(self.parse_values(value, i), 5, True))
+            else:
+                mFormulaParts[i] = str(round_number(self.parse_values(value, i), 5, True))
 
-        return_value = ' '.join(mFormulaParts.values())
+        if self.needs_calculation:
+            return_value = sum(mFormulaParts.values())
+        else:
+            return_value = ' '.join(mFormulaParts.values())
 
         if 'mMultiplier' in current_block:
             mMultiplier = self.parse_values(current_block['mMultiplier'])
@@ -99,6 +105,9 @@ class BinDefinitions:
         return return_value
     
     def __NamedDataValueCalculationPart(self, current_block, key=0):
+        if self.needs_calculation:
+            return self.var_values[current_block["mDataValue"].lower()]
+        
         formula_part_style_key = "tooltip_statsuidata_formulapartstyle" if key == 0 else "tooltip_statsuidata_formulapartstylebonus"
         return_value = self.__get_string(formula_part_style_key)
 
@@ -126,6 +135,11 @@ class BinDefinitions:
         return self.var_values.get(effect_key, 0)
     
     def __StatByNamedDataValueCalculationPart(self, current_block, key=0):
+        if self.needs_calculation:
+            current_stat = self.champion_stats[current_block.get('mStat', 0)]
+            current_value = self.var_values.get(current_block['mDataValue'].lower(), 0)
+            return current_stat * current_value
+
         formula_part_style_key = "tooltip_statsuidata_formulapartstylepercent" if key == 0 else "tooltip_statsuidata_formulapartstylebonuspercent"
         return_value = self.__get_string(formula_part_style_key)
 
@@ -137,14 +151,86 @@ class BinDefinitions:
         if stat_formula:
             icon_modifier = self.__get_string(f'tooltip_statsuidata_{stat_types[stat_formula]}iconmodifier')
 
-        value = 0
+        value = self.var_values.get(current_block['mDataValue'].lower())
 
-        if current_block['__type'] == 'StatByNamedDataValueCalculationPart':
-            value = self.var_values.get(current_block['mDataValue'].lower())
-        elif current_block['__type'] == 'StatByCoefficientCalculationPart':
-            value = current_block['mCoefficient']
-        elif current_block['__type'] == 'StatBySubPartCalculationPart':
-            value = self.parse_values(current_block['mSubpart'], key)
+        try:
+            value = float(value) * 100
+        except:
+            pass
+
+        placeholders = {
+            '@IconModifier@': icon_modifier,
+            '@OpeningTag@': stats[current_stat]['openingTag'],
+            '@Icon@': stats[current_stat]['icon'],
+            '@ClosingTag@': stats[current_stat]['closingTag'],
+            '@Value@': round_number(value, 5)
+        }
+
+        for placeholder, replacement in placeholders.items():
+            return_value = str_ireplace(placeholder, replacement, return_value)
+
+        return return_value
+    
+    def __StatByCoefficientCalculationPart(self, current_block, key=0):
+        if self.needs_calculation:
+            current_stat = self.champion_stats[current_block.get('mStat', 0)]
+            current_coef = current_block['mCoefficient']
+            stat_formula = current_block.get('mStatFormula', 1)
+
+            if stat_formula == 2:
+                return 0
+            
+            return current_stat * current_coef
+        
+        formula_part_style_key = "tooltip_statsuidata_formulapartstylepercent" if key == 0 else "tooltip_statsuidata_formulapartstylebonuspercent"
+        return_value = self.__get_string(formula_part_style_key)
+
+        current_stat = current_block.get('mStat', 0)
+
+        icon_modifier = ''
+        stat_formula = current_block.get('mStatFormula')
+
+        if stat_formula:
+            icon_modifier = self.__get_string(f'tooltip_statsuidata_{stat_types[stat_formula]}iconmodifier')
+
+        value = current_block['mCoefficient']
+
+        try:
+            value = float(value) * 100
+        except:
+            pass
+
+        placeholders = {
+            '@IconModifier@': icon_modifier,
+            '@OpeningTag@': stats[current_stat]['openingTag'],
+            '@Icon@': stats[current_stat]['icon'],
+            '@ClosingTag@': stats[current_stat]['closingTag'],
+            '@Value@': round_number(value, 5)
+        }
+
+        for placeholder, replacement in placeholders.items():
+            return_value = str_ireplace(placeholder, replacement, return_value)
+
+        return return_value
+    
+    def __StatBySubPartCalculationPart(self, current_block, key=0):
+        if self.needs_calculation:
+            current_stat = self.champion_stats[current_block.get('mStat', 0)]
+            current_value = self.parse_values(current_block['mSubpart'])
+            return current_stat * current_value
+        
+        formula_part_style_key = "tooltip_statsuidata_formulapartstylepercent" if key == 0 else "tooltip_statsuidata_formulapartstylebonuspercent"
+        return_value = self.__get_string(formula_part_style_key)
+
+        current_stat = current_block.get('mStat', 0)
+
+        icon_modifier = ''
+        stat_formula = current_block.get('mStatFormula')
+
+        if stat_formula:
+            icon_modifier = self.__get_string(f'tooltip_statsuidata_{stat_types[stat_formula]}iconmodifier')
+
+        value = self.parse_values(current_block['mSubpart'], key)
 
         try:
             value = float(value) * 100
@@ -248,6 +334,11 @@ class BinDefinitions:
         for subpart in current_block['mSubparts']:
             parsed_value = self.parse_values(subpart)
 
+            try:
+                parsed_value = float(parsed_value)
+            except:
+                pass
+
             if isinstance(parsed_value, (int, float)):
                 total_sum += parsed_value
             else:
@@ -274,3 +365,51 @@ class BinDefinitions:
     
     def __f3cbe7b2(self, current_block, key=0):
         return self.parse_values(self.all_calculations[current_block['{88536426}']])
+    
+    def __803dae4c(self, current_block, key=0):
+        if self.needs_calculation:
+            floor = current_block.get('mFloor')
+            ceiling = current_block.get('mCeiling')
+            subparts = current_block.get('mSubparts')
+
+            if subparts and len(subparts) > 0:
+                calculated_subparts = self.parse_values(subparts[0])
+
+                if floor and calculated_subparts < floor:
+                    return floor
+                
+                if ceiling and calculated_subparts > ceiling:
+                    return ceiling
+                
+                return calculated_subparts
+            
+            return 0
+        
+        return 0
+    
+    def __SubPartScaledProportionalToStat(self, current_block, key=0):
+        if self.needs_calculation:
+            current_stat = self.champion_stats[current_block.get('mStat', 0)]
+            current_ratio = current_block.get('mRatio', 1)
+            current_value = self.parse_values(current_block['mSubpart'])
+            return current_stat * current_ratio * current_value
+        
+        formula_part_style_key = "tooltip_statsuidata_formulapartstylepercent" if key == 0 else "tooltip_statsuidata_formulapartstylebonuspercent"
+        return_value = self.__get_string(formula_part_style_key)
+        
+        current_subpart = self.parse_values(current_block['mSubpart'])
+        current_stat = round_number(current_block.get('mStat', 0), 5)
+        current_ratio = round_number(current_block.get('mRatio', 1) * 100, 5)
+
+        placeholders = {
+            '@IconModifier@': '',
+            '@OpeningTag@': stats[current_stat]['openingTag'],
+            '@Icon@': stats[current_stat]['icon'],
+            '@ClosingTag@': stats[current_stat]['closingTag'],
+            '@Value@': round_number(current_subpart * current_ratio, 5)
+        }
+
+        for placeholder, replacement in placeholders.items():
+            return_value = str_ireplace(placeholder, replacement, return_value)
+
+        return return_value

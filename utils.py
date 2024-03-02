@@ -20,6 +20,38 @@ def hash_fnv1a(key):
 
     return '{' + f"{hash_value:08x}" + '}'
 
+def cd_get_languages(version):
+    url = f"https://raw.communitydragon.org/json/{version}/game/"
+    response = requests.get(url)
+
+    if response.status_code == 200:
+        langs_raw = response.json()
+        languages = [file.get('name') for file in langs_raw if file.get('type') == 'directory' and re.match(r'^[a-z]{2}_[a-z]{2}$', file.get('name'))]
+        if len(languages) != 0:
+            if 'ar_ae' in languages:
+                languages.remove('ar_ae')
+            return languages
+
+    url2 = f"https://raw.communitydragon.org/json/{version}/game/data/menu/"
+    response2 = requests.get(url2)
+
+    if response2.status_code == 200:
+        langs_raw = response2.json()
+        languages = [re.search(r'(?<=_)([a-z]{2}_[a-z]{2})(?=\.(stringtable|txt)\.json)', file.get('name'), re.IGNORECASE).group(0) for file in langs_raw if file.get('name').endswith('.json')]
+        if 'ar_ae' in languages:
+            languages.remove('ar_ae')
+        return languages
+    
+def cd_get_versions():
+    url = "https://raw.communitydragon.org/json/"
+    response = requests.get(url)
+
+    if response.status_code == 200:
+        versions_raw = response.json()
+        versions = [file for file in versions_raw if re.match(r'^\d+\.\d+$', file.get('name')) and float(file.get('name').split(".")[0]) > 10]
+        versions = sorted(versions, key = lambda version: float(re.sub(r'\.(\d)$', r'.0\1', version['name'])))
+        return versions
+
 def get_last_modified(file_url):
     try:
         response = requests.head(file_url)
@@ -39,22 +71,7 @@ def get_final_url(version, urls):
             pass
     return None
 
-def get_items_file(version):
-    urls = ["items.cdtb.bin.json", "global/items/items.bin.json"]
-    final_url = get_final_url(version, urls)
-
-    if not final_url:
-        print(f"Items file not found: {version}.")
-        return
-    
-    try:
-        items_response = requests.get(final_url)
-        return items_response.json()
-    except requests.RequestException as e:
-        print(f"An error occurred (item file): {e}")
-        return
-
-def get_strings_file(version, lang):
+def cd_get_strings_file(version, lang):
     urls = [f"{lang}/data/menu/en_us/main.stringtable.json", f"data/menu/main_{lang}.stringtable.json", f"data/menu/fontconfig_{lang}.txt.json"]
     final_url = get_final_url(version, urls)
 
