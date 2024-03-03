@@ -39,7 +39,7 @@ class TFTUnitsProcessor:
         return get_string(self.strings_raw, string)
     
     def __get_champion(self, champion_id, champion_data):
-        #if champion_id != 'Characters/TFT10_Lucian':
+        #if champion_id != 'Characters/TFT10_Ezreal':
         #    return
 
         #print(champion_id)
@@ -110,7 +110,7 @@ class TFTUnitsProcessor:
                 spell_calculations[hash_fnv1a(spell_calculations_key.lower())] = spell_calculations[spell_calculations_key.lower()]
 
         spell_desc_scaling = self.__process_spell_scaling(spell_desc_scaling_raw, var_values)
-        self.strings[champion_id_trimmed] = self.__generate_champion_tooltip(f"{spell_desc_main}{spell_desc_scaling}", spell_calculations)
+        self.strings[champion_id_trimmed] = self.__generate_champion_tooltip(f"{spell_desc_main}{spell_desc_scaling}", spell_calculations, var_values)
         
         #print(champion_stats)
         #print(spell_calculations)
@@ -161,7 +161,7 @@ class TFTUnitsProcessor:
         else:
             return '/'.join(arr)
         
-    def __generate_champion_tooltip(self, spell_desc_main, spell_calculations):
+    def __generate_champion_tooltip(self, spell_desc_main, spell_calculations, var_values):
         def replace_callback(matches):
             replacement = '@' + matches.group(2) + '@'
 
@@ -177,10 +177,10 @@ class TFTUnitsProcessor:
                 var_mod = 1
 
             if var_name in spell_calculations:
-                decimal_places = 2
+                decimal_places = 0
 
-                if 'damage' in var_name:
-                    decimal_places = 0
+                if var_name in var_values:
+                    decimal_places = 2
 
                 if isinstance(spell_calculations[var_name], (int, float)):
                     replacement = round_number(float(spell_calculations[var_name]) * var_mod, decimal_places, True)

@@ -108,9 +108,14 @@ def get_string(strings_array, id):
 
 def round_number(num, decimal, to_string=False):
     if isinstance(num, (int, float)):
-        temp_result = round(num, decimal)
+        if decimal == 0:
+            temp_result = int(num + 0.5)
+        else:
+            temp_result = round(num, decimal)
+        
         temp_result = int(temp_result) if isinstance(temp_result, float) and temp_result.is_integer() else temp_result
 
+        
         if to_string is True:
             return str(temp_result)
         else:
