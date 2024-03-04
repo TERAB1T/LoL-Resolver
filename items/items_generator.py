@@ -23,7 +23,7 @@ def get_items_file(version):
         return
     
 def generate_version(inputVersion, output_dir):
-    print(f"Generating version {inputVersion}...")
+    print(f"LoL Items: generating version {inputVersion}...")
     items = get_items_file(inputVersion)
     languages = cd_get_languages(inputVersion)
 
@@ -134,5 +134,5 @@ def generate_items(input_version, output_dir, cache = False, atlas = False):
             if atlas:
                 processor = AtlasProcessor()
                 processor.process_icons(input_version, output_dir)
-        elif redis_cache[input_version]["status"] == patch_status :
+        elif redis_cache[input_version]["status"] == patch_status:
             print(f"Version {input_version} is up to date. Skipping...")
