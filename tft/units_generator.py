@@ -29,13 +29,13 @@ def get_tftmap_file(version):
         print(f"An error occurred (TFT data file): {e}")
         return
     
-def generate_version(inputVersion, output_dir):
-    print(f"TFT Units: generating version {inputVersion}...")
-    tft_data = get_tftmap_file(inputVersion)
+def generate_version(input_version, output_dir):
+    print(f"TFT Units: generating version {input_version}...")
+    tft_data = get_tftmap_file(input_version)
     unit_properties = filter_unit_properties(tft_data)
 
-    champion_list_ids = get_champion_list(tft_data)
-    champion_list = download_all_champions(champion_list_ids)
+    unit_ids = get_unit_ids(tft_data)
+    unit_list = download_all_units(input_version, unit_ids)
 
     ###
     #with open(r"C:\Users\Alex\Desktop\tft-test\main.stringtable.json", 'r', encoding='utf-8') as file:
@@ -44,27 +44,31 @@ def generate_version(inputVersion, output_dir):
     #return
     ###
 
-    languages = cd_get_languages(inputVersion) # ["en_us", "ru_ru"]
+    languages = cd_get_languages(input_version) # ["en_us", "ru_ru"]
 
     if not tft_data:
         return
 
     for lang in languages:
         print(f"  {lang}")
-        strings = cd_get_strings_file(inputVersion, lang)
-        processor = TFTUnitsProcessor(inputVersion, output_dir, lang, tft_data, champion_list, unit_properties, strings)
+        strings = cd_get_strings_file(input_version, lang)
+        processor = TFTUnitsProcessor(input_version, output_dir, lang, tft_data, unit_list, unit_properties, strings)
 
-def get_champion_list(tft_data):
+def get_unit_ids(tft_data):
     current_set_id = tft_data["{9fcfd7a6}"]["{0d43af66}"]
-    champion_list_id = tft_data[current_set_id]["tftCharacterLists"][0]
-    return tft_data[champion_list_id]['characters']
+    if tft_data[current_set_id].get("tftCharacterLists"):
+        unit_list_id = tft_data[current_set_id]["tftCharacterLists"][0]
+        return tft_data[unit_list_id]['characters']
+    else:
+        lists = [tft_data[item]["characters"] for item in tft_data[current_set_id]["characterLists"]]
+        return max(lists, key=len)
 
-def download_all_champions(ids):
+def download_all_units(input_version, ids):
     with ThreadPoolExecutor() as executor:
-        return dict(executor.map(download_champion, ids))
+        return dict(executor.map(download_unit, [input_version] * len(ids), ids))
 
-def download_champion(id):
-    response = requests.get(f'https://raw.communitydragon.org/latest/game/{id.lower()}.cdtb.bin.json')
+def download_unit(input_version, id):
+    response = requests.get(f'https://raw.communitydragon.org/{input_version}/game/{id.lower()}.cdtb.bin.json')
     return (id, response.json())
 
 def filter_unit_properties(tft_data):

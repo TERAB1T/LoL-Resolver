@@ -131,3 +131,11 @@ def not_none(value, default_value):
 
 def str_ireplace(before, after, string):
     return re.sub(str(before), str(after), str(string), flags=re.IGNORECASE)
+
+def normalize_game_version(version):
+    str_version = str(version)
+
+    if not re.match(r'^\d+\.\d+$', str_version):
+        return str_version
+
+    return round_number(float(re.sub(r'\.(\d)$', r'.0\1', str_version)), 2)

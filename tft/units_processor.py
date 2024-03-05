@@ -6,27 +6,30 @@ from stats import *
 from bin_definitions import BinDefinitions
 
 class TFTUnitsProcessor:
-    def __init__(self, version, output_dir, lang, tft_data, champion_list, unit_properties, strings):
+    def __init__(self, version, output_dir, lang, tft_data, unit_list, unit_properties, strings):
+        self.version = version
         self.lang = lang
-        self.tft_data = tft_data
-        self.unit_properties = unit_properties
+        self.strings_raw = strings
+
         self.hp_coef = [0.7, 1, 1.8, 3.24, 5.832]
         self.ad_coef = [0.5, 1, 1.5, 2.25, 3.375]
-        self.strings_raw = strings
-        self.strings = {}
-        self.champion_list = champion_list
+        if re.match(r'^\d+\.\d+$', str(version)) and normalize_game_version(version) < 12.14:
+            self.ad_coef = self.hp_coef
 
+        self.output_dict = {}
         self.output_dir = os.path.join(output_dir, f"tft-units/{version}")
-
         self.output_filepath = f"{self.output_dir}/{lang}.json"
-        self.var_values = {}
 
-        for key, value in self.champion_list.items():
-            self.__get_champion(key, value)
+        self.tft_data = tft_data
+        self.unit_list = unit_list
+        self.unit_properties = unit_properties
+
+        for key, value in self.unit_list.items():
+            self.__get_unit(key, value)
 
         success_return = {
             'status': 1,
-            'data': self.strings
+            'data': self.output_dict
         }
         output_json = json.dumps(success_return, ensure_ascii=False, separators=(',', ':'))
 
@@ -38,19 +41,19 @@ class TFTUnitsProcessor:
     def __get_string(self, string):
         return get_string(self.strings_raw, string)
     
-    def __get_champion(self, champion_id, champion_data):
-        #if champion_id != 'Characters/TFT10_Ezreal':
+    def __get_unit(self, unit_id, unit_data):
+        #if unit_id != 'Characters/TFT10_Ahri':
         #    return
 
-        #print(champion_id)
+        #print(unit_id)
         
-        champion_id_trimmed = champion_id.split("/")[1].lower()
-        root_record = champion_data[f'{champion_id}/CharacterRecords/Root']
+        unit_id_trimmed = unit_id.split("/")[1].lower()
+        root_record = unit_data[f'{unit_id}/CharacterRecords/Root']
 
         if not root_record.get("spellNames"):
             return
 
-        spell_record = champion_data.get(f'{champion_id}/Spells/{root_record["spellNames"][0]}')
+        spell_record = unit_data.get(f'{unit_id}/Spells/{root_record["spellNames"][0]}')
 
         if not spell_record or not spell_record.get("mSpell") or not spell_record["mSpell"]["mClientData"]["mTooltipData"].get("mLocKeys") or not spell_record["mSpell"].get("mDataValues"):
             return
@@ -58,8 +61,8 @@ class TFTUnitsProcessor:
         spell_desc_main_raw = spell_record["mSpell"]["mClientData"]["mTooltipData"]["mLocKeys"]["keyTooltip"]
         spell_desc_main = self.__get_string(spell_desc_main_raw)
 
-        if '@TFTUnitProperty.:TFT10_Headliner_TRA@' in spell_desc_main or '@TFTUnitProperty.unit:TFT10_Headliner_TRA@' in spell_desc_main:
-            headliner_id = f'tft10_headliner_{champion_id_trimmed}'
+        if 'TFT10_Headliner_TRA@' in spell_desc_main:
+            headliner_id = f'tft10_headliner_{unit_id_trimmed}'
             spell_desc_main = str_ireplace('@TFTUnitProperty.:TFT10_Headliner_TRA@', self.__get_string(headliner_id), spell_desc_main)
             spell_desc_main = str_ireplace('@TFTUnitProperty.unit:TFT10_Headliner_TRA@', self.__get_string(headliner_id), spell_desc_main)
 
@@ -110,7 +113,7 @@ class TFTUnitsProcessor:
                 spell_calculations[hash_fnv1a(spell_calculations_key.lower())] = spell_calculations[spell_calculations_key.lower()]
 
         spell_desc_scaling = self.__process_spell_scaling(spell_desc_scaling_raw, var_values)
-        self.strings[champion_id_trimmed] = self.__generate_champion_tooltip(f"{spell_desc_main}{spell_desc_scaling}", spell_calculations, var_values)
+        self.output_dict[unit_id_trimmed] = self.__generate_champion_tooltip(f"{spell_desc_main}{spell_desc_scaling}", spell_calculations, var_values)
         
         #print(champion_stats)
         #print(spell_calculations)
@@ -175,6 +178,9 @@ class TFTUnitsProcessor:
                 var_mod = float(var_mod)
             except:
                 var_mod = 1
+
+            if var_name not in spell_calculations and hash_fnv1a(var_name) in spell_calculations:
+                var_name = hash_fnv1a(var_name)
 
             if var_name in spell_calculations:
                 decimal_places = 0
