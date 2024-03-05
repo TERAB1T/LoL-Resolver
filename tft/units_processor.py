@@ -42,12 +42,16 @@ class TFTUnitsProcessor:
         return get_string(self.strings_raw, string)
     
     def __get_unit(self, unit_id, unit_data):
-        #if unit_id != 'Characters/TFT10_Ahri':
+        #if unit_id != 'Characters/TFT4_Morgana':
         #    return
 
         #print(unit_id)
         
         unit_id_trimmed = unit_id.split("/")[1].lower()
+
+        if not unit_data.get(f'{unit_id}/CharacterRecords/Root'):
+            return
+
         root_record = unit_data[f'{unit_id}/CharacterRecords/Root']
 
         if not root_record.get("spellNames"):
@@ -55,7 +59,11 @@ class TFTUnitsProcessor:
 
         spell_record = unit_data.get(f'{unit_id}/Spells/{root_record["spellNames"][0]}')
 
-        if not spell_record or not spell_record.get("mSpell") or not spell_record["mSpell"]["mClientData"]["mTooltipData"].get("mLocKeys") or not spell_record["mSpell"].get("mDataValues"):
+        if not spell_record or not spell_record.get("mSpell") or\
+           not spell_record["mSpell"].get("mClientData") or\
+           not spell_record["mSpell"]["mClientData"].get("mTooltipData") or\
+           not spell_record["mSpell"]["mClientData"]["mTooltipData"].get("mLocKeys") or\
+           not spell_record["mSpell"].get("mDataValues"):
             return
 
         spell_desc_main_raw = spell_record["mSpell"]["mClientData"]["mTooltipData"]["mLocKeys"]["keyTooltip"]
@@ -71,6 +79,7 @@ class TFTUnitsProcessor:
             spell_desc_main = str_ireplace('@TFTUnitProperty.:', '@', spell_desc_main)
 
         spell_desc_scaling_raw = spell_record["mSpell"]["mClientData"]["mTooltipData"]["mLists"]["LevelUp"]
+        scaling_levels = 1 + spell_desc_scaling_raw.get("levelCount", 3)
 
         var_values = {}
 
@@ -90,20 +99,23 @@ class TFTUnitsProcessor:
             8:  [round(root_record.get('critDamageMultiplier', 0), 5)] * 5, # crit damage
             11: [round(root_record.get('baseHP', 0) * self.hp_coef[i], 5) for i in range(5)], # max health
             28: [round(root_record.get('attackRange', 0), 5)] * 5, # attack range
+            33: [1] * 5, # dodge chance
         }
 
         spell_calculations_raw = spell_record["mSpell"].get("mSpellCalculations")
+        if not spell_calculations_raw:
+            spell_calculations_raw = spell_record["mSpell"].get(hash_fnv1a("mSpellCalculations"))
         spell_calculations = {}
 
         for key, value in var_values.items():
-            spell_calculations[key.lower()] = self.__process_value_array([value[i] for i in range(1, 4)])
+            spell_calculations[key.lower()] = self.__process_value_array([value[i] for i in range(1, scaling_levels)])
 
         spell_calculations.update(self.unit_properties)
 
         if spell_calculations_raw:
             for spell_calculations_key, spell_calculations_value in spell_calculations_raw.items():
                 spell_calculations[spell_calculations_key.lower()] = []
-                for i in range(1, 4):
+                for i in range(1, scaling_levels):
                     current_var_values = {key: value[i] for key, value in var_values.items()}
                     current_champion_stats = {key: value[i] for key, value in champion_stats.items()}
                     bin_definitions = BinDefinitions(self.strings_raw, current_var_values, spell_calculations_raw, current_champion_stats, True)
@@ -118,7 +130,7 @@ class TFTUnitsProcessor:
         #print(champion_stats)
         #print(spell_calculations)
 
-        #print(champion_stats)
+        #print(self.output_dict[unit_id_trimmed])
         #print(data_values)
         #print(self.strings[champion_id_trimmed])
         #print(spell_desc_scaling_raw)
@@ -128,8 +140,9 @@ class TFTUnitsProcessor:
 
         #print(champion_data.json())
     
-    def __process_spell_scaling(self, spell_desc_main_raw, var_values):
-        scaling_elements = spell_desc_main_raw.get("elements")
+    def __process_spell_scaling(self, spell_desc_scaling_raw, var_values):
+        scaling_elements = spell_desc_scaling_raw.get("elements")
+        scaling_levels = 1 + spell_desc_scaling_raw.get("levelCount", 3)
         if not scaling_elements:
             return ""
         
@@ -140,11 +153,11 @@ class TFTUnitsProcessor:
             current_string = '<scalingcontainer><scalingblock>' + self.__get_string(element["nameOverride"]) + '</scalingblock>'
 
             if not style:
-                values = [str(round_number(var_values[element["type"].lower()][i], 2)) for i in range(1, 4)]
+                values = [str(round_number(var_values[element["type"].lower()][i], 2)) for i in range(1, scaling_levels)]
                 current_string += f'<scalingblock>[{"/".join(values)}]</scalingblock>'
             elif style == 1:
                 multiplier = element.get("multiplier", 1)
-                values = [str(round_number(var_values[element["type"].lower()][i] * multiplier, 2)) for i in range(1, 4)]
+                values = [str(round_number(var_values[element["type"].lower()][i] * multiplier, 2)) for i in range(1, scaling_levels)]
                 current_string += f'<scalingblock>[{"/".join(values)}%]</scalingblock>'
 
             return_array.append(current_string + '</scalingcontainer>')

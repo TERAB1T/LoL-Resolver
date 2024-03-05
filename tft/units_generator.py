@@ -55,21 +55,36 @@ def generate_version(input_version, output_dir):
         processor = TFTUnitsProcessor(input_version, output_dir, lang, tft_data, unit_list, unit_properties, strings)
 
 def get_unit_ids(tft_data):
-    current_set_id = tft_data["{9fcfd7a6}"]["{0d43af66}"]
+    current_set_id = tft_data["{9fcfd7a6}"].get("{0d43af66}")
+    if not current_set_id:
+        current_set_id = tft_data["{9fcfd7a6}"].get("{2caa347b}")
+    unit_ids = []
+
     if tft_data[current_set_id].get("tftCharacterLists"):
         unit_list_id = tft_data[current_set_id]["tftCharacterLists"][0]
-        return tft_data[unit_list_id]['characters']
+        unit_ids = tft_data[unit_list_id]['characters']
     else:
         lists = [tft_data[item]["characters"] for item in tft_data[current_set_id]["characterLists"]]
-        return max(lists, key=len)
+        unit_ids = max(lists, key=len)
 
-def download_all_units(input_version, ids):
+    for i in range(len(unit_ids)):
+        if re.match(r'^\{.*?\}$', unit_ids[i]):
+            unit_ids[i] = f"Characters/{tft_data[unit_ids[i]]['name']}"
+
+    return unit_ids
+
+def download_all_units(input_version, unit_ids):
     with ThreadPoolExecutor() as executor:
-        return dict(executor.map(download_unit, [input_version] * len(ids), ids))
+        return dict(executor.map(download_unit, [input_version] * len(unit_ids), unit_ids))
 
-def download_unit(input_version, id):
-    response = requests.get(f'https://raw.communitydragon.org/{input_version}/game/{id.lower()}.cdtb.bin.json')
-    return (id, response.json())
+def download_unit(input_version, unit_id):
+    unit_url = f"https://raw.communitydragon.org/{input_version}/game/{unit_id.lower()}.cdtb.bin.json"
+
+    if re.match(r'^\d+\.\d+$', str(input_version)) and normalize_game_version(input_version) < 14.2:
+        unit_url = f"https://raw.communitydragon.org/{input_version}/game/data/{unit_id.lower()}/{unit_id.split("/")[1].lower()}.bin.json"
+
+    response = requests.get(unit_url)
+    return (unit_id, response.json())
 
 def filter_unit_properties(tft_data):
     return_dict = {}
