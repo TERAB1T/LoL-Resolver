@@ -72,10 +72,6 @@ class TFTUnitsProcessor:
             spell_desc_main = str_ireplace('@TFTUnitProperty.:TFT10_Headliner_TRA@', self.__get_string(headliner_id), spell_desc_main)
             spell_desc_main = str_ireplace('@TFTUnitProperty.unit:TFT10_Headliner_TRA@', self.__get_string(headliner_id), spell_desc_main)
 
-        if '@TFTUnitProperty.' in spell_desc_main:
-            spell_desc_main = str_ireplace('@TFTUnitProperty.unit:', '@', spell_desc_main)
-            spell_desc_main = str_ireplace('@TFTUnitProperty.:', '@', spell_desc_main)
-
         spell_desc_scaling_raw = spell_record["mSpell"]["mClientData"]["mTooltipData"]["mLists"]["LevelUp"]
         scaling_levels = 1 + spell_desc_scaling_raw.get("levelCount", 3)
 
@@ -123,7 +119,7 @@ class TFTUnitsProcessor:
                 spell_calculations[hash_fnv1a(spell_calculations_key.lower())] = spell_calculations[spell_calculations_key.lower()]
 
         spell_desc_scaling = self.__process_spell_scaling(spell_desc_scaling_raw, var_values)
-        self.output_dict[unit_id_trimmed] = self.__generate_champion_tooltip(f"{spell_desc_main}{spell_desc_scaling}", spell_calculations, var_values)
+        self.output_dict[unit_id_trimmed] = self.__generate_unit_tooltip(f"{spell_desc_main}{spell_desc_scaling}", spell_calculations, var_values)
         
         #print(champion_stats)
         #print(spell_calculations)
@@ -175,7 +171,7 @@ class TFTUnitsProcessor:
         else:
             return '/'.join(arr)
         
-    def __generate_champion_tooltip(self, spell_desc_main, spell_calculations, var_values):
+    def __generate_unit_tooltip(self, spell_desc_main, spell_calculations, var_values):
         def replace_callback(matches):
             replacement = '@' + matches.group(2) + '@'
 
@@ -215,4 +211,8 @@ class TFTUnitsProcessor:
             #print(matches.group(2), spell_calculations.get(var_name), replacement)
             return replacement
         
+        if '@TFTUnitProperty.' in spell_desc_main:
+            spell_desc_main = str_ireplace('@TFTUnitProperty.unit:', '@', spell_desc_main)
+            spell_desc_main = str_ireplace('@TFTUnitProperty.:', '@', spell_desc_main)
+
         return re.sub(r'(@)(.*?)(@)', replace_callback, spell_desc_main, flags=re.IGNORECASE)
