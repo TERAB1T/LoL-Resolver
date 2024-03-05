@@ -18,7 +18,7 @@ class BinDefinitions:
         
         block_type = current_block['__type']
 
-        if block_type in [
+        known_types = [
             'GameCalculation',
             'ByCharLevelInterpolationCalculationPart',
             'NamedDataValueCalculationPart',
@@ -35,7 +35,9 @@ class BinDefinitions:
             '{f3cbe7b2}',
             '{803dae4c}',
             'SubPartScaledProportionalToStat'
-            ]:
+            ]
+
+        if block_type in known_types:
             return getattr(self, f'_BinDefinitions__{block_type.strip("{}")}')(current_block, key)
         elif block_type in [
             'BuffCounterByCoefficientCalculationPart',
@@ -44,6 +46,10 @@ class BinDefinitions:
             ]:
             return 0
         else:
+            for current_type in known_types:
+                if block_type == hash_fnv1a(current_type):
+                    return getattr(self, f'_BinDefinitions__{current_type.strip("{}")}')(current_block, key)
+
             return current_block
     
     def __GameCalculation(self, current_block, key=0):

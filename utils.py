@@ -104,7 +104,7 @@ def get_string(strings_array, id):
     if "_mod_1" in id:
         return get_string(strings_array, id.replace("_mod_1", "_mod_2"))
 
-    return False
+    return ''
 
 def round_number(num, decimal, to_string=False):
     if isinstance(num, (int, float)):

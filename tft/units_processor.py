@@ -42,22 +42,20 @@ class TFTUnitsProcessor:
         return get_string(self.strings_raw, string)
     
     def __get_unit(self, unit_id, unit_data):
-        #if unit_id != 'Characters/TFT4_Morgana':
+        #if unit_id != 'Characters/TFT8_Blitzcrank':
         #    return
 
         #print(unit_id)
         
         unit_id_trimmed = unit_id.split("/")[1].lower()
 
-        if not unit_data.get(f'{unit_id}/CharacterRecords/Root'):
+        root_record_path = f'{unit_id}/CharacterRecords/Root'
+        root_record = unit_data.get(root_record_path, unit_data.get(hash_fnv1a(root_record_path)))
+        if not root_record or not root_record.get("spellNames"):
             return
 
-        root_record = unit_data[f'{unit_id}/CharacterRecords/Root']
-
-        if not root_record.get("spellNames"):
-            return
-
-        spell_record = unit_data.get(f'{unit_id}/Spells/{root_record["spellNames"][0]}')
+        spell_record_path = f'{unit_id}/Spells/{root_record["spellNames"][0]}'
+        spell_record = unit_data.get(spell_record_path, unit_data.get(hash_fnv1a(spell_record_path)))
 
         if not spell_record or not spell_record.get("mSpell") or\
            not spell_record["mSpell"].get("mClientData") or\
