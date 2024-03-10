@@ -37,14 +37,7 @@ def generate_version(input_version, output_dir):
     unit_ids = get_unit_ids(tft_data)
     unit_list = download_all_units(input_version, unit_ids)
 
-    ###
-    #with open(r"C:\Users\Alex\Desktop\tft-test\main.stringtable.json", 'r', encoding='utf-8') as file:
-    #    strings = json.load(file)["entries"]
-    #    processor = TFTUnitsProcessor(inputVersion, output_dir, "ru_ru", tft_data, strings)
-    #return
-    ###
-
-    languages = cd_get_languages(input_version) # ["en_us", "ru_ru"]
+    languages = cd_get_languages(input_version) # ["ru_ru"]
 
     if not tft_data:
         return
@@ -55,9 +48,8 @@ def generate_version(input_version, output_dir):
         processor = TFTUnitsProcessor(input_version, output_dir, lang, tft_data, unit_list, unit_properties, strings)
 
 def get_unit_ids(tft_data):
-    current_set_id = tft_data["{9fcfd7a6}"].get("{0d43af66}")
-    if not current_set_id:
-        current_set_id = tft_data["{9fcfd7a6}"].get("{2caa347b}")
+    tft_data_main = tft_data["{9fcfd7a6}"]
+    current_set_id = tft_data_main.get("{0d43af66}", tft_data_main.get("{2caa347b}", tft_data_main.get("mDefaultSetData")))
     unit_ids = []
 
     if tft_data[current_set_id].get("tftCharacterLists"):

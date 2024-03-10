@@ -42,7 +42,7 @@ class TFTUnitsProcessor:
         return get_string(self.strings_raw, string)
     
     def __get_unit(self, unit_id, unit_data):
-        #if unit_id != 'Characters/TFT8_Blitzcrank':
+        #if unit_id != 'Characters/TFT8_Ashe':
         #    return
 
         #print(unit_id)
@@ -96,37 +96,54 @@ class TFTUnitsProcessor:
             33: [1] * 5, # dodge chance
         }
 
-        spell_calculations_raw = spell_record["mSpell"].get("mSpellCalculations")
-        if not spell_calculations_raw:
-            spell_calculations_raw = spell_record["mSpell"].get(hash_fnv1a("mSpellCalculations"))
-        spell_calculations = {}
+        spell_calc_raw = spell_record["mSpell"].get("mSpellCalculations")
+        if not spell_calc_raw:
+            spell_calc_raw = spell_record["mSpell"].get(hash_fnv1a("mSpellCalculations"))
+        spell_calc = {}
+        spell_style = {}
 
         for key, value in var_values.items():
-            spell_calculations[key.lower()] = self.__process_value_array([value[i] for i in range(1, scaling_levels)])
+            spell_calc[key.lower()] = self.__process_value_array([value[i] for i in range(1, scaling_levels)])
 
-        spell_calculations.update(self.unit_properties)
+        spell_calc.update(self.unit_properties)
 
-        if spell_calculations_raw:
-            for spell_calculations_key, spell_calculations_value in spell_calculations_raw.items():
-                spell_calculations[spell_calculations_key.lower()] = []
+        if spell_calc_raw:
+            for spell_calc_key, spell_calc_value in spell_calc_raw.items():
+                spell_calc[spell_calc_key.lower()] = []
                 for i in range(1, scaling_levels):
                     current_var_values = {key: value[i] for key, value in var_values.items()}
-                    current_champion_stats = {key: value[i] for key, value in champion_stats.items()}
-                    bin_definitions = BinDefinitions(self.strings_raw, current_var_values, spell_calculations_raw, current_champion_stats, True)
-                    calculated_value = bin_definitions.parse_values(spell_calculations_value)
-                    spell_calculations[spell_calculations_key.lower()].append(calculated_value if not isinstance(calculated_value, (int, float)) and '%' in calculated_value else float(calculated_value))
-                spell_calculations[spell_calculations_key.lower()] = self.__process_value_array(spell_calculations[spell_calculations_key.lower()])
-                spell_calculations[hash_fnv1a(spell_calculations_key.lower())] = spell_calculations[spell_calculations_key.lower()]
+                    current_unit_stats = {key: value[i] for key, value in champion_stats.items()}
+                    bin_definitions = BinDefinitions(self.strings_raw, current_var_values, spell_calc_raw, current_unit_stats, True)
+
+                    parsed_bin = bin_definitions.parse_values(spell_calc_value)
+
+                    if isinstance(parsed_bin, dict):
+                        calculated_value = parsed_bin['value']
+
+                        if re.match(r'^\d+\.\d+$', str(self.version)) and normalize_game_version(self.version) < 13.12:
+                            spell_style[spell_calc_key.lower()] = {
+                                'tag': parsed_bin['tag'],
+                                'icon': parsed_bin['icon']
+                            }
+                    else:
+                        calculated_value = parsed_bin
+
+                    spell_calc[spell_calc_key.lower()].append(calculated_value if not isinstance(calculated_value, (int, float)) and '%' in calculated_value else float(calculated_value))
+                spell_calc[spell_calc_key.lower()] = self.__process_value_array(spell_calc[spell_calc_key.lower()])
+
+                spell_calc[hash_fnv1a(spell_calc_key.lower())] = spell_calc[spell_calc_key.lower()]
+
+                if spell_calc_key.lower() in spell_style:
+                    spell_style[hash_fnv1a(spell_calc_key.lower())] = spell_style[spell_calc_key.lower()]
 
         spell_desc_scaling = self.__process_spell_scaling(spell_desc_scaling_raw, var_values)
-        self.output_dict[unit_id_trimmed] = self.__generate_unit_tooltip(f"{spell_desc_main}{spell_desc_scaling}", spell_calculations, var_values)
+        self.output_dict[unit_id_trimmed] = self.__generate_unit_tooltip(f"{spell_desc_main}{spell_desc_scaling}", spell_calc, var_values, spell_style)
         
         #print(champion_stats)
         #print(spell_calculations)
 
         #print(self.output_dict[unit_id_trimmed])
         #print(data_values)
-        #print(self.strings[champion_id_trimmed])
         #print(spell_desc_scaling_raw)
 
         #with open(r"C:/Users/Alex/Desktop/tft-test/" + id.lower() + '.cdtb.bin.json', 'w') as file:
@@ -152,7 +169,7 @@ class TFTUnitsProcessor:
             elif style == 1:
                 multiplier = element.get("multiplier", 1)
                 values = [str(round_number(var_values[element["type"].lower()][i] * multiplier, 2)) for i in range(1, scaling_levels)]
-                current_string += f'<scalingblock>[{"/".join(values)}%]</scalingblock>'
+                current_string += f'<scalingblock>[{str_ireplace('@NUMBER@', "/".join(values), self.__get_string('number_formatting_percentage_format'))}]</scalingblock>'
 
             return_array.append(current_string + '</scalingcontainer>')
 
@@ -171,7 +188,7 @@ class TFTUnitsProcessor:
         else:
             return '/'.join(arr)
         
-    def __generate_unit_tooltip(self, spell_desc_main, spell_calculations, var_values):
+    def __generate_unit_tooltip(self, spell_desc_main, spell_calc, var_values, spell_style = {}):
         def replace_callback(matches):
             replacement = '@' + matches.group(2) + '@'
 
@@ -186,27 +203,31 @@ class TFTUnitsProcessor:
             except:
                 var_mod = 1
 
-            if var_name not in spell_calculations and hash_fnv1a(var_name) in spell_calculations:
+            if var_name not in spell_calc and hash_fnv1a(var_name) in spell_calc:
                 var_name = hash_fnv1a(var_name)
 
-            if var_name in spell_calculations:
+            if var_name in spell_calc:
                 decimal_places = 0
 
                 if var_name in var_values:
                     decimal_places = 2
 
-                if isinstance(spell_calculations[var_name], (int, float)):
-                    replacement = round_number(float(spell_calculations[var_name]) * var_mod, decimal_places, True)
+                if isinstance(spell_calc[var_name], (int, float)):
+                    replacement = round_number(float(spell_calc[var_name]) * var_mod, decimal_places, True)
                 else:
-                    if '/' in spell_calculations[var_name] and not '%' in spell_calculations[var_name]:
-                        replacement = '/'.join([round_number(float(x) * var_mod, decimal_places, True) for x in spell_calculations[var_name].split('/')])
-                    elif '/' in spell_calculations[var_name] and '%' in spell_calculations[var_name]:
-                        replacement = re.sub('%/', '/', spell_calculations[var_name])
+                    if '/' in spell_calc[var_name] and not '%' in spell_calc[var_name]:
+                        replacement = '/'.join([round_number(float(x) * var_mod, decimal_places, True) for x in spell_calc[var_name].split('/')])
+                    elif '/' in spell_calc[var_name] and '%' in spell_calc[var_name]:
+                        replacement = re.sub(' *%/', '/', spell_calc[var_name])
                     else:
-                        replacement = spell_calculations[var_name]
+                        replacement = spell_calc[var_name]
 
-            if var_name == 'value' and var_name not in spell_calculations:
+            if var_name == 'value' and var_name not in spell_calc:
                 replacement = '0'
+
+            if var_name in spell_style:
+                current_style = spell_style[var_name]
+                replacement = f"<{current_style['tag']}>{replacement} %i:{current_style['icon']}%</{current_style['tag']}>"
 
             #print(matches.group(2), spell_calculations.get(var_name), replacement)
             return replacement

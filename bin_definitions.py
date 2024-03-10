@@ -12,6 +12,12 @@ class BinDefinitions:
     def __get_string(self, string):
         return get_string(self.strings_raw, string)
     
+    def __check_dict(self, value):
+        if isinstance(value, dict) and 'icon' in value:
+            value = value['value']
+        
+        return value
+    
     def parse_values(self, current_block, key=0):
         if not isinstance(current_block, (list, dict)):
             return current_block
@@ -34,6 +40,7 @@ class BinDefinitions:
             'StatBySubPartCalculationPart',
             '{f3cbe7b2}',
             '{803dae4c}',
+            '{05abdfab}',
             'SubPartScaledProportionalToStat'
             ]
 
@@ -54,10 +61,21 @@ class BinDefinitions:
     
     def __GameCalculation(self, current_block, key=0):
         mFormulaParts = {}
+        calculated_tag = None
+        calculated_icon = None
 
         for i, value in enumerate(current_block['mFormulaParts']):
             if self.needs_calculation:
-                mFormulaParts[i] = float(round_number(self.parse_values(value, i), 5, True))
+                block_calculation = self.parse_values(value, i)
+
+                if isinstance(block_calculation, dict):
+                    calculated_value = block_calculation['value']
+                    calculated_tag = block_calculation['tag']
+                    calculated_icon = block_calculation['icon']
+                else:
+                    calculated_value = block_calculation
+
+                mFormulaParts[i] = float(round_number(calculated_value, 5, True))
             else:
                 mFormulaParts[i] = str(round_number(self.parse_values(value, i), 5, True))
 
@@ -88,7 +106,14 @@ class BinDefinitions:
 
                 return_value = re.sub(r'^([0-9]+(\.[0-9]+)*)', callback_for_numbers, return_value)
 
-        return return_value
+        if calculated_tag and calculated_icon:
+            return {
+                'value': return_value,
+                'tag': calculated_tag,
+                'icon': calculated_icon
+            }
+        else:
+            return return_value
     
     def __ByCharLevelInterpolationCalculationPart(self, current_block, key=0):
         if 'mStartValue' not in current_block:
@@ -142,14 +167,19 @@ class BinDefinitions:
     
     def __StatByNamedDataValueCalculationPart(self, current_block, key=0):
         if self.needs_calculation:
-            current_stat = self.champion_stats[current_block.get('mStat', 0)]
+            stat_type = current_block.get('mStat', 0)
+            current_stat = self.champion_stats[stat_type]
             current_value = self.var_values.get(current_block['mDataValue'].lower(), 0)
             stat_formula = current_block.get('mStatFormula', 1)
 
             if stat_formula == 2:
                 return 0
             
-            return current_stat * current_value
+            return {
+                'value': current_stat * current_value,
+                'tag': re.sub(r'[<>]', '', stats[stat_type]['openingTag']),
+                'icon': re.sub(r'%i:(.*?)%', '\\1', stats[stat_type]['icon'])
+            }
 
         formula_part_style_key = "tooltip_statsuidata_formulapartstylepercent" if key == 0 else "tooltip_statsuidata_formulapartstylebonuspercent"
         return_value = self.__get_string(formula_part_style_key)
@@ -227,7 +257,7 @@ class BinDefinitions:
     def __StatBySubPartCalculationPart(self, current_block, key=0):
         if self.needs_calculation:
             current_stat = self.champion_stats[current_block.get('mStat', 0)]
-            current_value = self.parse_values(current_block['mSubpart'])
+            current_value = self.__check_dict(self.parse_values(current_block['mSubpart']))
 
             stat_formula = current_block.get('mStatFormula', 1)
 
@@ -247,7 +277,7 @@ class BinDefinitions:
         if stat_formula:
             icon_modifier = self.__get_string(f'tooltip_statsuidata_{stat_types[stat_formula]}iconmodifier')
 
-        value = self.parse_values(current_block['mSubpart'], key)
+        value = self.__check_dict(self.parse_values(current_block['mSubpart'], key))
 
         try:
             value = float(value) * 100
@@ -329,8 +359,8 @@ class BinDefinitions:
         return return_value
     
     def __ProductOfSubPartsCalculationPart(self, current_block, key=0):
-        m_part1 = self.parse_values(current_block['mPart1'])
-        m_part2 = self.parse_values(current_block['mPart2'])
+        m_part1 = self.__check_dict(self.parse_values(current_block['mPart1']))
+        m_part2 = self.__check_dict(self.parse_values(current_block['mPart2']))
 
         try:
             m_part1 = float(m_part1)
@@ -345,11 +375,11 @@ class BinDefinitions:
     
     def __SumOfSubPartsCalculationPart(self, current_block, key=0):
         if len(current_block['mSubparts']) == 1:
-            return self.parse_values(current_block['mSubparts'][0])
+            return self.__check_dict(self.parse_values(current_block['mSubparts'][0]))
         
         total_sum = 0
         for subpart in current_block['mSubparts']:
-            parsed_value = self.parse_values(subpart)
+            parsed_value = self.__check_dict(self.parse_values(subpart))
 
             try:
                 parsed_value = float(parsed_value)
@@ -360,12 +390,12 @@ class BinDefinitions:
                 total_sum += parsed_value
             else:
                 return 0
-
+        
         return total_sum
 
     def __GameCalculationModified(self, current_block, key=0):
-        multiplier = self.parse_values(current_block['mMultiplier'])
-        modified_block = self.parse_values(self.all_calculations[current_block['mModifiedGameCalculation']])
+        multiplier = self.__check_dict(self.parse_values(current_block['mMultiplier']))
+        modified_block = self.__check_dict(self.parse_values(self.all_calculations[current_block['mModifiedGameCalculation']]))
 
         try:
             multiplier = float(multiplier)
@@ -381,7 +411,7 @@ class BinDefinitions:
         return re.sub(r'([0-9]+(\.[0-9]+)*)', callback_for_numbers, str(modified_block), flags=re.IGNORECASE)
     
     def __f3cbe7b2(self, current_block, key=0):
-        return self.parse_values(self.all_calculations[current_block['{88536426}']])
+        return self.__check_dict(self.parse_values(self.all_calculations[current_block['{88536426}']]))
     
     def __803dae4c(self, current_block, key=0):
         if self.needs_calculation:
@@ -390,7 +420,7 @@ class BinDefinitions:
             subparts = current_block.get('mSubparts')
 
             if subparts and len(subparts) > 0:
-                calculated_subparts = self.parse_values(subparts[0])
+                calculated_subparts = self.__check_dict(self.parse_values(subparts[0]))
 
                 if floor and calculated_subparts < floor:
                     return floor
@@ -404,17 +434,40 @@ class BinDefinitions:
         
         return 0
     
+    def __05abdfab(self, current_block, key=0):
+        if self.needs_calculation:
+            current_value = self.var_values.get(current_block['mDataValue'].lower(), 0)
+            current_coef = current_block['{bfe6ad01}'] # doesn't work well with mDisplayAsPercent
+            
+            return current_value # * current_coef
+
+        return 0
+    
     def __SubPartScaledProportionalToStat(self, current_block, key=0):
         if self.needs_calculation:
             current_stat = self.champion_stats[current_block.get('mStat', 0)]
             current_ratio = current_block.get('mRatio', 1)
-            current_value = self.parse_values(current_block['mSubpart'])
+            current_value = self.__check_dict(self.parse_values(current_block['mSubpart']))
+
+            current_tag = current_block.get('mStyleTag', current_block.get('{992cd7eb}'))
+            current_icon = current_block.get('{a5749b52}')
+
+            if current_icon == 'noScale' and current_tag != 'noScale':
+                current_icon, current_tag = current_tag, current_icon
+
+            if current_tag and current_icon:
+                return {
+                    'value': current_stat * current_ratio * current_value,
+                    'tag': current_tag,
+                    'icon': current_icon
+                }
+            
             return current_stat * current_ratio * current_value
         
         formula_part_style_key = "tooltip_statsuidata_formulapartstylepercent" if key == 0 else "tooltip_statsuidata_formulapartstylebonuspercent"
         return_value = self.__get_string(formula_part_style_key)
         
-        current_subpart = self.parse_values(current_block['mSubpart'])
+        current_subpart = self.__check_dict(self.parse_values(current_block['mSubpart']))
         current_stat = round_number(current_block.get('mStat', 0), 5)
         current_ratio = round_number(current_block.get('mRatio', 1) * 100, 5)
 
