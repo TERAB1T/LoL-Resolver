@@ -29,12 +29,49 @@ def get_tftmap_file(version):
         print(f"An error occurred (TFT data file): {e}")
         return
     
+def get_set_root(tft_data):
+    tft_data_main = tft_data["{9fcfd7a6}"]
+    current_set_id = tft_data_main.get("{0d43af66}", tft_data_main.get("{2caa347b}", tft_data_main.get("mDefaultSetData")))
+    return tft_data[current_set_id]
+
+def get_set_items(tft_data):
+    set_root = get_set_root(tft_data)
+    item_ids = {}
+    augment_ids = {}
+
+    for item_list in set_root["itemLists"]:
+        for item_link in tft_data[item_list]["mItems"]:
+            current_item = tft_data[item_link]
+
+            item_id = current_item.get("mName", current_item.get(hash_fnv1a("mName")))
+            item_name = current_item.get("mDisplayNameTra", current_item.get(hash_fnv1a("mDisplayNameTra")))
+            item_desc = current_item.get("mDescriptionNameTra", current_item.get(hash_fnv1a("mDescriptionNameTra")))
+            item_icon = current_item.get("mIconPath", current_item.get(hash_fnv1a("mIconPath")))
+
+            if item_id and item_name and item_desc and item_icon:
+                if 'augments' in item_icon.lower():
+                    augment_ids[item_id] = current_item
+                elif not 'augment' in item_id.lower():
+                    item_ids[item_id] = current_item
+    
+    print(f"Items: {len(item_ids)}")
+    for id, item in sorted(item_ids.items()):
+        print(f"  {id}")
+
+    print(f"Augments: {len(augment_ids)}")
+    for id, item in sorted(augment_ids.items()):
+        print(f"  {id}")
+    
 def generate_version(input_version, output_dir):
     print(f"TFT Units: generating version {input_version}...")
     tft_data = get_tftmap_file(input_version)
     unit_properties = filter_unit_properties(tft_data)
 
+    get_set_items(tft_data)
+    return
+
     unit_ids = get_unit_ids(tft_data)
+    
     unit_list = download_all_units(input_version, unit_ids)
 
     languages = cd_get_languages(input_version) # ["ru_ru"]
@@ -48,15 +85,14 @@ def generate_version(input_version, output_dir):
         processor = TFTUnitsProcessor(input_version, output_dir, lang, tft_data, unit_list, unit_properties, strings)
 
 def get_unit_ids(tft_data):
-    tft_data_main = tft_data["{9fcfd7a6}"]
-    current_set_id = tft_data_main.get("{0d43af66}", tft_data_main.get("{2caa347b}", tft_data_main.get("mDefaultSetData")))
+    set_root = get_set_root(tft_data)
     unit_ids = []
 
-    if tft_data[current_set_id].get("tftCharacterLists"):
-        unit_list_id = tft_data[current_set_id]["tftCharacterLists"][0]
+    if set_root.get("tftCharacterLists"):
+        unit_list_id = set_root["tftCharacterLists"][0]
         unit_ids = tft_data[unit_list_id]['characters']
     else:
-        lists = [tft_data[item]["characters"] for item in tft_data[current_set_id]["characterLists"]]
+        lists = [tft_data[item]["characters"] for item in set_root["characterLists"]]
         unit_ids = max(lists, key=len)
 
     for i in range(len(unit_ids)):
