@@ -60,7 +60,18 @@ def get_set_items(tft_data):
 
     print(f"Augments: {len(augment_ids)}")
     for id, item in sorted(augment_ids.items()):
-        print(f"  {id}")
+        aug_tags = item.get("ItemTags", item.get(hash_fnv1a("ItemTags")))
+
+        if aug_tags:
+            if '{d11fd6d5}' in aug_tags:
+                print(f"  {id}  |  серебро")
+            if '{ce1fd21c}' in aug_tags:
+                print(f"  {id}  |  золото")
+            if '{cf1fd3af}' in aug_tags:
+                print(f"  {id}  |  призма")
+        else:
+            print(f"  {id}")
+
     
 def generate_version(input_version, output_dir):
     print(f"TFT Units: generating version {input_version}...")
