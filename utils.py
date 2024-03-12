@@ -2,6 +2,7 @@ from xxhash import xxh64_intdigest
 import requests
 import ujson
 import re
+import redis
 
 def hash_xxhash(key, bits=39):
     key_int = xxh64_intdigest(key.lower())
@@ -139,3 +140,104 @@ def normalize_game_version(version):
         return str_version
 
     return round_number(float(re.sub(r'\.(\d)$', r'.0\1', str_version)), 2)
+
+def gen_handler(input_version, output_dir, alias, urls, generate_version, cache = False, atlas = False):
+    from lol.atlas_processor import AtlasProcessor
+
+    redis_cache = {}
+    redis_con = None
+
+    try:
+        if cache:
+            redis_con = redis.Redis(host='localhost', port=6379, decode_responses=True)
+            redis_con.ping()
+    except:
+        redis_con = None
+
+    if redis_con and redis_con.exists(alias):
+        redis_cache = ujson.loads(redis_con.get(alias))
+
+    if input_version == 'all':
+        versions = cd_get_versions()
+
+        for version in versions:
+            version_name = version.get('name')
+            last_modified = version.get('mtime')
+
+            if version_name not in redis_cache:
+                redis_cache[version_name] = {
+                    "last_modified": ''
+                }
+
+            if redis_cache[version_name]["last_modified"] != last_modified:
+                generate_version(version_name, output_dir)
+
+                if redis_con:
+                    redis_cache[version_name]["last_modified"] = last_modified
+                    redis_con.set(alias, ujson.dumps(redis_cache))
+
+                if atlas:
+                    processor = AtlasProcessor()
+                    processor.process_icons(version_name, output_dir)
+            else:
+                print(f"Version {version_name} is up to date. Skipping...")
+            
+    elif re.match(r'^\d+\.\d+$', input_version):
+        versions = cd_get_versions()
+        version = next((element for element in versions if element['name'] == input_version), None)
+
+        if version:
+            version_name = version.get('name')
+            last_modified = version.get('mtime')
+
+            if version_name not in redis_cache:
+                redis_cache[version_name] = {
+                    "last_modified": ''
+                }
+
+            if redis_cache[version_name]["last_modified"] != last_modified:
+                generate_version(version_name, output_dir)
+
+                if redis_con:
+                    redis_cache[version_name]["last_modified"] = last_modified
+                    redis_con.set(alias, ujson.dumps(redis_cache))
+
+                if atlas:
+                    processor = AtlasProcessor()
+                    processor.process_icons(version_name, output_dir)
+            else:
+                print(f"Version {version_name} is up to date. Skipping...")
+        else:
+            print(f"Version {input_version} not found.")
+    elif input_version in ['latest', 'pbe']:
+        if input_version not in redis_cache:
+            redis_cache[input_version] = {
+                "status": '',
+                "last_modified": ''
+            }
+
+        last_modified = get_last_modified(get_final_url(input_version, urls))
+        input_version_modified = "live" if input_version == "latest" else input_version
+        response = requests.get(f"https://raw.communitydragon.org/status.{input_version_modified}.txt")
+
+        if response.status_code == 200:
+            patch_status = response.text
+        else:
+            return
+
+        if redis_cache[input_version]["status"] != patch_status and "done" in patch_status:
+            if redis_cache[input_version]["last_modified"] != last_modified:
+                generate_version(input_version, output_dir)
+
+                if redis_con:
+                    redis_cache[input_version]["status"] = patch_status
+                    redis_cache[input_version]["last_modified"] = last_modified
+                    redis_con.set(alias, ujson.dumps(redis_cache))
+            else:
+                print(f"Version {input_version} is up to date. Skipping...")
+
+            if atlas:
+                processor = AtlasProcessor()
+                processor.process_icons(input_version, output_dir)
+        elif redis_cache[input_version]["status"] == patch_status:
+            print(f"Version {input_version} is up to date. Skipping...")

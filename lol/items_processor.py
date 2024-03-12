@@ -12,7 +12,7 @@ class ItemsProcessor:
         self.strings_raw = strings
         self.strings = strings
 
-        self.output_dir = os.path.join(output_dir, f"items/{version}")
+        self.output_dir = os.path.join(output_dir, f"lol-items/{version}")
 
         self.output_filepath = f"{self.output_dir}/{lang}.json"
         self.var_values = {}

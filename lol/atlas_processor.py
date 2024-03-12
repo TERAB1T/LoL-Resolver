@@ -106,7 +106,7 @@ class AtlasProcessor:
             print(f"An error occurred: {e}")
 
     def process_icons(self, version, output_dir):
-        self.output_dir = os.path.join(output_dir, f"items/{version}/icons")
+        self.output_dir = os.path.join(output_dir, f"lol-items/{version}/icons")
         os.makedirs(self.output_dir, exist_ok=True)
 
         url_bin = f"https://raw.communitydragon.org/{version}/game/assets/items/icons2d/autoatlas/largeicons/atlas_info.bin"
