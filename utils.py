@@ -1,6 +1,6 @@
 from xxhash import xxh64_intdigest
 import requests
-import sys
+import ujson
 import re
 
 def hash_xxhash(key, bits=39):
@@ -25,7 +25,7 @@ def cd_get_languages(version):
     response = requests.get(url)
 
     if response.status_code == 200:
-        langs_raw = response.json()
+        langs_raw = ujson.loads(response.content)
         languages = [file.get('name') for file in langs_raw if file.get('type') == 'directory' and re.match(r'^[a-z]{2}_[a-z]{2}$', file.get('name'))]
         if len(languages) != 0:
             if 'ar_ae' in languages:
@@ -36,7 +36,7 @@ def cd_get_languages(version):
     response2 = requests.get(url2)
 
     if response2.status_code == 200:
-        langs_raw = response2.json()
+        langs_raw = ujson.loads(response2.content)
         languages = [re.search(r'(?<=_)([a-z]{2}_[a-z]{2})(?=\.(stringtable|txt)\.json)', file.get('name'), re.IGNORECASE).group(0) for file in langs_raw if file.get('name').endswith('.json')]
         if 'ar_ae' in languages:
             languages.remove('ar_ae')
@@ -47,7 +47,7 @@ def cd_get_versions():
     response = requests.get(url)
 
     if response.status_code == 200:
-        versions_raw = response.json()
+        versions_raw = ujson.loads(response.content)
         versions = [file for file in versions_raw if re.match(r'^\d+\.\d+$', file.get('name')) and float(file.get('name').split(".")[0]) > 10]
         versions = sorted(versions, key = lambda version: float(re.sub(r'\.(\d)$', r'.0\1', version['name'])))
         return versions
@@ -81,7 +81,7 @@ def cd_get_strings_file(version, lang):
     
     try:
         items_response = requests.get(final_url)
-        return items_response.json()["entries"]
+        return ujson.loads(items_response.content)["entries"]
     except requests.RequestException as e:
         print(f"An error occurred (strings file): {e}")
         return

@@ -1,8 +1,7 @@
 import requests
 import re
 import redis
-import json
-import os
+import ujson
 from items.atlas_processor import AtlasProcessor
 from items.items_processor import ItemsProcessor
 from utils import *
@@ -17,7 +16,7 @@ def get_items_file(version):
     
     try:
         items_response = requests.get(final_url)
-        return items_response.json()
+        return ujson.loads(items_response.content)
     except requests.RequestException as e:
         print(f"An error occurred (item file): {e}")
         return
@@ -49,7 +48,7 @@ def generate_items(input_version, output_dir, cache = False, atlas = False):
     item_urls = ["items.cdtb.bin.json", "global/items/items.bin.json"]
 
     if redis_con and redis_con.exists("items"):
-        redis_cache = json.loads(redis_con.get("items"))
+        redis_cache = ujson.loads(redis_con.get("items"))
         # print(redis_con.get("items"))
 
     if input_version == 'all':
@@ -69,7 +68,7 @@ def generate_items(input_version, output_dir, cache = False, atlas = False):
 
                 if redis_con:
                     redis_cache[version_name]["itemsLastModified"] = items_last_modified
-                    redis_con.set("items", json.dumps(redis_cache))
+                    redis_con.set("items", ujson.dumps(redis_cache))
 
                 if atlas:
                     processor = AtlasProcessor()
@@ -95,7 +94,7 @@ def generate_items(input_version, output_dir, cache = False, atlas = False):
 
                 if redis_con:
                     redis_cache[version_name]["itemsLastModified"] = items_last_modified
-                    redis_con.set("items", json.dumps(redis_cache))
+                    redis_con.set("items", ujson.dumps(redis_cache))
 
                 if atlas:
                     processor = AtlasProcessor()
@@ -127,7 +126,7 @@ def generate_items(input_version, output_dir, cache = False, atlas = False):
                 if redis_con:
                     redis_cache[input_version]["status"] = patch_status
                     redis_cache[input_version]["itemsLastModified"] = items_last_modified
-                    redis_con.set("items", json.dumps(redis_cache))
+                    redis_con.set("items", ujson.dumps(redis_cache))
             else:
                 print(f"Version {input_version} is up to date. Skipping...")
 

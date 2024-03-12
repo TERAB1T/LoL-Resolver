@@ -1,10 +1,8 @@
 import requests
 from concurrent.futures import ThreadPoolExecutor
-from threading import Thread,local
 import re
 import redis
-import json
-import os
+import ujson
 from tft.units_processor import TFTUnitsProcessor
 from utils import *
 
@@ -12,7 +10,7 @@ def get_tftmap_file(version):
 
     ###
     #with open(r"C:\Users\Alex\Desktop\tft-test\map22.bin.json", 'r', encoding='utf-8') as file:
-    #    return json.load(file)
+    #    return ujson.load(file)
     ###
 
     urls = ["data/maps/shipping/map22/map22.bin.json"]
@@ -24,7 +22,7 @@ def get_tftmap_file(version):
     
     try:
         tftmap_response = requests.get(final_url)
-        return tftmap_response.json()
+        return ujson.loads(tftmap_response.content)
     except requests.RequestException as e:
         print(f"An error occurred (TFT data file): {e}")
         return
@@ -78,8 +76,8 @@ def generate_version(input_version, output_dir):
     tft_data = get_tftmap_file(input_version)
     unit_properties = filter_unit_properties(tft_data)
 
-    get_set_items(tft_data)
-    return
+    #get_set_items(tft_data)
+    #return
 
     unit_ids = get_unit_ids(tft_data)
     
@@ -123,7 +121,7 @@ def download_unit(input_version, unit_id):
         unit_url = f"https://raw.communitydragon.org/{input_version}/game/data/{unit_id.lower()}/{unit_id.split('/')[1].lower()}.bin.json"
 
     response = requests.get(unit_url)
-    return (unit_id, response.json())
+    return (unit_id, ujson.loads(response.content))
 
 def filter_unit_properties(tft_data):
     return_dict = {}
@@ -148,7 +146,7 @@ def generate_tft_units(input_version, output_dir, cache = False):
     tft_units_urls = ["data/maps/shipping/map22/map22.bin.json"]
 
     if redis_con and redis_con.exists("tft-units"):
-        redis_cache = json.loads(redis_con.get("tft-units"))
+        redis_cache = ujson.loads(redis_con.get("tft-units"))
 
     if input_version == 'all':
         versions = cd_get_versions()
@@ -167,7 +165,7 @@ def generate_tft_units(input_version, output_dir, cache = False):
 
                 if redis_con:
                     redis_cache[version_name]["lastModified"] = last_modified
-                    redis_con.set("tft-units", json.dumps(redis_cache))
+                    redis_con.set("tft-units", ujson.dumps(redis_cache))
             else:
                 print(f"Version {version_name} is up to date. Skipping...")
     elif re.match(r'^\d+\.\d+$', input_version):
@@ -188,7 +186,7 @@ def generate_tft_units(input_version, output_dir, cache = False):
 
                 if redis_con:
                     redis_cache[version_name]["lastModified"] = last_modified
-                    redis_con.set("tft-units", json.dumps(redis_cache))
+                    redis_con.set("tft-units", ujson.dumps(redis_cache))
             else:
                 print(f"Version {version_name} is up to date. Skipping...")
         else:
@@ -216,7 +214,7 @@ def generate_tft_units(input_version, output_dir, cache = False):
                 if redis_con:
                     redis_cache[input_version]["status"] = patch_status
                     redis_cache[input_version]["lastModified"] = last_modified
-                    redis_con.set("tft-units", json.dumps(redis_cache))
+                    redis_con.set("tft-units", ujson.dumps(redis_cache))
             else:
                 print(f"Version {input_version} is up to date. Skipping...")
         elif redis_cache[input_version]["status"] == patch_status:
