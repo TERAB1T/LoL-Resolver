@@ -1,9 +1,8 @@
 import requests
 from concurrent.futures import ThreadPoolExecutor
 import re
-import redis
 import ujson
-from tft.units_processor import TFTUnitsProcessor
+from tft.units import TFTUnitsProcessor
 from utils import *
 
 def get_tftmap_file(version):

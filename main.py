@@ -1,8 +1,8 @@
 import argparse
 import os
-from lol.atlas_processor import AtlasProcessor
-from lol.items_generator import generate_lol_items
-from tft.units_generator import generate_tft_units
+from lol.atlas import AtlasProcessor
+from lol.generator import generate_lol_items
+from tft.generator import generate_tft_units
 
 def main():
     arg_parser = argparse.ArgumentParser()

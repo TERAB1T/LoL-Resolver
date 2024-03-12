@@ -1,6 +1,6 @@
 import requests
 import ujson
-from lol.items_processor import ItemsProcessor
+from lol.items import ItemsProcessor
 from utils import *
     
 def get_items_file(version):

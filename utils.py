@@ -142,7 +142,7 @@ def normalize_game_version(version):
     return round_number(float(re.sub(r'\.(\d)$', r'.0\1', str_version)), 2)
 
 def gen_handler(input_version, output_dir, alias, urls, generate_version, cache = False, atlas = False):
-    from lol.atlas_processor import AtlasProcessor
+    from lol.atlas import AtlasProcessor
 
     redis_cache = {}
     redis_con = None
