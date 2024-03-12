@@ -3,15 +3,12 @@ from concurrent.futures import ThreadPoolExecutor
 import re
 import ujson
 from tft.units import TFTUnitsProcessor
+from tft.items import TFTItemsProcessor
 from utils import *
 
+### COMMON ###
+
 def get_tftmap_file(version):
-
-    ###
-    #with open(r"C:\Users\Alex\Desktop\tft-test\map22.bin.json", 'r', encoding='utf-8') as file:
-    #    return ujson.load(file)
-    ###
-
     urls = ["data/maps/shipping/map22/map22.bin.json"]
     final_url = get_final_url(version, urls)
 
@@ -31,55 +28,23 @@ def get_set_root(tft_data):
     current_set_id = tft_data_main.get("{0d43af66}", tft_data_main.get("{2caa347b}", tft_data_main.get("mDefaultSetData")))
     return tft_data[current_set_id]
 
-def get_set_items(tft_data):
-    set_root = get_set_root(tft_data)
-    item_ids = {}
-    augment_ids = {}
+def filter_unit_props(tft_data):
+    unit_props = {}
 
-    for item_list in set_root["itemLists"]:
-        for item_link in tft_data[item_list]["mItems"]:
-            current_item = tft_data[item_link]
+    for key, value in tft_data.items():
+        if value.get('__type') == 'TftUnitPropertyDefinition' and value.get('name') and value.get('DefaultValue') and (value['DefaultValue'].get("__type") == "TftUnitPropertyValueInteger" or value['DefaultValue'].get("__type") == "TftUnitPropertyValueFloat"):
+            unit_props[value["name"].lower()] = value["DefaultValue"].get("value", 0)
 
-            item_id = current_item.get("mName", current_item.get(hash_fnv1a("mName")))
-            item_name = current_item.get("mDisplayNameTra", current_item.get(hash_fnv1a("mDisplayNameTra")))
-            item_desc = current_item.get("mDescriptionNameTra", current_item.get(hash_fnv1a("mDescriptionNameTra")))
-            item_icon = current_item.get("mIconPath", current_item.get(hash_fnv1a("mIconPath")))
+    return unit_props
 
-            if item_id and item_name and item_desc and item_icon:
-                if 'augments' in item_icon.lower():
-                    augment_ids[item_id] = current_item
-                elif not 'augment' in item_id.lower():
-                    item_ids[item_id] = current_item
+
+### UNITS ###
     
-    print(f"Items: {len(item_ids)}")
-    for id, item in sorted(item_ids.items()):
-        print(f"  {id}")
-
-    print(f"Augments: {len(augment_ids)}")
-    for id, item in sorted(augment_ids.items()):
-        aug_tags = item.get("ItemTags", item.get(hash_fnv1a("ItemTags")))
-
-        if aug_tags:
-            if '{d11fd6d5}' in aug_tags:
-                print(f"  {id}  |  серебро")
-            if '{ce1fd21c}' in aug_tags:
-                print(f"  {id}  |  золото")
-            if '{cf1fd3af}' in aug_tags:
-                print(f"  {id}  |  призма")
-        else:
-            print(f"  {id}")
-
-    
-def generate_version(input_version, output_dir):
+def generate_version_units(input_version, output_dir):
     print(f"TFT Units: generating version {input_version}...")
     tft_data = get_tftmap_file(input_version)
-    unit_properties = filter_unit_properties(tft_data)
-
-    #get_set_items(tft_data)
-    #return
-
+    unit_props = filter_unit_props(tft_data)
     unit_ids = get_unit_ids(tft_data)
-    
     unit_list = download_all_units(input_version, unit_ids)
 
     languages = cd_get_languages(input_version) # ["ru_ru"]
@@ -90,7 +55,7 @@ def generate_version(input_version, output_dir):
     for lang in languages:
         print(f"  {lang}")
         strings = cd_get_strings_file(input_version, lang)
-        processor = TFTUnitsProcessor(input_version, output_dir, lang, tft_data, unit_list, unit_properties, strings)
+        processor = TFTUnitsProcessor(input_version, output_dir, lang, tft_data, unit_list, unit_props, strings)
 
 def get_unit_ids(tft_data):
     set_root = get_set_root(tft_data)
@@ -122,16 +87,74 @@ def download_unit(input_version, unit_id):
     response = requests.get(unit_url)
     return (unit_id, ujson.loads(response.content))
 
-def filter_unit_properties(tft_data):
-    return_dict = {}
-
-    for key, value in tft_data.items():
-        if value.get('__type') == 'TftUnitPropertyDefinition' and value.get('name') and value.get('DefaultValue') and (value['DefaultValue'].get("__type") == "TftUnitPropertyValueInteger" or value['DefaultValue'].get("__type") == "TftUnitPropertyValueFloat"):
-            return_dict[value["name"].lower()] = value["DefaultValue"].get("value", 0)
-
-    return return_dict
-
 def generate_tft_units(input_version, output_dir, cache = False):
     alias = 'tft-units'
     urls = ["data/maps/shipping/map22/map22.bin.json"]
-    gen_handler(input_version, output_dir, alias, urls, generate_version, cache)
+    gen_handler(input_version, output_dir, alias, urls, generate_version_units, cache)
+
+
+### ITEMS / AUGMENTS ###
+    
+def generate_version_items(input_version, output_dir):
+    print(f"TFT Items: generating version {input_version}...")
+    tft_data = get_tftmap_file(input_version)
+    unit_props = filter_unit_props(tft_data)
+    items = get_set_items(tft_data)
+    languages = cd_get_languages(input_version) # ["ru_ru"]
+
+    if not tft_data:
+        return
+
+    for lang in languages:
+        print(f"  {lang}")
+        strings = cd_get_strings_file(input_version, lang)
+        processor = TFTItemsProcessor(input_version, output_dir, lang, tft_data, items, "items", unit_props, strings)
+
+def generate_version_augments(input_version, output_dir):
+    print(f"TFT Augments: generating version {input_version}...")
+    tft_data = get_tftmap_file(input_version)
+    unit_props = filter_unit_props(tft_data)
+    items = get_set_items(tft_data)
+    languages = ["ru_ru"] # cd_get_languages(input_version)
+
+    if not tft_data:
+        return
+
+    for lang in languages:
+        print(f"  {lang}")
+        strings = cd_get_strings_file(input_version, lang)
+        processor = TFTItemsProcessor(input_version, output_dir, lang, tft_data, items, "augments", unit_props, strings)
+
+def get_set_items(tft_data):
+    set_root = get_set_root(tft_data)
+    items = {
+        'items': {},
+        'augments': {}
+    }
+
+    for item_list in set_root["itemLists"]:
+        for item_link in tft_data[item_list]["mItems"]:
+            current_item = tft_data[item_link]
+
+            item_id = current_item.get("mName", current_item.get(hash_fnv1a("mName")))
+            item_name = current_item.get("mDisplayNameTra", current_item.get(hash_fnv1a("mDisplayNameTra")))
+            item_desc = current_item.get("mDescriptionNameTra", current_item.get(hash_fnv1a("mDescriptionNameTra")))
+            item_icon = current_item.get("mIconPath", current_item.get(hash_fnv1a("mIconPath")))
+
+            if item_id and item_name and item_desc and item_icon and not 'debug' in item_id.lower():
+                if 'augment' in item_id.lower():
+                    items['augments'][item_id] = current_item
+                else:
+                    items['items'][item_id] = current_item
+
+    return items
+
+def generate_tft_items(input_version, output_dir, cache = False):
+    alias = 'tft-items'
+    urls = ["data/maps/shipping/map22/map22.bin.json"]
+    gen_handler(input_version, output_dir, alias, urls, generate_version_items, cache)
+
+def generate_tft_augments(input_version, output_dir, cache = False):
+    alias = 'tft-augments'
+    urls = ["data/maps/shipping/map22/map22.bin.json"]
+    gen_handler(input_version, output_dir, alias, urls, generate_version_augments, cache)
