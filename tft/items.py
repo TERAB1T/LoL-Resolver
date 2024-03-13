@@ -49,7 +49,7 @@ class TFTItemsProcessor:
             constants = radiant_map.get('mConstants', radiant_map.get(hash_fnv1a('mConstants')))
 
             for key, value in constants.items():
-                self.radiants[value.get('mValue', value.get(hash_fnv1a('mValue')))] = key.lower()
+                self.radiants[value.get('mValue', value.get(hash_fnv1a('mValue'))).lower()] = key.lower()
 
         self.radiants['TFT5_Item_LudensEchoShadow'.lower()] = 'tft_item_archangelsstaff'
 
