@@ -16,7 +16,9 @@ class TFTItemsProcessor:
         self.items = items['items']
         self.augments = items['augments']
 
-        self.radiants = {}
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        with open(os.path.join(current_dir, 'radiants.json'), 'r') as file:
+            self.radiants = ujson.load(file)
 
         self.output_dict = {}
 
@@ -42,25 +44,8 @@ class TFTItemsProcessor:
     def __get_string(self, string):
         return get_string(self.strings_raw, string)
     
-    def __get_radiants(self):
-        radiant_map = self.tft_data.get('{49431492}')
-
-        if radiant_map:
-            constants = radiant_map.get('mConstants', radiant_map.get(hash_fnv1a('mConstants')))
-
-            for key, value in constants.items():
-                self.radiants[value.get('mValue', value.get(hash_fnv1a('mValue'))).lower()] = key.lower()
-
-        self.radiants['TFT5_Item_LudensEchoShadow'.lower()] = 'tft_item_archangelsstaff'
-
-        self.radiants['TFT8_Item_Warmogs_GenAE'.lower()] = 'tft_item_warmogsarmor'
-        self.radiants['TFT8_Item_Shojin_GenAE'.lower()] = 'tft_item_spearofshojin'
-        self.radiants['TFT8_Item_Sunfire_GenAE'.lower()] = 'tft_item_redbuff'
-    
     def __get_items(self):
         components = []
-
-        self.__get_radiants()
         item_ids_lower = [id.lower() for id in self.items.keys()]
 
         for item_id, item_data in self.items.items():
