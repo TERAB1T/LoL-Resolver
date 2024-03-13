@@ -1,6 +1,6 @@
 import os
 import re
-import json
+import ujson
 from utils import *
 from stats import *
 from bin_definitions import BinDefinitions
@@ -31,7 +31,7 @@ class TFTUnitsProcessor:
             'status': 1,
             'data': self.output_dict
         }
-        output_json = json.dumps(success_return, ensure_ascii=False, separators=(',', ':'))
+        output_json = ujson.dumps(success_return, ensure_ascii=False, separators=(',', ':'), escape_forward_slashes=False, sort_keys=True)
 
         os.makedirs(self.output_dir, exist_ok=True)
         with open(self.output_filepath, 'w', encoding='utf-8') as output_file:

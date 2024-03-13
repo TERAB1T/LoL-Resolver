@@ -2,3 +2,4 @@ requests
 Pillow
 xxhash
 redis
+ujson

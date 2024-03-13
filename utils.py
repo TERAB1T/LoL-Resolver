@@ -1,7 +1,8 @@
 from xxhash import xxh64_intdigest
 import requests
-import sys
+import ujson
 import re
+import redis
 
 def hash_xxhash(key, bits=39):
     key_int = xxh64_intdigest(key.lower())
@@ -25,7 +26,7 @@ def cd_get_languages(version):
     response = requests.get(url)
 
     if response.status_code == 200:
-        langs_raw = response.json()
+        langs_raw = ujson.loads(response.content)
         languages = [file.get('name') for file in langs_raw if file.get('type') == 'directory' and re.match(r'^[a-z]{2}_[a-z]{2}$', file.get('name'))]
         if len(languages) != 0:
             if 'ar_ae' in languages:
@@ -36,7 +37,7 @@ def cd_get_languages(version):
     response2 = requests.get(url2)
 
     if response2.status_code == 200:
-        langs_raw = response2.json()
+        langs_raw = ujson.loads(response2.content)
         languages = [re.search(r'(?<=_)([a-z]{2}_[a-z]{2})(?=\.(stringtable|txt)\.json)', file.get('name'), re.IGNORECASE).group(0) for file in langs_raw if file.get('name').endswith('.json')]
         if 'ar_ae' in languages:
             languages.remove('ar_ae')
@@ -47,7 +48,7 @@ def cd_get_versions():
     response = requests.get(url)
 
     if response.status_code == 200:
-        versions_raw = response.json()
+        versions_raw = ujson.loads(response.content)
         versions = [file for file in versions_raw if re.match(r'^\d+\.\d+$', file.get('name')) and float(file.get('name').split(".")[0]) > 10]
         versions = sorted(versions, key = lambda version: float(re.sub(r'\.(\d)$', r'.0\1', version['name'])))
         return versions
@@ -81,7 +82,7 @@ def cd_get_strings_file(version, lang):
     
     try:
         items_response = requests.get(final_url)
-        return items_response.json()["entries"]
+        return ujson.loads(items_response.content)["entries"]
     except requests.RequestException as e:
         print(f"An error occurred (strings file): {e}")
         return
@@ -139,3 +140,104 @@ def normalize_game_version(version):
         return str_version
 
     return round_number(float(re.sub(r'\.(\d)$', r'.0\1', str_version)), 2)
+
+def gen_handler(input_version, output_dir, alias, urls, generate_version, cache = False, atlas = False):
+    from lol.atlas import AtlasProcessor
+
+    redis_cache = {}
+    redis_con = None
+
+    try:
+        if cache:
+            redis_con = redis.Redis(host='localhost', port=6379, decode_responses=True)
+            redis_con.ping()
+    except:
+        redis_con = None
+
+    if redis_con and redis_con.exists(alias):
+        redis_cache = ujson.loads(redis_con.get(alias))
+
+    if input_version == 'all':
+        versions = cd_get_versions()
+
+        for version in versions:
+            version_name = version.get('name')
+            last_modified = version.get('mtime')
+
+            if version_name not in redis_cache:
+                redis_cache[version_name] = {
+                    "last_modified": ''
+                }
+
+            if redis_cache[version_name]["last_modified"] != last_modified:
+                generate_version(version_name, output_dir)
+
+                if redis_con:
+                    redis_cache[version_name]["last_modified"] = last_modified
+                    redis_con.set(alias, ujson.dumps(redis_cache))
+
+                if atlas:
+                    processor = AtlasProcessor()
+                    processor.process_icons(version_name, output_dir)
+            else:
+                print(f"Version {version_name} is up to date. Skipping...")
+            
+    elif re.match(r'^\d+\.\d+$', input_version):
+        versions = cd_get_versions()
+        version = next((element for element in versions if element['name'] == input_version), None)
+
+        if version:
+            version_name = version.get('name')
+            last_modified = version.get('mtime')
+
+            if version_name not in redis_cache:
+                redis_cache[version_name] = {
+                    "last_modified": ''
+                }
+
+            if redis_cache[version_name]["last_modified"] != last_modified:
+                generate_version(version_name, output_dir)
+
+                if redis_con:
+                    redis_cache[version_name]["last_modified"] = last_modified
+                    redis_con.set(alias, ujson.dumps(redis_cache))
+
+                if atlas:
+                    processor = AtlasProcessor()
+                    processor.process_icons(version_name, output_dir)
+            else:
+                print(f"Version {version_name} is up to date. Skipping...")
+        else:
+            print(f"Version {input_version} not found.")
+    elif input_version in ['latest', 'pbe']:
+        if input_version not in redis_cache:
+            redis_cache[input_version] = {
+                "status": '',
+                "last_modified": ''
+            }
+
+        last_modified = get_last_modified(get_final_url(input_version, urls))
+        input_version_modified = "live" if input_version == "latest" else input_version
+        response = requests.get(f"https://raw.communitydragon.org/status.{input_version_modified}.txt")
+
+        if response.status_code == 200:
+            patch_status = response.text
+        else:
+            return
+
+        if redis_cache[input_version]["status"] != patch_status and "done" in patch_status:
+            if redis_cache[input_version]["last_modified"] != last_modified:
+                generate_version(input_version, output_dir)
+
+                if redis_con:
+                    redis_cache[input_version]["status"] = patch_status
+                    redis_cache[input_version]["last_modified"] = last_modified
+                    redis_con.set(alias, ujson.dumps(redis_cache))
+            else:
+                print(f"Version {input_version} is up to date. Skipping...")
+
+            if atlas:
+                processor = AtlasProcessor()
+                processor.process_icons(input_version, output_dir)
+        elif redis_cache[input_version]["status"] == patch_status:
+            print(f"Version {input_version} is up to date. Skipping...")

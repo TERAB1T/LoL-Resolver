@@ -1,6 +1,6 @@
 import os
 import re
-import json
+import ujson
 from utils import *
 from stats import *
 from bin_definitions import BinDefinitions
@@ -12,7 +12,7 @@ class ItemsProcessor:
         self.strings_raw = strings
         self.strings = strings
 
-        self.output_dir = os.path.join(output_dir, f"items/{version}")
+        self.output_dir = os.path.join(output_dir, f"lol-items/{version}")
 
         self.output_filepath = f"{self.output_dir}/{lang}.json"
         self.var_values = {}
@@ -27,7 +27,7 @@ class ItemsProcessor:
             'status': 1,
             'data': self.strings
         }
-        output_json = json.dumps(success_return, ensure_ascii=False, separators=(',', ':'))
+        output_json = ujson.dumps(success_return, ensure_ascii=False, separators=(',', ':'), escape_forward_slashes=False, sort_keys=True)
 
         os.makedirs(self.output_dir, exist_ok=True)
         with open(self.output_filepath, 'w', encoding='utf-8') as output_file:

@@ -1,4 +1,5 @@
 import os
+import ujson
 import requests
 from io import BytesIO
 from PIL import Image
@@ -105,7 +106,7 @@ class AtlasProcessor:
             print(f"An error occurred: {e}")
 
     def process_icons(self, version, output_dir):
-        self.output_dir = os.path.join(output_dir, f"items/{version}/icons")
+        self.output_dir = os.path.join(output_dir, f"lol-items/{version}/icons")
         os.makedirs(self.output_dir, exist_ok=True)
 
         url_bin = f"https://raw.communitydragon.org/{version}/game/assets/items/icons2d/autoatlas/largeicons/atlas_info.bin"
@@ -133,7 +134,7 @@ class AtlasProcessor:
             print(f"Atlas file not found: {version}")
             return
         
-        fonts_json = response.json()
+        fonts_json = ujson.loads(response.content)
         
         if not "{9c87124a}" in fonts_json or not "iconTexture" in fonts_json["{9c87124a}"] or not "icons" in fonts_json["{9c87124a}"]:
             print(f"Atlas definitions not found: {version}")
