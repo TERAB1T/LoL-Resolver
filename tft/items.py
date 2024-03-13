@@ -118,7 +118,7 @@ class TFTItemsProcessor:
                         component_id = component.get("mName", component.get(hash_fnv1a("mName"))).lower()
                         item_recipe.append(component_id)
 
-                        if not component_id in components:
+                        if not component_id in components and component_id in item_ids_lower:
                             components.append(component_id)
 
             item_effects_raw = item_data.get("effectAmounts", item_data.get(hash_fnv1a("effectAmounts")))
@@ -158,7 +158,11 @@ class TFTItemsProcessor:
                 self.output_dict[item_id.lower()]['parent'] = item_parent
 
             if len(item_recipe):
-                self.output_dict[item_id.lower()]['recipe'] = item_recipe
+                if item_recipe[0] in item_ids_lower and item_recipe[1] in item_ids_lower:
+                    self.output_dict[item_id.lower()]['recipe'] = item_recipe
+                else:
+                    del self.output_dict[item_id.lower()]
+                    continue
 
             if len(item_stats):
                 self.output_dict[item_id.lower()]['stats'] = [self.__generate_desc(item_stat, item_effects) for item_stat in item_stats]
