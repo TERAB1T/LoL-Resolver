@@ -102,6 +102,10 @@ class TFTItemsProcessor:
                     item_type = 'Gadgeteen'
 
                 if '{6ef5c598}' in item_tags or '{d30ba8ed}' in item_tags or '{47df912f}' in item_tags:
+
+                    if not 'tft_item_seraphsembrace' in item_ids_lower:
+                        self.radiants['TFT5_Item_BlueBuffRadiant'.lower()] = 'tft_item_bluebuff'
+
                     if item_id.lower() in self.radiants:
                         item_parent = self.radiants[item_id.lower()]
                     elif radiant_guess in item_ids_lower:
