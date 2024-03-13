@@ -16,6 +16,8 @@ class TFTItemsProcessor:
         self.items = items['items']
         self.augments = items['augments']
 
+        self.radiants = {}
+
         self.output_dict = {}
 
         if self.type == 'items':
@@ -40,9 +42,134 @@ class TFTItemsProcessor:
     def __get_string(self, string):
         return get_string(self.strings_raw, string)
     
+    def __get_radiants(self):
+        radiant_map = self.tft_data.get('{49431492}')
+
+        if radiant_map:
+            constants = radiant_map.get('mConstants', radiant_map.get(hash_fnv1a('mConstants')))
+
+            for key, value in constants.items():
+                self.radiants[value.get('mValue', value.get(hash_fnv1a('mValue')))] = key.lower()
+
+        self.radiants['TFT5_Item_LudensEchoShadow'.lower()] = 'tft_item_archangelsstaff'
+
+        self.radiants['TFT8_Item_Warmogs_GenAE'.lower()] = 'tft_item_warmogsarmor'
+        self.radiants['TFT8_Item_Shojin_GenAE'.lower()] = 'tft_item_spearofshojin'
+        self.radiants['TFT8_Item_Sunfire_GenAE'.lower()] = 'tft_item_redbuff'
+    
     def __get_items(self):
+        components = []
+
+        self.__get_radiants()
+        item_ids_lower = [id.lower() for id in self.items.keys()]
+
         for item_id, item_data in self.items.items():
-            pass
+            item_name_id = item_data.get("mDisplayNameTra", item_data.get(hash_fnv1a("mDisplayNameTra")))
+            item_name = self.__get_string(item_name_id)
+
+            item_desc_id = item_data.get("mDescriptionNameTra", item_data.get(hash_fnv1a("mDescriptionNameTra")))
+            item_desc = self.__get_string(item_desc_id)
+
+            item_icon = item_data.get("mIconPath", item_data.get(hash_fnv1a("mIconPath")))
+            item_unit = item_data.get("{f0021999}")
+            item_traits = item_data.get("AssociatedTraits", item_data.get(hash_fnv1a("AssociatedTraits")))
+
+            item_tags = item_data.get("ItemTags", item_data.get(hash_fnv1a("ItemTags")))
+            item_type = None
+            item_parent = None
+
+            radiant_guess = re.sub(r'(radiant|shadow|_genae)$', '', item_id.lower())
+            radiant_guess = re.sub(r'tft(\d+)', 'tft', radiant_guess)
+
+            if item_tags:
+                if '{5efd6ee0}' in item_tags:
+                    item_type = 'Component'
+                elif '{44ace175}' in item_tags:
+                    item_type = 'Artifact'
+                elif 'Consumable' in item_tags or hash_fnv1a('consumable') in item_tags:
+                    item_type = 'Consumable'
+                elif '{27557a09}' in item_tags:
+                    item_type = 'Support'
+                elif '{6ef5c598}' in item_tags:
+                    item_type = 'Radiant'
+                elif '{ebcd1bac}' in item_tags:
+                    item_type = 'Emblem'
+                elif '{da7e999a}' in item_tags:
+                    item_type = 'Inkshadow'
+                elif '{d30ba8ed}' in item_tags:
+                    item_type = 'Shadow'
+                elif '{47df912f}' in item_tags:
+                    item_type = 'Gadgeteen'
+
+                if '{6ef5c598}' in item_tags or '{d30ba8ed}' in item_tags or '{47df912f}' in item_tags:
+                    if item_id.lower() in self.radiants:
+                        item_parent = self.radiants[item_id.lower()]
+                    elif radiant_guess in item_ids_lower:
+                        item_parent = radiant_guess
+
+            item_recipe_raw = item_data.get("mComposition", item_data.get(hash_fnv1a("mComposition")))
+            item_recipe = []
+
+            if item_recipe_raw:
+                for component_link in item_recipe_raw:
+                    component = self.tft_data.get(component_link, self.tft_data.get(hash_fnv1a(component_link)))
+
+                    if component:
+                        component_id = component.get("mName", component.get(hash_fnv1a("mName"))).lower()
+                        item_recipe.append(component_id)
+
+                        if not component_id in components:
+                            components.append(component_id)
+
+            item_effects_raw = item_data.get("effectAmounts", item_data.get(hash_fnv1a("effectAmounts")))
+            item_effects = self.unit_props.copy()
+            item_stats = []
+
+            if item_effects_raw:
+                for effect in item_effects_raw:
+                    effect_name = effect.get("name", effect.get(hash_fnv1a("name")))
+                    effect_value = effect.get("value", effect.get(hash_fnv1a("value"), 0))
+                    effect_format = effect.get("formatString", effect.get(hash_fnv1a("formatString")))
+
+                    if effect_format:
+                        item_stat = re.sub(r'@Value', f'@{effect_name}', effect_format, flags=re.IGNORECASE)
+                        item_stats.append(item_stat)
+                    
+                    if effect_name:
+                        item_effects[effect_name.lower()] = effect_value
+
+            self.output_dict[item_id.lower()] = {
+                'id': item_id,
+                'name': item_name,
+                'desc': self.__generate_desc(item_desc, item_effects),
+                'icon': item_icon.lower()
+            }
+
+            if item_unit:
+                self.output_dict[item_id.lower()]['unit'] = item_unit.lower()
+
+            if item_traits:
+                self.output_dict[item_id.lower()]['traits'] = [self.tft_data[trait]['mName'].lower() for trait in item_traits]
+
+            if item_type:
+                self.output_dict[item_id.lower()]['type'] = item_type
+
+            if item_parent:
+                self.output_dict[item_id.lower()]['parent'] = item_parent
+
+            if len(item_recipe):
+                self.output_dict[item_id.lower()]['recipe'] = item_recipe
+
+            if len(item_stats):
+                self.output_dict[item_id.lower()]['stats'] = [self.__generate_desc(item_stat, item_effects) for item_stat in item_stats]
+
+        for component in components:
+            component_type = self.output_dict[component].get('type')
+
+            if component_type and component_type == 'Shadow':
+                self.output_dict[component]['type'] = 'Shadow Component'
+            else:
+                self.output_dict[component]['type'] = 'Component'
 
     def __get_augments(self):
         for aug_id, aug_data in self.augments.items():

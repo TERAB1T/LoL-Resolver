@@ -115,7 +115,7 @@ def generate_version_augments(input_version, output_dir):
     tft_data = get_tftmap_file(input_version)
     unit_props = filter_unit_props(tft_data)
     items = get_set_items(tft_data)
-    languages = ["ru_ru"] # cd_get_languages(input_version)
+    languages = cd_get_languages(input_version) # ["ru_ru"]
 
     if not tft_data:
         return
@@ -141,7 +141,7 @@ def get_set_items(tft_data):
             item_desc = current_item.get("mDescriptionNameTra", current_item.get(hash_fnv1a("mDescriptionNameTra")))
             item_icon = current_item.get("mIconPath", current_item.get(hash_fnv1a("mIconPath")))
 
-            if item_id and item_name and item_desc and item_icon and not 'debug' in item_id.lower():
+            if item_id and item_name and item_desc and item_icon and not 'debug' in item_id.lower() and not '_HR' in item_id and not 'empty' in item_id.lower() and not 'blankslot' in item_id.lower() and not 'admincause' in item_id.lower() and not 'tft_assist_' in item_id.lower():
                 if 'augment' in item_id.lower():
                     items['augments'][item_id] = current_item
                 else:
