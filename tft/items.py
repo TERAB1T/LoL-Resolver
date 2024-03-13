@@ -140,9 +140,6 @@ class TFTItemsProcessor:
             if item_traits:
                 self.output_dict[item_id.lower()]['traits'] = [self.tft_data[trait]['mName'].lower() for trait in item_traits]
 
-            if item_type:
-                self.output_dict[item_id.lower()]['type'] = item_type
-
             if item_parent:
                 self.output_dict[item_id.lower()]['parent'] = item_parent
 
@@ -152,6 +149,11 @@ class TFTItemsProcessor:
                 else:
                     del self.output_dict[item_id.lower()]
                     continue
+
+            if item_type:
+                self.output_dict[item_id.lower()]['type'] = item_type
+            elif len(item_recipe):
+                self.output_dict[item_id.lower()]['type'] = 'Complete'
 
             if len(item_stats):
                 self.output_dict[item_id.lower()]['stats'] = [self.__generate_desc(item_stat, item_effects) for item_stat in item_stats]
