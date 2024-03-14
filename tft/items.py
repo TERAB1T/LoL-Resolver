@@ -159,6 +159,8 @@ class TFTItemsProcessor:
                 self.output_dict[item_id.lower()]['type'] = 'Emblem'
             elif len(item_recipe):
                 self.output_dict[item_id.lower()]['type'] = 'Complete'
+            elif 'consumable' in item_id.lower():
+                self.output_dict[item_id.lower()]['type'] = 'Consumable'
 
             if len(item_stats):
                 self.output_dict[item_id.lower()]['stats'] = [self.__generate_desc(item_stat, item_effects) for item_stat in item_stats]
