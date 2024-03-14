@@ -146,12 +146,17 @@ class TFTItemsProcessor:
             if len(item_recipe):
                 if item_recipe[0] in item_ids_lower and item_recipe[1] in item_ids_lower:
                     self.output_dict[item_id.lower()]['recipe'] = item_recipe
+
+                    if not 'spatula' in item_recipe[0] and 'spatula' in item_recipe[1]:
+                        item_recipe[0], item_recipe[1] = item_recipe[1], item_recipe[0]
                 else:
                     del self.output_dict[item_id.lower()]
                     continue
 
             if item_type:
                 self.output_dict[item_id.lower()]['type'] = item_type
+            elif item_id.lower().endswith('spatulaitem'):
+                self.output_dict[item_id.lower()]['type'] = 'Emblem'
             elif len(item_recipe):
                 self.output_dict[item_id.lower()]['type'] = 'Complete'
 
