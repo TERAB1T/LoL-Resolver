@@ -158,7 +158,7 @@ class TFTItemsProcessor:
             elif item_id.lower().endswith('spatulaitem'):
                 self.output_dict[item_id.lower()]['type'] = 'Emblem'
             elif len(item_recipe):
-                self.output_dict[item_id.lower()]['type'] = 'Complete'
+                self.output_dict[item_id.lower()]['type'] = 'Completed'
             elif 'consumable' in item_id.lower():
                 self.output_dict[item_id.lower()]['type'] = 'Consumable'
 
