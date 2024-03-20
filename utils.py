@@ -164,7 +164,7 @@ def gen_handler(input_version, output_dir, alias, urls, generate_version, cache 
             version_name = version.get('name')
             last_modified = version.get('mtime')
 
-            if version_name not in redis_cache:
+            if not version_name in redis_cache or not 'last_modified' in redis_cache[version_name]:
                 redis_cache[version_name] = {
                     "last_modified": ''
                 }
@@ -190,7 +190,7 @@ def gen_handler(input_version, output_dir, alias, urls, generate_version, cache 
             version_name = version.get('name')
             last_modified = version.get('mtime')
 
-            if version_name not in redis_cache:
+            if not version_name in redis_cache or not 'last_modified' in redis_cache[version_name]:
                 redis_cache[version_name] = {
                     "last_modified": ''
                 }
@@ -210,7 +210,7 @@ def gen_handler(input_version, output_dir, alias, urls, generate_version, cache 
         else:
             print(f"Version {input_version} not found.")
     elif input_version in ['latest', 'pbe']:
-        if input_version not in redis_cache:
+        if not input_version in redis_cache or not 'status' in redis_cache[input_version] or not 'last_modified' in redis_cache[input_version]:
             redis_cache[input_version] = {
                 "status": '',
                 "last_modified": ''
