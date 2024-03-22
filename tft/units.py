@@ -29,9 +29,9 @@ class TFTUnitsProcessor:
 
         success_return = {
             'status': 1,
-            'data': self.output_dict
+            'data': dict(sorted(self.output_dict.items()))
         }
-        output_json = ujson.dumps(success_return, ensure_ascii=False, separators=(',', ':'), escape_forward_slashes=False, sort_keys=True)
+        output_json = ujson.dumps(success_return, ensure_ascii=False, separators=(',', ':'), escape_forward_slashes=False)
 
         os.makedirs(self.output_dir, exist_ok=True)
         with open(self.output_filepath, 'w', encoding='utf-8') as output_file:
@@ -45,7 +45,7 @@ class TFTUnitsProcessor:
         #if unit_id != 'Characters/TFT8_Ashe':
         #    return
 
-        #print(unit_id)
+        print(unit_id)
         
         unit_id_trimmed = unit_id.split("/")[1].lower()
 
@@ -64,6 +64,7 @@ class TFTUnitsProcessor:
            not spell_record["mSpell"].get("mDataValues"):
             return
 
+        spell_name = self.__get_string(spell_record["mSpell"]["mClientData"]["mTooltipData"]["mLocKeys"]["keyName"])
         spell_desc_main_raw = spell_record["mSpell"]["mClientData"]["mTooltipData"]["mLocKeys"]["keyTooltip"]
         spell_desc_main = self.__get_string(spell_desc_main_raw)
 
@@ -75,6 +76,8 @@ class TFTUnitsProcessor:
         spell_desc_scaling_raw = spell_record["mSpell"]["mClientData"]["mTooltipData"]["mLists"]["LevelUp"]
         scaling_levels = 1 + spell_desc_scaling_raw.get("levelCount", 3)
 
+        unit_shop_data = self.tft_data.get(root_record.get('mShopData', root_record.get(hash_fnv1a("mShopData"))))
+
         var_values = {}
 
         for data_value in spell_record["mSpell"]["mDataValues"]:
@@ -82,7 +85,7 @@ class TFTUnitsProcessor:
                 var_values[data_value["mName"].lower()] = [round(data_value["mValues"][i], 5) for i in range(5)]
                 var_values[hash_fnv1a(data_value["mName"].lower())] = var_values[data_value["mName"].lower()]
 
-        champion_stats = {
+        unit_stats = {
             0:  [100.0] * 5, # ability power
             1:  [round(root_record.get('baseArmor', 0), 5)] * 5, # armor
             2:  [round(root_record.get('baseDamage', 0) * self.ad_coef[i], 5) for i in range(5)], # attack damage
@@ -112,7 +115,7 @@ class TFTUnitsProcessor:
                 spell_calc[spell_calc_key.lower()] = []
                 for i in range(1, scaling_levels):
                     current_var_values = {key: value[i] for key, value in var_values.items()}
-                    current_unit_stats = {key: value[i] for key, value in champion_stats.items()}
+                    current_unit_stats = {key: value[i] for key, value in unit_stats.items()}
                     bin_definitions = BinDefinitions(self.strings_raw, current_var_values, spell_calc_raw, current_unit_stats, True)
 
                     parsed_bin = bin_definitions.parse_values(spell_calc_value)
@@ -137,7 +140,42 @@ class TFTUnitsProcessor:
                     spell_style[hash_fnv1a(spell_calc_key.lower())] = spell_style[spell_calc_key.lower()]
 
         spell_desc_scaling = self.__process_spell_scaling(spell_desc_scaling_raw, var_values)
-        self.output_dict[unit_id_trimmed] = self.__generate_unit_tooltip(f"{spell_desc_main}{spell_desc_scaling}", spell_calc, var_values, spell_style)
+
+        self.output_dict[unit_id_trimmed] = {
+            'id': unit_id.split("/")[1],
+            'name': self.__get_string(unit_shop_data["mDisplayNameTra"]),
+            'cost': root_record.get('tier', 0),
+            'icon': unit_shop_data.get("{dac11dd4}", "").lower(),
+            'tileSmall': unit_shop_data.get("{466dc3cc}", "").lower(),
+            'tileLarge': unit_shop_data.get("{16071366}", "").lower(),
+        }
+
+        if "{b6b01440}" in root_record:
+            self.output_dict[unit_id_trimmed]['role'] = self.__get_string(self.tft_data[root_record["{b6b01440}"]]["{5969040c}"])
+
+        self.output_dict[unit_id_trimmed]['stats'] = {
+            'health': round_number(unit_stats[11][1], 2),
+            'startingMana': round_number(root_record.get('mInitialMana', unit_data.get(hash_fnv1a('mInitialMana'), 0)), 2),
+            'maxMana': round_number(root_record["primaryAbilityResource"].get("arBase", 100), 2),
+            'attackDamage': round_number(unit_stats[2][1], 2),
+            'abilityPower': round_number(unit_stats[0][1], 2),
+            'armor': round_number(unit_stats[1][1], 2),
+            'magicResist': round_number(unit_stats[5][1], 2),
+            'attackSpeed': round_number(unit_stats[3][1], 2),
+            'range': int(unit_stats[28][1] / 180),
+        }
+
+        if "mLinkedTraits" in root_record:
+            self.output_dict[unit_id_trimmed]['traits'] = [self.tft_data[trait["TraitData"]]["mName"].lower() for trait in root_record["mLinkedTraits"]]
+
+        self.output_dict[unit_id_trimmed]['ability'] = {
+            'name': spell_name,
+            'desc': self.__generate_unit_tooltip(f"{spell_desc_main}{spell_desc_scaling}", spell_calc, var_values, spell_style),
+            'icon': unit_shop_data.get("{df0ad83b}", "").lower(),
+        }
+
+        print(self.output_dict[unit_id_trimmed])
+        print('\n----\n')
         
         #print(champion_stats)
         #print(spell_calculations)

@@ -47,7 +47,7 @@ def generate_version_units(input_version, output_dir):
     unit_ids = get_unit_ids(tft_data)
     unit_list = download_all_units(input_version, unit_ids)
 
-    languages = cd_get_languages(input_version) # ["ru_ru"]
+    languages = ["ru_ru"] # cd_get_languages(input_version)
 
     if not tft_data:
         return
@@ -81,7 +81,7 @@ def download_all_units(input_version, unit_ids):
 def download_unit(input_version, unit_id):
     unit_url = f"https://raw.communitydragon.org/{input_version}/game/{unit_id.lower()}.cdtb.bin.json"
 
-    if re.match(r'^\d+\.\d+$', str(input_version)) and normalize_game_version(input_version) < 14.2:
+    if re.match(r'^\d+\.\d+$', str(input_version)) and normalize_game_version(input_version) < 14.02:
         unit_url = f"https://raw.communitydragon.org/{input_version}/game/data/{unit_id.lower()}/{unit_id.split('/')[1].lower()}.bin.json"
 
     response = requests.get(unit_url)
