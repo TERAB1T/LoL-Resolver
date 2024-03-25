@@ -2,7 +2,7 @@ import argparse
 import os
 from lol.atlas import AtlasProcessor
 from lol.generator import generate_lol_items
-from tft.generator import generate_tft_units, generate_tft_items, generate_tft_augments
+from tft.generator import generate_tft_units, generate_tft_traits, generate_tft_items, generate_tft_augments
 
 def main():
     arg_parser = argparse.ArgumentParser()
@@ -15,6 +15,11 @@ def main():
     parser_items.add_argument("--icons", action=argparse.BooleanOptionalAction, default=False, help="Determines whether to generate item icons.")
 
     parser_items = subparsers.add_parser("tft-units", help="Generates Teamfight Tactics units.")
+    parser_items.add_argument("-v", "--version", nargs='+', metavar="VERSION", default="pbe", help="Version of the game (currently supported: latest/pbe/all).")
+    parser_items.add_argument("-o", "--output", metavar="PATH", default="export", help="Defines the output path.")
+    parser_items.add_argument("--cache", action=argparse.BooleanOptionalAction, default=False, help="Determines whether the Redis cache should be used.")
+
+    parser_items = subparsers.add_parser("tft-traits", help="Generates Teamfight Tactics traits.")
     parser_items.add_argument("-v", "--version", nargs='+', metavar="VERSION", default="pbe", help="Version of the game (currently supported: latest/pbe/all).")
     parser_items.add_argument("-o", "--output", metavar="PATH", default="export", help="Defines the output path.")
     parser_items.add_argument("--cache", action=argparse.BooleanOptionalAction, default=False, help="Determines whether the Redis cache should be used.")
@@ -44,6 +49,11 @@ def main():
         output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), args.output)
         for version in args.version:
             generate_tft_units(version, output_dir, args.cache)
+
+    elif args.cmd == "tft-traits":
+        output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), args.output)
+        for version in args.version:
+            generate_tft_traits(version, output_dir, args.cache)
 
     elif args.cmd == "tft-items":
         output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), args.output)
