@@ -45,63 +45,70 @@ class TFTUnitsProcessor:
         #if unit_id != 'Characters/TFT8_Ashe':
         #    return
 
-        print(unit_id)
+        # print(unit_id)
         
         unit_id_trimmed = unit_id.split("/")[1].lower()
 
         root_record_path = f'{unit_id}/CharacterRecords/Root'
-        root_record = unit_data.get(root_record_path, unit_data.get(hash_fnv1a(root_record_path)))
-        if not root_record or not root_record.get("spellNames"):
+        root_record = getf(unit_data, root_record_path)
+        if not root_record:
             return
 
-        spell_record_path = f'{unit_id}/Spells/{root_record["spellNames"][0]}'
-        spell_record = unit_data.get(spell_record_path, unit_data.get(hash_fnv1a(spell_record_path)))
-
-        if not spell_record or not spell_record.get("mSpell") or\
-           not spell_record["mSpell"].get("mClientData") or\
-           not spell_record["mSpell"]["mClientData"].get("mTooltipData") or\
-           not spell_record["mSpell"]["mClientData"]["mTooltipData"].get("mLocKeys") or\
-           not spell_record["mSpell"].get("mDataValues"):
+        spell_names = getf(root_record, "spellNames")
+        if not spell_names:
             return
 
-        spell_name = self.__get_string(spell_record["mSpell"]["mClientData"]["mTooltipData"]["mLocKeys"]["keyName"])
-        spell_desc_main_raw = spell_record["mSpell"]["mClientData"]["mTooltipData"]["mLocKeys"]["keyTooltip"]
-        spell_desc_main = self.__get_string(spell_desc_main_raw)
+        spell_record_path = f'{unit_id}/Spells/{spell_names[0]}'
+        spell_record = getf(unit_data, spell_record_path, {})
+        
+        m_spell = getf(spell_record, "mSpell", {})
+        m_client_data = getf(m_spell, "mClientData", {})
+        m_tooltip_data = getf(m_client_data, "mTooltipData", {})
+        m_loc_keys = getf(m_tooltip_data, "mLocKeys")
+        m_lists = getf(m_tooltip_data, "mLists")
+        m_data_values = getf(m_spell, "mDataValues")
+        m_spell_calc = getf(m_spell, "mSpellCalculations")
+        m_shop_data = getf(root_record, "mShopData")
+
+        if not m_loc_keys or not m_data_values:
+            return
+
+        spell_name = self.__get_string(getf(m_loc_keys, "keyName"))
+        spell_desc_main = self.__get_string(getf(m_loc_keys, "keyTooltip"))
 
         if 'TFT10_Headliner_TRA@' in spell_desc_main:
             headliner_id = f'tft10_headliner_{unit_id_trimmed}'
-            spell_desc_main = str_ireplace('@TFTUnitProperty.:TFT10_Headliner_TRA@', self.__get_string(headliner_id), spell_desc_main)
-            spell_desc_main = str_ireplace('@TFTUnitProperty.unit:TFT10_Headliner_TRA@', self.__get_string(headliner_id), spell_desc_main)
+            spell_desc_main = re.sub(r'@TFTUnitProperty\.[a-z]*:TFT10_Headliner_TRA@', self.__get_string(headliner_id), spell_desc_main, flags=re.IGNORECASE)
 
-        spell_desc_scaling_raw = spell_record["mSpell"]["mClientData"]["mTooltipData"]["mLists"]["LevelUp"]
-        scaling_levels = 1 + spell_desc_scaling_raw.get("levelCount", 3)
+        spell_desc_scaling_raw = getf(m_lists, "LevelUp")
+        scaling_levels = 1 + getf(spell_desc_scaling_raw, "levelCount", 3)
 
-        unit_shop_data = self.tft_data.get(root_record.get('mShopData', root_record.get(hash_fnv1a("mShopData"))))
+        unit_shop_data = getf(self.tft_data, m_shop_data)
 
         var_values = {}
 
-        for data_value in spell_record["mSpell"]["mDataValues"]:
-            if data_value.get("mName") and data_value.get("mValues"):
-                var_values[data_value["mName"].lower()] = [round(data_value["mValues"][i], 5) for i in range(5)]
-                var_values[hash_fnv1a(data_value["mName"].lower())] = var_values[data_value["mName"].lower()]
+        for data_value in m_data_values:
+            m_name = getf(data_value, "mName")
+            m_values = getf(data_value, "mValues")
+
+            if m_name and m_values:
+                var_values[m_name.lower()] = [round(m_values[i], 5) for i in range(5)]
+                var_values[hash_fnv1a(m_name.lower())] = var_values[m_name.lower()]
 
         unit_stats = {
             0:  [100.0] * 5, # ability power
-            1:  [round(root_record.get('baseArmor', 0), 5)] * 5, # armor
-            2:  [round(root_record.get('baseDamage', 0) * self.ad_coef[i], 5) for i in range(5)], # attack damage
-            3:  [round(root_record.get('attackSpeed', 0), 5)] * 5, # attack speed
-            5:  [round(root_record.get('baseSpellBlock', 0), 5)] * 5, # magic resistance
-            6:  [round(root_record.get('baseMoveSpeed', 0), 5)] * 5, # move speed
-            7:  [round(root_record.get('baseCritChance', 0), 5)] * 5, # crit chance
-            8:  [round(root_record.get('critDamageMultiplier', 0), 5)] * 5, # crit damage
-            11: [round(root_record.get('baseHP', 0) * self.hp_coef[i], 5) for i in range(5)], # max health
-            28: [round(root_record.get('attackRange', 0), 5)] * 5, # attack range
+            1:  [round(getf(root_record, 'baseArmor', 0), 5)] * 5, # armor
+            2:  [round(getf(root_record, 'baseDamage', 0) * self.ad_coef[i], 5) for i in range(5)], # attack damage
+            3:  [round(getf(root_record, 'attackSpeed', 0), 5)] * 5, # attack speed
+            5:  [round(getf(root_record, 'baseSpellBlock', 0), 5)] * 5, # magic resistance
+            6:  [round(getf(root_record, 'baseMoveSpeed', 0), 5)] * 5, # move speed
+            7:  [round(getf(root_record, 'baseCritChance', 0), 5)] * 5, # crit chance
+            8:  [round(getf(root_record, 'critDamageMultiplier', 0), 5)] * 5, # crit damage
+            11: [round(getf(root_record, 'baseHP', 0) * self.hp_coef[i], 5) for i in range(5)], # max health
+            28: [round(getf(root_record, 'attackRange', 0), 5)] * 5, # attack range
             33: [1] * 5, # dodge chance
         }
 
-        spell_calc_raw = spell_record["mSpell"].get("mSpellCalculations")
-        if not spell_calc_raw:
-            spell_calc_raw = spell_record["mSpell"].get(hash_fnv1a("mSpellCalculations"))
         spell_calc = {}
         spell_style = {}
 
@@ -110,13 +117,14 @@ class TFTUnitsProcessor:
 
         spell_calc.update(self.unit_properties)
 
-        if spell_calc_raw:
-            for spell_calc_key, spell_calc_value in spell_calc_raw.items():
+        if m_spell_calc:
+            for spell_calc_key, spell_calc_value in m_spell_calc.items():
                 spell_calc[spell_calc_key.lower()] = []
+
                 for i in range(1, scaling_levels):
                     current_var_values = {key: value[i] for key, value in var_values.items()}
                     current_unit_stats = {key: value[i] for key, value in unit_stats.items()}
-                    bin_definitions = BinDefinitions(self.strings_raw, current_var_values, spell_calc_raw, current_unit_stats, True)
+                    bin_definitions = BinDefinitions(self.strings_raw, current_var_values, m_spell_calc, current_unit_stats, True)
 
                     parsed_bin = bin_definitions.parse_values(spell_calc_value)
 
@@ -132,8 +140,8 @@ class TFTUnitsProcessor:
                         calculated_value = parsed_bin
 
                     spell_calc[spell_calc_key.lower()].append(calculated_value if not isinstance(calculated_value, (int, float)) and '%' in calculated_value else float(calculated_value))
-                spell_calc[spell_calc_key.lower()] = self.__process_value_array(spell_calc[spell_calc_key.lower()])
 
+                spell_calc[spell_calc_key.lower()] = self.__process_value_array(spell_calc[spell_calc_key.lower()])
                 spell_calc[hash_fnv1a(spell_calc_key.lower())] = spell_calc[spell_calc_key.lower()]
 
                 if spell_calc_key.lower() in spell_style:
@@ -143,39 +151,59 @@ class TFTUnitsProcessor:
 
         self.output_dict[unit_id_trimmed] = {
             'id': unit_id.split("/")[1],
-            'name': self.__get_string(unit_shop_data["mDisplayNameTra"]),
-            'cost': root_record.get('tier', 0),
-            'icon': unit_shop_data.get("{dac11dd4}", "").lower(),
-            'tileSmall': unit_shop_data.get("{466dc3cc}", "").lower(),
-            'tileLarge': unit_shop_data.get("{16071366}", "").lower(),
+            'name': self.__get_string(getf(unit_shop_data, "mDisplayNameTra")),
+            'cost': getf(root_record, 'tier', 0),
+            'traits': []
         }
+
+        if "{dac11dd4}" in unit_shop_data:
+            self.output_dict[unit_id_trimmed]['icon'] = unit_shop_data.get("{dac11dd4}").lower()
+        elif getf(root_record, 'PortraitIcon'):
+            self.output_dict[unit_id_trimmed]['icon'] = getf(root_record, 'PortraitIcon').lower()
+
+        if "{466dc3cc}" in unit_shop_data:
+            self.output_dict[unit_id_trimmed]['tileSmall'] = unit_shop_data.get("{466dc3cc}").lower()
+        elif getf(unit_shop_data, 'mIconPath'):
+            self.output_dict[unit_id_trimmed]['tileSmall'] = getf(unit_shop_data, 'mIconPath').lower()
+
+        if "{16071366}" in unit_shop_data:
+            self.output_dict[unit_id_trimmed]['tileLarge'] = unit_shop_data.get("{16071366}").lower()
+        elif getf(unit_shop_data, 'mMobileIconPath'):
+            self.output_dict[unit_id_trimmed]['tileLarge'] = getf(unit_shop_data, 'mMobileIconPath').lower()
 
         if "{b6b01440}" in root_record:
             self.output_dict[unit_id_trimmed]['role'] = self.__get_string(self.tft_data[root_record["{b6b01440}"]]["{5969040c}"])
 
         self.output_dict[unit_id_trimmed]['stats'] = {
             'health': round_number(unit_stats[11][1], 2),
-            'startingMana': round_number(root_record.get('mInitialMana', unit_data.get(hash_fnv1a('mInitialMana'), 0)), 2),
-            'maxMana': round_number(root_record["primaryAbilityResource"].get("arBase", 100), 2),
+            'startingMana': round_number(getf(root_record, 'mInitialMana', 0), 2),
+            'maxMana': round_number(getf(getf(root_record, "primaryAbilityResource", {}), "arBase", 100), 2),
             'attackDamage': round_number(unit_stats[2][1], 2),
             'abilityPower': round_number(unit_stats[0][1], 2),
             'armor': round_number(unit_stats[1][1], 2),
             'magicResist': round_number(unit_stats[5][1], 2),
             'attackSpeed': round_number(unit_stats[3][1], 2),
-            'range': int(unit_stats[28][1] / 180),
+            'range': int(unit_stats[28][1] / 180)
         }
 
-        if "mLinkedTraits" in root_record:
-            self.output_dict[unit_id_trimmed]['traits'] = [self.tft_data[trait["TraitData"]]["mName"].lower() for trait in root_record["mLinkedTraits"]]
+        m_linked_traits = getf(root_record, 'mLinkedTraits', [])
+        for trait in m_linked_traits:
+            trait_link = getf(trait, "TraitData")
+            trait_data = getf(self.tft_data, trait_link, {})
+            trait_id = getf(trait_data, "mName")
+
+            if trait_id:
+                self.output_dict[unit_id_trimmed]['traits'].append(trait_id.lower())
 
         self.output_dict[unit_id_trimmed]['ability'] = {
             'name': spell_name,
-            'desc': self.__generate_unit_tooltip(f"{spell_desc_main}{spell_desc_scaling}", spell_calc, var_values, spell_style),
-            'icon': unit_shop_data.get("{df0ad83b}", "").lower(),
+            'desc': self.__generate_unit_tooltip(f"{spell_desc_main}{spell_desc_scaling}", spell_calc, var_values, spell_style)
         }
 
-        print(self.output_dict[unit_id_trimmed])
-        print('\n----\n')
+        if "{df0ad83b}" in unit_shop_data:
+            self.output_dict[unit_id_trimmed]['ability']['icon'] = unit_shop_data.get("{df0ad83b}").lower()
+        elif getf(unit_shop_data, 'mPortraitIconPath'):
+            self.output_dict[unit_id_trimmed]['ability']['icon'] = getf(unit_shop_data, 'mPortraitIconPath').lower()
         
         #print(champion_stats)
         #print(spell_calculations)
