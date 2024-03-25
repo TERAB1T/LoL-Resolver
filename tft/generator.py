@@ -85,7 +85,10 @@ def download_unit(input_version, unit_id):
         unit_url = f"https://raw.communitydragon.org/{input_version}/game/data/{unit_id.lower()}/{unit_id.split('/')[1].lower()}.bin.json"
 
     response = requests.get(unit_url)
-    return (unit_id, ujson.loads(response.content))
+    if response.status_code == 200:
+        return (unit_id, ujson.loads(response.content))
+    else:
+        return (unit_id, {})
 
 def generate_tft_units(input_version, output_dir, cache = False):
     alias = 'tft-units'

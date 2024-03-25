@@ -45,7 +45,7 @@ class TFTUnitsProcessor:
         #if unit_id != 'Characters/TFT8_Ashe':
         #    return
 
-        # print(unit_id)
+        #print(unit_id)
         
         unit_id_trimmed = unit_id.split("/")[1].lower()
 
@@ -65,12 +65,13 @@ class TFTUnitsProcessor:
         m_client_data = getf(m_spell, "mClientData", {})
         m_tooltip_data = getf(m_client_data, "mTooltipData", {})
         m_loc_keys = getf(m_tooltip_data, "mLocKeys")
-        m_lists = getf(m_tooltip_data, "mLists")
+        m_lists = getf(m_tooltip_data, "mLists", {})
         m_data_values = getf(m_spell, "mDataValues")
         m_spell_calc = getf(m_spell, "mSpellCalculations")
         m_shop_data = getf(root_record, "mShopData")
+        unit_shop_data = getf(self.tft_data, m_shop_data)
 
-        if not m_loc_keys or not m_data_values:
+        if not m_loc_keys or not m_data_values or not m_shop_data:
             return
 
         spell_name = self.__get_string(getf(m_loc_keys, "keyName"))
@@ -80,10 +81,8 @@ class TFTUnitsProcessor:
             headliner_id = f'tft10_headliner_{unit_id_trimmed}'
             spell_desc_main = re.sub(r'@TFTUnitProperty\.[a-z]*:TFT10_Headliner_TRA@', self.__get_string(headliner_id), spell_desc_main, flags=re.IGNORECASE)
 
-        spell_desc_scaling_raw = getf(m_lists, "LevelUp")
+        spell_desc_scaling_raw = getf(m_lists, "LevelUp", {})
         scaling_levels = 1 + getf(spell_desc_scaling_raw, "levelCount", 3)
-
-        unit_shop_data = getf(self.tft_data, m_shop_data)
 
         var_values = {}
 
@@ -157,19 +156,19 @@ class TFTUnitsProcessor:
         }
 
         if "{dac11dd4}" in unit_shop_data:
-            self.output_dict[unit_id_trimmed]['icon'] = unit_shop_data.get("{dac11dd4}").lower()
+            self.output_dict[unit_id_trimmed]['icon'] = image_to_png(unit_shop_data.get("{dac11dd4}").lower())
         elif getf(root_record, 'PortraitIcon'):
-            self.output_dict[unit_id_trimmed]['icon'] = getf(root_record, 'PortraitIcon').lower()
+            self.output_dict[unit_id_trimmed]['icon'] = image_to_png(getf(root_record, 'PortraitIcon').lower())
 
         if "{466dc3cc}" in unit_shop_data:
-            self.output_dict[unit_id_trimmed]['tileSmall'] = unit_shop_data.get("{466dc3cc}").lower()
+            self.output_dict[unit_id_trimmed]['splashSmall'] = image_to_png(unit_shop_data.get("{466dc3cc}").lower())
         elif getf(unit_shop_data, 'mIconPath'):
-            self.output_dict[unit_id_trimmed]['tileSmall'] = getf(unit_shop_data, 'mIconPath').lower()
+            self.output_dict[unit_id_trimmed]['splashSmall'] = image_to_png(getf(unit_shop_data, 'mIconPath').lower())
 
         if "{16071366}" in unit_shop_data:
-            self.output_dict[unit_id_trimmed]['tileLarge'] = unit_shop_data.get("{16071366}").lower()
+            self.output_dict[unit_id_trimmed]['splashLarge'] = image_to_png(unit_shop_data.get("{16071366}").lower())
         elif getf(unit_shop_data, 'mMobileIconPath'):
-            self.output_dict[unit_id_trimmed]['tileLarge'] = getf(unit_shop_data, 'mMobileIconPath').lower()
+            self.output_dict[unit_id_trimmed]['splashLarge'] = image_to_png(getf(unit_shop_data, 'mMobileIconPath').lower())
 
         if "{b6b01440}" in root_record:
             self.output_dict[unit_id_trimmed]['role'] = self.__get_string(self.tft_data[root_record["{b6b01440}"]]["{5969040c}"])
@@ -201,9 +200,9 @@ class TFTUnitsProcessor:
         }
 
         if "{df0ad83b}" in unit_shop_data:
-            self.output_dict[unit_id_trimmed]['ability']['icon'] = unit_shop_data.get("{df0ad83b}").lower()
+            self.output_dict[unit_id_trimmed]['ability']['icon'] = image_to_png(unit_shop_data.get("{df0ad83b}").lower())
         elif getf(unit_shop_data, 'mPortraitIconPath'):
-            self.output_dict[unit_id_trimmed]['ability']['icon'] = getf(unit_shop_data, 'mPortraitIconPath').lower()
+            self.output_dict[unit_id_trimmed]['ability']['icon'] = image_to_png(getf(unit_shop_data, 'mPortraitIconPath').lower())
         
         #print(champion_stats)
         #print(spell_calculations)
