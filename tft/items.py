@@ -33,9 +33,9 @@ class TFTItemsProcessor:
 
         success_return = {
             'status': 1,
-            'data': self.output_dict
+            'data': dict(sorted(self.output_dict.items()))
         }
-        output_json = ujson.dumps(success_return, ensure_ascii=False, separators=(',', ':'), escape_forward_slashes=False, sort_keys=True)
+        output_json = ujson.dumps(success_return, ensure_ascii=False, separators=(',', ':'), escape_forward_slashes=False)
 
         os.makedirs(self.output_dir, exist_ok=True)
         with open(self.output_filepath, 'w', encoding='utf-8') as output_file:
@@ -49,17 +49,17 @@ class TFTItemsProcessor:
         item_ids_lower = [id.lower() for id in self.items.keys()]
 
         for item_id, item_data in self.items.items():
-            item_name_id = item_data.get("mDisplayNameTra", item_data.get(hash_fnv1a("mDisplayNameTra")))
+            item_name_id = getf(item_data, "mDisplayNameTra")
             item_name = self.__get_string(item_name_id)
 
-            item_desc_id = item_data.get("mDescriptionNameTra", item_data.get(hash_fnv1a("mDescriptionNameTra")))
+            item_desc_id = getf(item_data, "mDescriptionNameTra")
             item_desc = self.__get_string(item_desc_id)
 
-            item_icon = item_data.get("mIconPath", item_data.get(hash_fnv1a("mIconPath")))
+            item_icon = getf(item_data, "mIconPath")
             item_unit = item_data.get("{f0021999}")
-            item_traits = item_data.get("AssociatedTraits", item_data.get(hash_fnv1a("AssociatedTraits")))
+            item_traits = getf(item_data, "AssociatedTraits")
 
-            item_tags = item_data.get("ItemTags", item_data.get(hash_fnv1a("ItemTags")))
+            item_tags = getf(item_data, "ItemTags")
             item_type = None
             item_parent = None
 
@@ -96,29 +96,29 @@ class TFTItemsProcessor:
                     elif radiant_guess in item_ids_lower:
                         item_parent = radiant_guess
 
-            item_recipe_raw = item_data.get("mComposition", item_data.get(hash_fnv1a("mComposition")))
+            item_recipe_raw = getf(item_data, "mComposition")
             item_recipe = []
 
             if item_recipe_raw:
                 for component_link in item_recipe_raw:
-                    component = self.tft_data.get(component_link, self.tft_data.get(hash_fnv1a(component_link)))
+                    component = getf(self.tft_data, component_link)
 
                     if component:
-                        component_id = component.get("mName", component.get(hash_fnv1a("mName"))).lower()
+                        component_id = getf(component, "mName").lower()
                         item_recipe.append(component_id)
 
                         if not component_id in components and component_id in item_ids_lower:
                             components.append(component_id)
 
-            item_effects_raw = item_data.get("effectAmounts", item_data.get(hash_fnv1a("effectAmounts")))
+            item_effects_raw = getf(item_data, "effectAmounts")
             item_effects = self.unit_props.copy()
             item_stats = []
 
             if item_effects_raw:
                 for effect in item_effects_raw:
-                    effect_name = effect.get("name", effect.get(hash_fnv1a("name")))
-                    effect_value = effect.get("value", effect.get(hash_fnv1a("value"), 0))
-                    effect_format = effect.get("formatString", effect.get(hash_fnv1a("formatString")))
+                    effect_name = getf(effect, "name")
+                    effect_value = getf(effect, "value", 0)
+                    effect_format = getf(effect, "formatString")
 
                     if effect_format:
                         item_stat = re.sub(r'@Value', f'@{effect_name}', effect_format, flags=re.IGNORECASE)
@@ -131,7 +131,7 @@ class TFTItemsProcessor:
                 'id': item_id,
                 'name': item_name,
                 'desc': self.__generate_desc(item_desc, item_effects),
-                'icon': item_icon.lower()
+                'icon': image_to_png(item_icon.lower())
             }
 
             if item_unit:
@@ -175,19 +175,19 @@ class TFTItemsProcessor:
 
     def __get_augments(self):
         for aug_id, aug_data in self.augments.items():
-            aug_name_id = aug_data.get("mDisplayNameTra", aug_data.get(hash_fnv1a("mDisplayNameTra")))
+            aug_name_id = getf(aug_data, "mDisplayNameTra")
             aug_name = self.__get_string(aug_name_id)
 
-            aug_desc_id = aug_data.get("mDescriptionNameTra", aug_data.get(hash_fnv1a("mDescriptionNameTra")))
+            aug_desc_id = getf(aug_data, "mDescriptionNameTra")
             aug_desc = self.__get_string(aug_desc_id)
 
-            aug_icon = aug_data.get("mIconPath", aug_data.get(hash_fnv1a("mIconPath")))
+            aug_icon = getf(aug_data, "mIconPath")
             aug_icon_large = aug_data.get("{d434d358}", aug_icon)
 
             aug_unit = aug_data.get("{f0021999}")
-            aug_traits = aug_data.get("AssociatedTraits", aug_data.get(hash_fnv1a("AssociatedTraits")))
+            aug_traits = getf(aug_data, "AssociatedTraits")
 
-            aug_tags = aug_data.get("ItemTags", aug_data.get(hash_fnv1a("ItemTags")))
+            aug_tags = getf(aug_data, "ItemTags")
             aug_tier = -1
 
             if aug_tags:
@@ -198,13 +198,13 @@ class TFTItemsProcessor:
                 elif '{cf1fd3af}' in aug_tags:
                     aug_tier = 3
 
-            aug_effects_raw = aug_data.get("effectAmounts", aug_data.get(hash_fnv1a("effectAmounts")))
+            aug_effects_raw = getf(aug_data, "effectAmounts")
             aug_effects = self.unit_props.copy()
 
             if aug_effects_raw:
                 for effect in aug_effects_raw:
-                    effect_name = effect.get("name", effect.get(hash_fnv1a("name")))
-                    effect_value = effect.get("value", effect.get(hash_fnv1a("value"), 0))
+                    effect_name = getf(effect, "name")
+                    effect_value = getf(effect, "value", 0)
 
                     if effect_name:
                         aug_effects[effect_name.lower()] = effect_value
@@ -213,8 +213,8 @@ class TFTItemsProcessor:
                 'id': aug_id,
                 'name': aug_name,
                 'desc': self.__generate_desc(aug_desc, aug_effects),
-                'icon': aug_icon.lower(),
-                'iconLarge': aug_icon_large.lower(),
+                'icon': image_to_png(aug_icon.lower()),
+                'iconLarge': image_to_png(aug_icon_large.lower()),
                 'tier': aug_tier
             }
 
