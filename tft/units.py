@@ -69,10 +69,10 @@ class TFTUnitsProcessor:
         m_data_values = getf(m_spell, "mDataValues")
         m_spell_calc = getf(m_spell, "mSpellCalculations")
         m_shop_data = getf(root_record, "mShopData")
-        unit_shop_data = getf(self.tft_data, m_shop_data)
-
         if not m_loc_keys or not m_data_values or not m_shop_data:
             return
+        
+        unit_shop_data = getf(self.tft_data, m_shop_data)
 
         spell_name = self.__get_string(getf(m_loc_keys, "keyName"))
         spell_desc_main = self.__get_string(getf(m_loc_keys, "keyTooltip"))
