@@ -100,7 +100,7 @@ class TFTTraitsProcessor:
                 self.output_dict[trait_id.lower()]['units'] = self.trait_units[trait_id.lower()]
 
     def __prepare_desc(self, trait_desc, effects_main, effects_bonus, breakpoints):
-        trait_desc = re.sub(r'<expandrow>(.*?)<\/expandrow>', f"<row>{'</row><br><row>'.join(['\\1'] * len(effects_bonus))}</row>", trait_desc, flags=re.IGNORECASE)
+        trait_desc = re.sub(r'<expandrow>(.*?)<\/expandrow>', '<row>' + '</row><br><row>'.join(['\\1'] * len(effects_bonus)) + '</row>', trait_desc, flags=re.IGNORECASE)
         count = 0
 
         def replace_callback(matches):
