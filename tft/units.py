@@ -42,7 +42,7 @@ class TFTUnitsProcessor:
         return get_string(self.strings_raw, string)
     
     def __get_unit(self, unit_id, unit_data):
-        #if unit_id != 'Characters/TFT8_Ashe':
+        #if unit_id != 'Characters/TFT6_Jayce':
         #    return
 
         #print(unit_id)
@@ -53,11 +53,11 @@ class TFTUnitsProcessor:
         root_record = getf(unit_data, root_record_path)
         if not root_record:
             return
-
+        
         spell_names = getf(root_record, "spellNames")
         if not spell_names:
             return
-
+        
         spell_record_path = f'{unit_id}/Spells/{spell_names[0]}'
         spell_record = getf(unit_data, spell_record_path, {})
         
@@ -66,10 +66,11 @@ class TFTUnitsProcessor:
         m_tooltip_data = getf(m_client_data, "mTooltipData", {})
         m_loc_keys = getf(m_tooltip_data, "mLocKeys")
         m_lists = getf(m_tooltip_data, "mLists", {})
-        m_data_values = getf(m_spell, "mDataValues")
+        m_data_values = getf(m_spell, "mDataValues", [])
         m_spell_calc = getf(m_spell, "mSpellCalculations")
         m_shop_data = getf(root_record, "mShopData")
-        if not m_loc_keys or not m_data_values or not m_shop_data:
+        
+        if not m_loc_keys or not m_shop_data:
             return
         
         unit_shop_data = getf(self.tft_data, m_shop_data)

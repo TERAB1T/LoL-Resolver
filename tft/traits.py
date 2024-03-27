@@ -41,6 +41,9 @@ class TFTTraitsProcessor:
             #    continue
             #print(trait_id + '\n')
 
+            if not trait_id.lower() in self.trait_units and trait_id != 'TFT11_Exalted':
+                continue
+
             trait_name_id = getf(trait_data, "mDisplayNameTra")
             trait_name = self.__get_string(trait_name_id)
 
