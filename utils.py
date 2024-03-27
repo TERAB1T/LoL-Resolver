@@ -21,6 +21,9 @@ def hash_fnv1a(key):
 
     return '{' + f"{hash_value:08x}" + '}'
 
+def image_to_png(url):
+    return re.sub(r'\.(tex|dds)', '.png', url, flags=re.IGNORECASE)
+
 def cd_get_languages(version):
     url = f"https://raw.communitydragon.org/json/{version}/game/"
     response = requests.get(url)
@@ -140,6 +143,9 @@ def normalize_game_version(version):
         return str_version
 
     return round_number(float(re.sub(r'\.(\d)$', r'.0\1', str_version)), 2)
+
+def getf(dict, val, default=None):
+        return dict.get(val, dict.get(hash_fnv1a(val), default))
 
 def gen_handler(input_version, output_dir, alias, urls, generate_version, cache = False, atlas = False):
     from lol.atlas import AtlasProcessor

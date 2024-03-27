@@ -137,7 +137,7 @@ class BinDefinitions:
     
     def __NamedDataValueCalculationPart(self, current_block, key=0):
         if self.needs_calculation:
-            return self.var_values[current_block["mDataValue"].lower()]
+            return getf(self.var_values, current_block["mDataValue"].lower(), 0)
         
         formula_part_style_key = "tooltip_statsuidata_formulapartstyle" if key == 0 else "tooltip_statsuidata_formulapartstylebonus"
         return_value = self.__get_string(formula_part_style_key)

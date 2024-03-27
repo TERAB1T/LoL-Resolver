@@ -3,6 +3,7 @@ from concurrent.futures import ThreadPoolExecutor
 import re
 import ujson
 from tft.units import TFTUnitsProcessor
+from tft.traits import TFTTraitsProcessor
 from tft.items import TFTItemsProcessor
 from utils import *
 
@@ -37,20 +38,19 @@ def filter_unit_props(tft_data):
 
     return unit_props
 
-
 ### UNITS ###
     
 def generate_version_units(input_version, output_dir):
     print(f"TFT Units: generating version {input_version}...")
     tft_data = get_tftmap_file(input_version)
+    if not tft_data:
+        return
+    
     unit_props = filter_unit_props(tft_data)
     unit_ids = get_unit_ids(tft_data)
     unit_list = download_all_units(input_version, unit_ids)
 
-    languages = cd_get_languages(input_version) # ["ru_ru"]
-
-    if not tft_data:
-        return
+    languages = ["ru_ru"] # cd_get_languages(input_version)
 
     for lang in languages:
         print(f"  {lang}")
@@ -81,29 +81,111 @@ def download_all_units(input_version, unit_ids):
 def download_unit(input_version, unit_id):
     unit_url = f"https://raw.communitydragon.org/{input_version}/game/{unit_id.lower()}.cdtb.bin.json"
 
-    if re.match(r'^\d+\.\d+$', str(input_version)) and normalize_game_version(input_version) < 14.2:
+    if re.match(r'^\d+\.\d+$', str(input_version)) and normalize_game_version(input_version) < 14.02:
         unit_url = f"https://raw.communitydragon.org/{input_version}/game/data/{unit_id.lower()}/{unit_id.split('/')[1].lower()}.bin.json"
 
     response = requests.get(unit_url)
-    return (unit_id, ujson.loads(response.content))
+    if response.status_code == 200:
+        return (unit_id, ujson.loads(response.content))
+    else:
+        return (unit_id, {})
 
 def generate_tft_units(input_version, output_dir, cache = False):
     alias = 'tft-units'
     urls = ["data/maps/shipping/map22/map22.bin.json"]
     gen_handler(input_version, output_dir, alias, urls, generate_version_units, cache)
 
+### TRAITS ###
+
+def generate_version_traits(input_version, output_dir):
+    print(f"TFT Traits: generating version {input_version}...")
+    tft_data = get_tftmap_file(input_version)
+    if not tft_data:
+        return
+    
+    unit_props = filter_unit_props(tft_data)
+    trait_units = get_trait_units(tft_data, download_all_units(input_version, get_unit_ids(tft_data)))
+    trait_list = get_set_traits(tft_data)
+
+    languages = ["ru_ru"] # cd_get_languages(input_version)
+
+    for lang in languages:
+        print(f"  {lang}")
+        strings = cd_get_strings_file(input_version, lang)
+        processor = TFTTraitsProcessor(input_version, output_dir, lang, tft_data, trait_list, trait_units, unit_props, strings)
+
+def get_trait_units(tft_data, unit_list):
+    trait_units = {}
+
+    for unit_id, unit_data in unit_list.items():
+        unit_id_trimmed = unit_id.split("/")[1].lower()
+
+        root_record_path = f'{unit_id}/CharacterRecords/Root'
+        root_record = getf(unit_data, root_record_path)
+        if not root_record:
+            continue
+
+        m_linked_traits = getf(root_record, 'mLinkedTraits')
+        if not m_linked_traits:
+            continue
+
+        unit_tier = getf(root_record, 'tier', 999)
+
+        for trait in m_linked_traits:
+            trait_link = getf(trait, "TraitData")
+            trait_data = getf(tft_data, trait_link, {})
+            trait_id = getf(trait_data, "mName")
+
+            if trait_id:
+                trait_id = trait_id.lower()
+
+                if trait_id not in trait_units:
+                    trait_units[trait_id] = {}
+
+                if unit_id_trimmed not in trait_units[trait_id]:
+                    trait_units[trait_id][unit_id_trimmed] = unit_tier
+
+    for trait_id, trait_data in trait_units.items():
+        trait_units[trait_id] = [key for key, _ in sorted(trait_data.items(), key=lambda x: (x[1], x[0]))]
+
+    return trait_units
+
+def get_set_traits(tft_data):
+    set_root = get_set_root(tft_data)
+    traits = {}
+
+    trait_lists = getf(set_root, "TraitLists", [getf(set_root, "traitList")])
+
+    for trait_list in trait_lists:
+        for trait_link in getf(tft_data[trait_list], "mTraits", []):
+            current_trait = tft_data[trait_link]
+
+            trait_id =   getf(current_trait, "mName")
+            trait_name = getf(current_trait, "mDisplayNameTra")
+            trait_desc = getf(current_trait, "mDescriptionNameTra")
+            trait_icon = getf(current_trait, "mIconPath")
+
+            if trait_id and trait_name and trait_desc and trait_icon:
+                traits[trait_id] = current_trait
+
+    return traits
+
+def generate_tft_traits(input_version, output_dir, cache = False):
+    alias = 'tft-traits'
+    urls = ["data/maps/shipping/map22/map22.bin.json"]
+    gen_handler(input_version, output_dir, alias, urls, generate_version_traits, cache)
 
 ### ITEMS / AUGMENTS ###
     
 def generate_version_items(input_version, output_dir):
     print(f"TFT Items: generating version {input_version}...")
     tft_data = get_tftmap_file(input_version)
+    if not tft_data:
+        return
+    
     unit_props = filter_unit_props(tft_data)
     items = get_set_items(tft_data)
     languages = cd_get_languages(input_version) # ["ru_ru"]
-
-    if not tft_data:
-        return
 
     for lang in languages:
         print(f"  {lang}")
@@ -113,12 +195,12 @@ def generate_version_items(input_version, output_dir):
 def generate_version_augments(input_version, output_dir):
     print(f"TFT Augments: generating version {input_version}...")
     tft_data = get_tftmap_file(input_version)
+    if not tft_data:
+        return
+    
     unit_props = filter_unit_props(tft_data)
     items = get_set_items(tft_data)
     languages = cd_get_languages(input_version) # ["ru_ru"]
-
-    if not tft_data:
-        return
 
     for lang in languages:
         print(f"  {lang}")
@@ -136,10 +218,10 @@ def get_set_items(tft_data):
         for item_link in tft_data[item_list]["mItems"]:
             current_item = tft_data[item_link]
 
-            item_id = current_item.get("mName", current_item.get(hash_fnv1a("mName")))
-            item_name = current_item.get("mDisplayNameTra", current_item.get(hash_fnv1a("mDisplayNameTra")))
-            item_desc = current_item.get("mDescriptionNameTra", current_item.get(hash_fnv1a("mDescriptionNameTra")))
-            item_icon = current_item.get("mIconPath", current_item.get(hash_fnv1a("mIconPath")))
+            item_id =   getf(current_item, "mName")
+            item_name = getf(current_item, "mDisplayNameTra")
+            item_desc = getf(current_item, "mDescriptionNameTra")
+            item_icon = getf(current_item, "mIconPath")
 
             if item_id and item_name and item_desc and item_icon and not 'debug' in item_id.lower() and not '_HR' in item_id and not 'empty' in item_id.lower() and not 'blankslot' in item_id.lower() and not 'admincause' in item_id.lower() and not 'tft_assist_' in item_id.lower():
                 if 'augment' in item_id.lower():
