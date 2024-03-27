@@ -50,7 +50,7 @@ def generate_version_units(input_version, output_dir):
     unit_ids = get_unit_ids(tft_data)
     unit_list = download_all_units(input_version, unit_ids)
 
-    languages = ["ru_ru"] # cd_get_languages(input_version)
+    languages = cd_get_languages(input_version) # ["ru_ru"]
 
     for lang in languages:
         print(f"  {lang}")
@@ -107,7 +107,7 @@ def generate_version_traits(input_version, output_dir):
     trait_units = get_trait_units(tft_data, download_all_units(input_version, get_unit_ids(tft_data)))
     trait_list = get_set_traits(tft_data)
 
-    languages = ["ru_ru"] # cd_get_languages(input_version)
+    languages = cd_get_languages(input_version) # ["ru_ru"]
 
     for lang in languages:
         print(f"  {lang}")

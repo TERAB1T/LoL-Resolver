@@ -39,7 +39,7 @@ class TFTTraitsProcessor:
 
             #if trait_id != "TFT11_Bruiser":
             #    continue
-            print(trait_id + '\n')
+            #print(trait_id + '\n')
 
             trait_name_id = getf(trait_data, "mDisplayNameTra")
             trait_name = self.__get_string(trait_name_id)
