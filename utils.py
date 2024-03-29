@@ -2,6 +2,7 @@ from xxhash import xxh64_intdigest
 import requests
 import ujson
 import re
+import os
 import redis
 
 def hash_xxhash(key, bits=39):
@@ -76,6 +77,16 @@ def get_final_url(version, urls):
     return None
 
 def cd_get_strings_file(version, lang):
+    temp_cache_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '_temp', version, 'lang')
+    temp_cache_file = f"{temp_cache_dir}/{lang}.json"
+
+    if (os.path.isfile(temp_cache_file)):
+        try:
+            with open(temp_cache_file, encoding='utf-8') as f:
+                return ujson.load(f)["entries"]
+        except Exception as e:
+            pass
+
     urls = [f"{lang}/data/menu/en_us/main.stringtable.json", f"data/menu/main_{lang}.stringtable.json", f"data/menu/fontconfig_{lang}.txt.json"]
     final_url = get_final_url(version, urls)
 
@@ -85,6 +96,11 @@ def cd_get_strings_file(version, lang):
     
     try:
         items_response = requests.get(final_url)
+
+        os.makedirs(temp_cache_dir, exist_ok=True)
+        with open(temp_cache_file, 'wb') as output_file:
+            output_file.write(items_response.content)
+
         return ujson.loads(items_response.content)["entries"]
     except requests.RequestException as e:
         print(f"An error occurred (strings file): {e}")
@@ -145,7 +161,7 @@ def normalize_game_version(version):
     return round_number(float(re.sub(r'\.(\d)$', r'.0\1', str_version)), 2)
 
 def getf(dict, val, default=None):
-        return dict.get(val, dict.get(hash_fnv1a(val), default))
+    return dict.get(val, dict.get(hash_fnv1a(val), default))
 
 def gen_handler(input_version, output_dir, alias, urls, generate_version, cache = False, atlas = False):
     from lol.atlas import AtlasProcessor

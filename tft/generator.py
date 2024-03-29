@@ -10,6 +10,16 @@ from utils import *
 ### COMMON ###
 
 def get_tftmap_file(version):
+    temp_cache_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '_temp', version)
+    temp_cache_file = f"{temp_cache_dir}/map22.bin.json"
+
+    if os.path.isfile(temp_cache_file):
+        try:
+            with open(temp_cache_file, encoding='utf-8') as f:
+                return ujson.load(f)
+        except Exception as e:
+            pass
+
     urls = ["data/maps/shipping/map22/map22.bin.json"]
     final_url = get_final_url(version, urls)
 
@@ -19,6 +29,11 @@ def get_tftmap_file(version):
     
     try:
         tftmap_response = requests.get(final_url)
+
+        os.makedirs(temp_cache_dir, exist_ok=True)
+        with open(temp_cache_file, 'wb') as output_file:
+            output_file.write(tftmap_response.content)
+
         return ujson.loads(tftmap_response.content)
     except requests.RequestException as e:
         print(f"An error occurred (TFT data file): {e}")
@@ -79,6 +94,16 @@ def download_all_units(input_version, unit_ids):
         return dict(executor.map(download_unit, [input_version] * len(unit_ids), unit_ids))
 
 def download_unit(input_version, unit_id):
+    temp_cache_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '_temp', input_version, 'units')
+    temp_cache_file = f"{temp_cache_dir}/{unit_id.split('/')[1].lower()}.json"
+
+    if (os.path.isfile(temp_cache_file)):
+        try:
+            with open(temp_cache_file, encoding='utf-8') as f:
+                return (unit_id, ujson.load(f))
+        except Exception as e:
+            pass
+
     unit_url = f"https://raw.communitydragon.org/{input_version}/game/{unit_id.lower()}.cdtb.bin.json"
 
     if re.match(r'^\d+\.\d+$', str(input_version)) and normalize_game_version(input_version) < 14.02:
@@ -86,6 +111,10 @@ def download_unit(input_version, unit_id):
 
     response = requests.get(unit_url)
     if response.status_code == 200:
+        os.makedirs(temp_cache_dir, exist_ok=True)
+        with open(temp_cache_file, 'wb') as output_file:
+            output_file.write(response.content)
+
         return (unit_id, ujson.loads(response.content))
     else:
         return (unit_id, {})
