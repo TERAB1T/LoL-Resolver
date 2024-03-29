@@ -111,7 +111,9 @@ def main():
 
 def rm_temp_cache(version=''):
     temp_cache_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '_temp', version)
-    shutil.rmtree(temp_cache_dir)
+
+    if os.path.exists(temp_cache_dir):
+        shutil.rmtree(temp_cache_dir)
 
 if __name__ == "__main__":
     main()
