@@ -67,34 +67,19 @@ def main():
             if re.match(r'^\d+\.\d+$', version) or version in ['latest', 'pbe']:
                 rm_temp_cache(version)
 
-    elif args.cmd == "tft-units":
+    elif args.cmd in ["tft-units", "tft-traits", "tft-items", "tft-augments"]:
         output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), args.output)
+
         for version in args.version:
-            generate_tft_units(version, output_dir, args.cache)
-
-            if re.match(r'^\d+\.\d+$', version) or version in ['latest', 'pbe']:
-                rm_temp_cache(version)
-
-    elif args.cmd == "tft-traits":
-        output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), args.output)
-        for version in args.version:
-            generate_tft_traits(version, output_dir, args.cache)
-
-            if re.match(r'^\d+\.\d+$', version) or version in ['latest', 'pbe']:
-                rm_temp_cache(version)
-
-    elif args.cmd == "tft-items":
-        output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), args.output)
-        for version in args.version:
-            generate_tft_items(version, output_dir, args.cache)
-
-            if re.match(r'^\d+\.\d+$', version) or version in ['latest', 'pbe']:
-                rm_temp_cache(version)
-
-    elif args.cmd == "tft-augments":
-        output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), args.output)
-        for version in args.version:
-            generate_tft_augments(version, output_dir, args.cache)
+            match args.cmd:
+                case "tft-units":
+                    generate_tft_units(version, output_dir, args.cache)
+                case "tft-traits":
+                    generate_tft_traits(version, output_dir, args.cache)
+                case "tft-items":
+                    generate_tft_items(version, output_dir, args.cache)
+                case "tft-augments":
+                    generate_tft_augments(version, output_dir, args.cache)
 
             if re.match(r'^\d+\.\d+$', version) or version in ['latest', 'pbe']:
                 rm_temp_cache(version)

@@ -58,42 +58,12 @@ class TFTUnitsProcessor:
         if not spell_names:
             return
         
-        spell_record_path = f'{unit_id}/Spells/{spell_names[0]}'
-        spell_record = getf(unit_data, spell_record_path, {})
-        
-        m_spell = getf(spell_record, "mSpell", {})
-        m_client_data = getf(m_spell, "mClientData", {})
-        m_tooltip_data = getf(m_client_data, "mTooltipData", {})
-        m_loc_keys = getf(m_tooltip_data, "mLocKeys")
-        m_lists = getf(m_tooltip_data, "mLists", {})
-        m_data_values = getf(m_spell, "mDataValues", [])
-        m_spell_calc = getf(m_spell, "mSpellCalculations")
         m_shop_data = getf(root_record, "mShopData")
         
-        if not m_loc_keys or not m_shop_data:
+        if not m_shop_data:
             return
         
         unit_shop_data = getf(self.tft_data, m_shop_data)
-
-        spell_name = self.__get_string(getf(m_loc_keys, "keyName"))
-        spell_desc_main = self.__get_string(getf(m_loc_keys, "keyTooltip"))
-
-        if 'TFT10_Headliner_TRA@' in spell_desc_main:
-            headliner_id = f'tft10_headliner_{unit_id_trimmed}'
-            spell_desc_main = re.sub(r'@TFTUnitProperty\.[a-z]*:TFT10_Headliner_TRA@', self.__get_string(headliner_id), spell_desc_main, flags=re.IGNORECASE)
-
-        spell_desc_scaling_raw = getf(m_lists, "LevelUp", {})
-        scaling_levels = 1 + getf(spell_desc_scaling_raw, "levelCount", 3)
-
-        var_values = {}
-
-        for data_value in m_data_values:
-            m_name = getf(data_value, "mName")
-            m_values = getf(data_value, "mValues")
-
-            if m_name and m_values:
-                var_values[m_name.lower()] = [round(m_values[i], 5) for i in range(5)]
-                var_values[hash_fnv1a(m_name.lower())] = var_values[m_name.lower()]
 
         unit_stats = {
             0:  [100.0] * 5, # ability power
@@ -108,46 +78,6 @@ class TFTUnitsProcessor:
             28: [round(getf(root_record, 'attackRange', 0), 5)] * 5, # attack range
             33: [1] * 5, # dodge chance
         }
-
-        spell_calc = {}
-        spell_style = {}
-
-        for key, value in var_values.items():
-            spell_calc[key.lower()] = self.__process_value_array([value[i] for i in range(1, scaling_levels)])
-
-        spell_calc.update(self.unit_properties)
-
-        if m_spell_calc:
-            for spell_calc_key, spell_calc_value in m_spell_calc.items():
-                spell_calc[spell_calc_key.lower()] = []
-
-                for i in range(1, scaling_levels):
-                    current_var_values = {key: value[i] for key, value in var_values.items()}
-                    current_unit_stats = {key: value[i] for key, value in unit_stats.items()}
-                    bin_definitions = BinDefinitions(self.strings_raw, current_var_values, m_spell_calc, current_unit_stats, True)
-
-                    parsed_bin = bin_definitions.parse_values(spell_calc_value)
-
-                    if isinstance(parsed_bin, dict):
-                        calculated_value = parsed_bin['value']
-
-                        if re.match(r'^\d+\.\d+$', str(self.version)) and normalize_game_version(self.version) < 13.12:
-                            spell_style[spell_calc_key.lower()] = {
-                                'tag': parsed_bin['tag'],
-                                'icon': parsed_bin['icon']
-                            }
-                    else:
-                        calculated_value = parsed_bin
-
-                    spell_calc[spell_calc_key.lower()].append(calculated_value if not isinstance(calculated_value, (int, float)) and '%' in calculated_value else float(calculated_value))
-
-                spell_calc[spell_calc_key.lower()] = self.__process_value_array(spell_calc[spell_calc_key.lower()])
-                spell_calc[hash_fnv1a(spell_calc_key.lower())] = spell_calc[spell_calc_key.lower()]
-
-                if spell_calc_key.lower() in spell_style:
-                    spell_style[hash_fnv1a(spell_calc_key.lower())] = spell_style[spell_calc_key.lower()]
-
-        spell_desc_scaling = self.__process_spell_scaling(spell_desc_scaling_raw, var_values)
 
         self.output_dict[unit_id_trimmed] = {
             'id': unit_id.split("/")[1],
@@ -195,27 +125,96 @@ class TFTUnitsProcessor:
             if trait_id:
                 self.output_dict[unit_id_trimmed]['traits'].append(trait_id.lower())
 
-        self.output_dict[unit_id_trimmed]['ability'] = {
-            'name': spell_name,
-            'desc': self.__generate_unit_tooltip(f"{spell_desc_main}{spell_desc_scaling}", spell_calc, var_values, spell_style)
-        }
+        self.output_dict[unit_id_trimmed]['abilities'] = []
+
+        for spell_name in spell_names:
+            if spell_name != 'BaseSpell':
+                spell_record_path = f'{unit_id}/Spells/{spell_name}'
+                self.__get_spell(unit_id_trimmed, unit_data, spell_record_path, unit_stats)
 
         if "{df0ad83b}" in unit_shop_data:
-            self.output_dict[unit_id_trimmed]['ability']['icon'] = image_to_png(unit_shop_data.get("{df0ad83b}").lower())
+            self.output_dict[unit_id_trimmed]['ability_icon'] = image_to_png(unit_shop_data.get("{df0ad83b}").lower())
         elif getf(unit_shop_data, 'mPortraitIconPath'):
-            self.output_dict[unit_id_trimmed]['ability']['icon'] = image_to_png(getf(unit_shop_data, 'mPortraitIconPath').lower())
+            self.output_dict[unit_id_trimmed]['ability_icon'] = image_to_png(getf(unit_shop_data, 'mPortraitIconPath').lower())
+
+    def __get_spell(self, unit_id_trimmed, unit_data, spell_record_path, unit_stats):
+        spell_record = getf(unit_data, spell_record_path, {})
         
-        #print(champion_stats)
-        #print(spell_calculations)
+        m_spell = getf(spell_record, "mSpell", {})
+        m_client_data = getf(m_spell, "mClientData", {})
+        m_tooltip_data = getf(m_client_data, "mTooltipData", {})
+        m_loc_keys = getf(m_tooltip_data, "mLocKeys")
+        m_lists = getf(m_tooltip_data, "mLists", {})
+        m_data_values = getf(m_spell, "mDataValues", [])
+        m_spell_calc = getf(m_spell, "mSpellCalculations")
 
-        #print(self.output_dict[unit_id_trimmed])
-        #print(data_values)
-        #print(spell_desc_scaling_raw)
+        if not m_loc_keys:
+            return
+        
+        spell_name = self.__get_string(getf(m_loc_keys, "keyName"))
+        spell_desc_main = self.__get_string(getf(m_loc_keys, "keyTooltip"))
 
-        #with open(r"C:/Users/Alex/Desktop/tft-test/" + id.lower() + '.cdtb.bin.json', 'w') as file:
-        #    file.write(champion_data.text)
+        if 'TFT10_Headliner_TRA@' in spell_desc_main:
+            headliner_id = f'tft10_headliner_{unit_id_trimmed}'
+            spell_desc_main = re.sub(r'@TFTUnitProperty\.[a-z]*:TFT10_Headliner_TRA@', self.__get_string(headliner_id), spell_desc_main, flags=re.IGNORECASE)
 
-        #print(champion_data.json())
+        spell_desc_scaling_raw = getf(m_lists, "LevelUp", {})
+        scaling_levels = 1 + getf(spell_desc_scaling_raw, "levelCount", 3)
+
+        var_values = {}
+
+        for data_value in m_data_values:
+            m_name = getf(data_value, "mName")
+            m_values = getf(data_value, "mValues")
+
+            if m_name and m_values:
+                var_values[m_name.lower()] = [round(m_values[i], 5) for i in range(5)]
+                var_values[hash_fnv1a(m_name.lower())] = var_values[m_name.lower()]
+
+        spell_calc = {}
+        spell_style = {}
+
+        for key, value in var_values.items():
+            spell_calc[key.lower()] = self.__process_value_array([value[i] for i in range(1, scaling_levels)])
+
+        spell_calc.update(self.unit_properties)
+
+        if m_spell_calc:
+            for spell_calc_key, spell_calc_value in m_spell_calc.items():
+                spell_calc[spell_calc_key.lower()] = []
+
+                for i in range(1, scaling_levels):
+                    current_var_values = {key: value[i] for key, value in var_values.items()}
+                    current_unit_stats = {key: value[i] for key, value in unit_stats.items()}
+                    bin_definitions = BinDefinitions(self.strings_raw, current_var_values, m_spell_calc, current_unit_stats, True)
+
+                    parsed_bin = bin_definitions.parse_values(spell_calc_value)
+
+                    if isinstance(parsed_bin, dict):
+                        calculated_value = parsed_bin['value']
+
+                        if re.match(r'^\d+\.\d+$', str(self.version)) and normalize_game_version(self.version) < 13.12:
+                            spell_style[spell_calc_key.lower()] = {
+                                'tag': parsed_bin['tag'],
+                                'icon': parsed_bin['icon']
+                            }
+                    else:
+                        calculated_value = parsed_bin
+
+                    spell_calc[spell_calc_key.lower()].append(calculated_value if not isinstance(calculated_value, (int, float)) and '%' in calculated_value else float(calculated_value))
+
+                spell_calc[spell_calc_key.lower()] = self.__process_value_array(spell_calc[spell_calc_key.lower()])
+                spell_calc[hash_fnv1a(spell_calc_key.lower())] = spell_calc[spell_calc_key.lower()]
+
+                if spell_calc_key.lower() in spell_style:
+                    spell_style[hash_fnv1a(spell_calc_key.lower())] = spell_style[spell_calc_key.lower()]
+
+        spell_desc_scaling = self.__process_spell_scaling(spell_desc_scaling_raw, var_values)
+
+        self.output_dict[unit_id_trimmed]['abilities'].append({
+            'name': spell_name,
+            'desc': self.__generate_unit_tooltip(f"{spell_desc_main}{spell_desc_scaling}", spell_calc, var_values, spell_style)
+        })
     
     def __process_spell_scaling(self, spell_desc_scaling_raw, var_values):
         scaling_elements = spell_desc_scaling_raw.get("elements")
