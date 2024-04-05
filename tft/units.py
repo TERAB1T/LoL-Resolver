@@ -133,9 +133,9 @@ class TFTUnitsProcessor:
                 self.__get_spell(unit_id_trimmed, unit_data, spell_record_path, unit_stats)
 
         if "{df0ad83b}" in unit_shop_data:
-            self.output_dict[unit_id_trimmed]['ability_icon'] = image_to_png(unit_shop_data.get("{df0ad83b}").lower())
+            self.output_dict[unit_id_trimmed]['abilityIcon'] = image_to_png(unit_shop_data.get("{df0ad83b}").lower())
         elif getf(unit_shop_data, 'mPortraitIconPath'):
-            self.output_dict[unit_id_trimmed]['ability_icon'] = image_to_png(getf(unit_shop_data, 'mPortraitIconPath').lower())
+            self.output_dict[unit_id_trimmed]['abilityIcon'] = image_to_png(getf(unit_shop_data, 'mPortraitIconPath').lower())
 
     def __get_spell(self, unit_id_trimmed, unit_data, spell_record_path, unit_stats):
         spell_record = getf(unit_data, spell_record_path, {})
