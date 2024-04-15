@@ -41,6 +41,7 @@ class BinDefinitions:
             '{f3cbe7b2}',
             '{803dae4c}',
             '{05abdfab}',
+            '{e9a3c91d}',
             'SubPartScaledProportionalToStat'
             ]
 
@@ -57,7 +58,7 @@ class BinDefinitions:
                 if block_type == hash_fnv1a(current_type):
                     return getattr(self, f'_BinDefinitions__{current_type.strip("{}")}')(current_block, key)
 
-            return current_block
+            return '@CalcError@' #current_block
     
     def __GameCalculation(self, current_block, key=0):
         mFormulaParts = {}
@@ -85,16 +86,17 @@ class BinDefinitions:
             return_value = ' '.join(mFormulaParts.values())
 
         if 'mMultiplier' in current_block:
+            def callback_for_multiplier(matches):
+                number = float(matches.group(1))
+                return round_number(number * mMultiplier, 5, True)
+            
             mMultiplier = self.parse_values(current_block['mMultiplier'])
 
             try:
                 mMultiplier = float(mMultiplier)
-                return_value = float(return_value)
+                return_value = re.sub(r'([0-9]+(\.[0-9]+)*)', callback_for_multiplier, return_value)
             except:
                 pass
-
-            if isinstance(return_value, (int, float)):
-                return_value = round_number(return_value * mMultiplier, 5)
 
         if 'mDisplayAsPercent' in current_block:
             if isinstance(return_value, (int, float)):
@@ -442,6 +444,26 @@ class BinDefinitions:
             return current_value # * current_coef
 
         return 0
+    
+    def __e9a3c91d(self, current_block, key=0):
+        return_value = self.__get_string("item_range_type_melee")
+
+        ranged_coef = self.parse_values(current_block['{68508370}'])
+        current_block_ranged = dict(current_block)
+        current_block_ranged['mMultiplier'] = ranged_coef
+
+        melee_value = self.__GameCalculation(current_block)
+        ranged_value = self.__GameCalculation(current_block_ranged)
+
+        placeholders = {
+            '@MeleeItemCalcValue@': melee_value,
+            '@RangedItemCalcValue@': ranged_value
+        }
+
+        for placeholder, replacement in placeholders.items():
+            return_value = str_ireplace(placeholder, replacement, return_value)
+
+        return return_value
     
     def __SubPartScaledProportionalToStat(self, current_block, key=0):
         if self.needs_calculation:
