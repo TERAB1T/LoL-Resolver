@@ -188,11 +188,11 @@ class ItemsProcessor:
             #    print("String: " + str(self.strings[itemID]))
         
         for key, value in self.strings.items():
-
             replacements = [
                 ("item_range_type_melee_dynamic", "item_range_type_melee"),
                 ("item_range_type_melee_dynamic_b", "item_range_type_melee_b"),
-                ("item_range_type_melee_dynamic_c", "item_range_type_melee_c")
+                ("item_range_type_melee_dynamic_c", "item_range_type_melee_c"),
+                ("item_range_type_melee_dynamic_d", "item_range_type_melee_d"),
             ]
 
             for dynamic_key, melee_key in replacements:
@@ -202,6 +202,20 @@ class ItemsProcessor:
                 if dynamic_string is not False and melee_string is not False:
                     if dynamic_string in self.strings[key] and melee_string not in self.strings[key]:
                         value = value.replace(dynamic_string, melee_string)
+
+            replacements2 = [
+                ("MeleeRangedSplitB", "item_range_type_melee_b"),
+                ("MeleeRangedSplitC", "item_range_type_melee_c"),
+                ("MeleeRangedSplitD", "item_range_type_melee_d"),
+                ("MeleeRangedSplit", "item_range_type_melee"),
+            ]
+
+            for dynamic_key, melee_key in replacements2:
+                melee_string = self.__get_string(melee_key)
+
+                if dynamic_key in self.strings[key] and melee_string is not False:
+                    if melee_string not in self.strings[key]:
+                        value = re.sub(f'@{dynamic_key}@', melee_string, value, flags=re.IGNORECASE)
 
             self.strings[key] = recursive_replace(key, value)
 
