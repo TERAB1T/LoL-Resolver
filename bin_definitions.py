@@ -42,6 +42,7 @@ class BinDefinitions:
             '{803dae4c}',
             '{05abdfab}',
             '{e9a3c91d}',
+            '{4750ceb6}',
             'SubPartScaledProportionalToStat'
             ]
 
@@ -454,6 +455,32 @@ class BinDefinitions:
 
         melee_value = self.__GameCalculation(current_block)
         ranged_value = self.__GameCalculation(current_block_ranged)
+
+        placeholders = {
+            '@MeleeItemCalcValue@': melee_value,
+            '@RangedItemCalcValue@': ranged_value
+        }
+
+        for placeholder, replacement in placeholders.items():
+            return_value = str_ireplace(placeholder, replacement, return_value)
+
+        return return_value
+    
+    def __4750ceb6(self, current_block, key=0):
+        return_value = self.__get_string("item_range_type_melee")
+
+        melee_value = 0
+        ranged_value = 0
+
+        if "{f61974d2}" in current_block:
+            temp_block = getf(self.all_calculations, current_block["{f61974d2}"].replace('@', ''))
+            if temp_block:
+                melee_value = self.parse_values(temp_block)
+
+        if "{158508fb}" in current_block:
+            temp_block = getf(self.all_calculations, current_block["{158508fb}"].replace('@', ''))
+            if temp_block:
+                ranged_value = self.parse_values(temp_block)
 
         placeholders = {
             '@MeleeItemCalcValue@': melee_value,
