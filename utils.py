@@ -56,6 +56,10 @@ def cd_get_versions():
         versions = [file for file in versions_raw if re.match(r'^\d+\.\d+$', file.get('name')) and float(file.get('name').split(".")[0]) > 10]
         versions = sorted(versions, key = lambda version: float(re.sub(r'\.(\d)$', r'.0\1', version['name'])))
         return versions
+    
+def cd_get_versions_clean():
+    versions_raw = cd_get_versions()
+    return list(map(lambda x: x.get('name'), versions_raw))
 
 def get_last_modified(file_url):
     try:
@@ -179,32 +183,7 @@ def gen_handler(input_version, output_dir, alias, urls, generate_version, cache 
     if redis_con and redis_con.exists(alias):
         redis_cache = ujson.loads(redis_con.get(alias))
 
-    if input_version == 'all':
-        versions = cd_get_versions()
-
-        for version in versions:
-            version_name = version.get('name')
-            last_modified = version.get('mtime')
-
-            if not version_name in redis_cache or not 'last_modified' in redis_cache[version_name]:
-                redis_cache[version_name] = {
-                    "last_modified": ''
-                }
-
-            if redis_cache[version_name]["last_modified"] != last_modified:
-                generate_version(version_name, output_dir)
-
-                if redis_con:
-                    redis_cache[version_name]["last_modified"] = last_modified
-                    redis_con.set(alias, ujson.dumps(redis_cache))
-
-                if atlas:
-                    processor = AtlasProcessor()
-                    processor.process_icons(version_name, output_dir)
-            else:
-                print(f"Version {version_name} is up to date. Skipping...")
-            
-    elif re.match(r'^\d+\.\d+$', input_version):
+    if re.match(r'^\d+\.\d+$', input_version):
         versions = cd_get_versions()
         version = next((element for element in versions if element['name'] == input_version), None)
 

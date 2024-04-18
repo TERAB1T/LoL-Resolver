@@ -15,7 +15,7 @@ stats = {
     13: {'name': 'PercentMissingHealth', 'icon': '%i:scaleHealth%', 'openingTag': '<scalehealth>', 'closingTag': '</scalehealth>'},
     14: {'name': 'Unknown14', 'icon': '%i:?%', 'openingTag': '<noscale>', 'closingTag': '</noscale>'},
     15: {'name': 'LifeSteal', 'icon': '%i:scaleLS%', 'openingTag': '<noscale>', 'closingTag': '</noscale>'},
-    16: {'name': 'Unknown16', 'icon': '%i:?%', 'openingTag': '<noscale>', 'closingTag': '</noscale>'},
+    16: {'name': 'AdaptiveForce', 'icon': '%i:scaleAdaptiveForce%', 'openingTag': '<scaleadaptivedorce>', 'closingTag': '</scaleadaptivedorce>'},
     17: {'name': 'OmniVamp', 'icon': '%i:?%', 'openingTag': '<noscale>', 'closingTag': '</noscale>'},
     18: {'name': 'PhysicalVamp', 'icon': '%i:?%', 'openingTag': '<noscale>', 'closingTag': '</noscale>'},
     19: {'name': 'MagicPenetrationFlat', 'icon': '%i:?%', 'openingTag': '<noscale>', 'closingTag': '</noscale>'},

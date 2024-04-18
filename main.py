@@ -2,6 +2,7 @@ import argparse
 import os
 import shutil
 import re
+from utils import cd_get_versions_clean
 from lol.atlas import AtlasProcessor
 from lol.generator import generate_lol_items
 from tft.generator import generate_tft_units, generate_tft_traits, generate_tft_items, generate_tft_augments
@@ -49,6 +50,10 @@ def main():
 
     if args.cmd == "lol-items":
         output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), args.output)
+        
+        if args.version == 'all':
+            args.version = cd_get_versions_clean()
+
         for version in args.version:
             generate_lol_items(version, output_dir, args.cache, args.icons)
 
@@ -57,6 +62,9 @@ def main():
 
     elif args.cmd == "tft":
         output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), args.output)
+
+        if args.version == 'all':
+            args.version = cd_get_versions_clean()
         
         for version in args.version:
             generate_tft_units(version, output_dir, args.cache)
@@ -69,6 +77,9 @@ def main():
 
     elif args.cmd in ["tft-units", "tft-traits", "tft-items", "tft-augments"]:
         output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), args.output)
+
+        if args.version == 'all':
+            args.version = cd_get_versions_clean()
 
         for version in args.version:
             match args.cmd:
@@ -86,6 +97,10 @@ def main():
 
     elif args.cmd == "staticons":
         output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), args.output)
+
+        if args.version == 'all':
+            args.version = cd_get_versions_clean()
+
         for version in args.version:
             AtlasProcessor().process_staticons(version, output_dir)
 

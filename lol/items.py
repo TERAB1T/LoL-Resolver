@@ -175,11 +175,13 @@ class ItemsProcessor:
                         else:
                             self.var_values[itemID][mDataValues_name_lower] = 0
                             self.var_values[itemID][hash_fnv1a(mDataValues_name_lower)] = 0
+
+            if not 'mItemCalculations' in itemValues and '{4308c416}' in itemValues:
+                itemValues['mItemCalculations'] = itemValues['{4308c416}']
+            elif 'mItemCalculations' in itemValues and '{4308c416}' in itemValues:
+                itemValues['mItemCalculations'].update(itemValues['{4308c416}'])
             
             if 'mItemCalculations' in itemValues:
-                if '{4308c416}' in itemValues:
-                    itemValues['mItemCalculations'].update(itemValues['{4308c416}'])
-
                 for mItemCalculations_key, mItemCalculations_value in itemValues['mItemCalculations'].items():
                     # if mItemCalculations_key not in ['MythicPassiveBonus', 'ChampRange', 'ChampLevelReached', 'CurrentMythicBonus']:
 
