@@ -51,7 +51,7 @@ def main():
     if args.cmd == "lol-items":
         output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), args.output)
         
-        if args.version == 'all':
+        if args.version[0] == 'all':
             args.version = cd_get_versions_clean()
 
         for version in args.version:
@@ -63,7 +63,7 @@ def main():
     elif args.cmd == "tft":
         output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), args.output)
 
-        if args.version == 'all':
+        if args.version[0] == 'all':
             args.version = cd_get_versions_clean()
         
         for version in args.version:
@@ -78,7 +78,7 @@ def main():
     elif args.cmd in ["tft-units", "tft-traits", "tft-items", "tft-augments"]:
         output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), args.output)
 
-        if args.version == 'all':
+        if args.version[0] == 'all':
             args.version = cd_get_versions_clean()
 
         for version in args.version:
@@ -98,7 +98,7 @@ def main():
     elif args.cmd == "staticons":
         output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), args.output)
 
-        if args.version == 'all':
+        if args.version[0] == 'all':
             args.version = cd_get_versions_clean()
 
         for version in args.version:
