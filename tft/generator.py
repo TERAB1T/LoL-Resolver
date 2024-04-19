@@ -55,7 +55,7 @@ def filter_unit_props(tft_data):
 
 ### UNITS ###
     
-def generate_version_units(input_version, output_dir):
+def generate_version_units(input_version, output_dir, languages):
     print(f"TFT Units: generating version {input_version}...")
     tft_data = get_tftmap_file(input_version)
     if not tft_data:
@@ -65,12 +65,20 @@ def generate_version_units(input_version, output_dir):
     unit_ids = get_unit_ids(tft_data)
     unit_list = download_all_units(input_version, unit_ids)
 
-    languages = cd_get_languages(input_version) # ["ru_ru"]
+    supported_langs = cd_get_languages(input_version)
+    if languages[0] == 'all':
+        languages = supported_langs
 
     for lang in languages:
-        print(f"  {lang}")
-        strings = cd_get_strings_file(input_version, lang)
-        processor = TFTUnitsProcessor(input_version, output_dir, lang, tft_data, unit_list, unit_props, strings)
+        print(f"  {lang}", end="")
+
+        if not lang in supported_langs:
+            print(f" — This language is not supported. Supported languages: {', '.join(supported_langs)}.")
+            continue
+        else:
+            strings = cd_get_strings_file(input_version, lang)
+            processor = TFTUnitsProcessor(input_version, output_dir, lang, tft_data, unit_list, unit_props, strings)
+            print(" — Done!")
 
 def get_unit_ids(tft_data):
     set_root = get_set_root(tft_data)
@@ -119,14 +127,14 @@ def download_unit(input_version, unit_id):
     else:
         return (unit_id, {})
 
-def generate_tft_units(input_version, output_dir, cache = False):
+def generate_tft_units(input_version, output_dir, languages, cache = False):
     alias = 'tft-units'
     urls = ["data/maps/shipping/map22/map22.bin.json"]
-    gen_handler(input_version, output_dir, alias, urls, generate_version_units, cache)
+    gen_handler(input_version, output_dir, languages, alias, urls, generate_version_units, cache)
 
 ### TRAITS ###
 
-def generate_version_traits(input_version, output_dir):
+def generate_version_traits(input_version, output_dir, languages):
     print(f"TFT Traits: generating version {input_version}...")
     tft_data = get_tftmap_file(input_version)
     if not tft_data:
@@ -136,12 +144,20 @@ def generate_version_traits(input_version, output_dir):
     trait_units = get_trait_units(tft_data, download_all_units(input_version, get_unit_ids(tft_data)))
     trait_list = get_set_traits(tft_data)
 
-    languages = cd_get_languages(input_version) # ["ru_ru"]
+    supported_langs = cd_get_languages(input_version)
+    if languages[0] == 'all':
+        languages = supported_langs
 
     for lang in languages:
-        print(f"  {lang}")
-        strings = cd_get_strings_file(input_version, lang)
-        processor = TFTTraitsProcessor(input_version, output_dir, lang, tft_data, trait_list, trait_units, unit_props, strings)
+        print(f"  {lang}", end="")
+
+        if not lang in supported_langs:
+            print(f" — This language is not supported. Supported languages: {', '.join(supported_langs)}.")
+            continue
+        else:
+            strings = cd_get_strings_file(input_version, lang)
+            processor = TFTTraitsProcessor(input_version, output_dir, lang, tft_data, trait_list, trait_units, unit_props, strings)
+            print(" — Done!")
 
 def get_trait_units(tft_data, unit_list):
     trait_units = {}
@@ -199,14 +215,14 @@ def get_set_traits(tft_data):
 
     return traits
 
-def generate_tft_traits(input_version, output_dir, cache = False):
+def generate_tft_traits(input_version, output_dir, languages, cache = False):
     alias = 'tft-traits'
     urls = ["data/maps/shipping/map22/map22.bin.json"]
-    gen_handler(input_version, output_dir, alias, urls, generate_version_traits, cache)
+    gen_handler(input_version, output_dir, languages, alias, urls, generate_version_traits, cache)
 
 ### ITEMS / AUGMENTS ###
     
-def generate_version_items(input_version, output_dir):
+def generate_version_items(input_version, output_dir, languages):
     print(f"TFT Items: generating version {input_version}...")
     tft_data = get_tftmap_file(input_version)
     if not tft_data:
@@ -214,14 +230,23 @@ def generate_version_items(input_version, output_dir):
     
     unit_props = filter_unit_props(tft_data)
     items = get_set_items(tft_data)
-    languages = cd_get_languages(input_version) # ["ru_ru"]
+    
+    supported_langs = cd_get_languages(input_version)
+    if languages[0] == 'all':
+        languages = supported_langs
 
     for lang in languages:
-        print(f"  {lang}")
-        strings = cd_get_strings_file(input_version, lang)
-        processor = TFTItemsProcessor(input_version, output_dir, lang, tft_data, items, "items", unit_props, strings)
+        print(f"  {lang}", end="")
 
-def generate_version_augments(input_version, output_dir):
+        if not lang in supported_langs:
+            print(f" — This language is not supported. Supported languages: {', '.join(supported_langs)}.")
+            continue
+        else:
+            strings = cd_get_strings_file(input_version, lang)
+            processor = TFTItemsProcessor(input_version, output_dir, lang, tft_data, items, "items", unit_props, strings)
+            print(" — Done!")
+
+def generate_version_augments(input_version, output_dir, languages):
     print(f"TFT Augments: generating version {input_version}...")
     tft_data = get_tftmap_file(input_version)
     if not tft_data:
@@ -229,12 +254,21 @@ def generate_version_augments(input_version, output_dir):
     
     unit_props = filter_unit_props(tft_data)
     items = get_set_items(tft_data)
-    languages = cd_get_languages(input_version) # ["ru_ru"]
+    
+    supported_langs = cd_get_languages(input_version)
+    if languages[0] == 'all':
+        languages = supported_langs
 
     for lang in languages:
-        print(f"  {lang}")
-        strings = cd_get_strings_file(input_version, lang)
-        processor = TFTItemsProcessor(input_version, output_dir, lang, tft_data, items, "augments", unit_props, strings)
+        print(f"  {lang}", end="")
+
+        if not lang in supported_langs:
+            print(f" — This language is not supported. Supported languages: {', '.join(supported_langs)}.")
+            continue
+        else:
+            strings = cd_get_strings_file(input_version, lang)
+            processor = TFTItemsProcessor(input_version, output_dir, lang, tft_data, items, "augments", unit_props, strings)
+            print(" — Done!")
 
 def get_set_items(tft_data):
     set_root = get_set_root(tft_data)
@@ -260,12 +294,12 @@ def get_set_items(tft_data):
 
     return items
 
-def generate_tft_items(input_version, output_dir, cache = False):
+def generate_tft_items(input_version, output_dir, languages, cache = False):
     alias = 'tft-items'
     urls = ["data/maps/shipping/map22/map22.bin.json"]
-    gen_handler(input_version, output_dir, alias, urls, generate_version_items, cache)
+    gen_handler(input_version, output_dir, languages, alias, urls, generate_version_items, cache)
 
-def generate_tft_augments(input_version, output_dir, cache = False):
+def generate_tft_augments(input_version, output_dir, languages, cache = False):
     alias = 'tft-augments'
     urls = ["data/maps/shipping/map22/map22.bin.json"]
-    gen_handler(input_version, output_dir, alias, urls, generate_version_augments, cache)
+    gen_handler(input_version, output_dir, languages, alias, urls, generate_version_augments, cache)

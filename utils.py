@@ -167,7 +167,7 @@ def normalize_game_version(version):
 def getf(dict, val, default=None):
     return dict.get(val, dict.get(hash_fnv1a(val), default))
 
-def gen_handler(input_version, output_dir, alias, urls, generate_version, cache = False, atlas = False):
+def gen_handler(input_version, output_dir, languages, alias, urls, generate_version, cache = False, atlas = False):
     from lol.atlas import AtlasProcessor
 
     redis_cache = {}
@@ -197,7 +197,7 @@ def gen_handler(input_version, output_dir, alias, urls, generate_version, cache 
                 }
 
             if redis_cache[version_name]["last_modified"] != last_modified:
-                generate_version(version_name, output_dir)
+                generate_version(version_name, output_dir, languages)
 
                 if redis_con:
                     redis_cache[version_name]["last_modified"] = last_modified
@@ -228,7 +228,7 @@ def gen_handler(input_version, output_dir, alias, urls, generate_version, cache 
 
         if redis_cache[input_version]["status"] != patch_status and "done" in patch_status:
             if redis_cache[input_version]["last_modified"] != last_modified:
-                generate_version(input_version, output_dir)
+                generate_version(input_version, output_dir, languages)
 
                 if redis_con:
                     redis_cache[input_version]["status"] = patch_status
