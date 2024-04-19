@@ -95,7 +95,7 @@ class BinDefinitions:
 
             try:
                 mMultiplier = float(mMultiplier)
-                return_value = re.sub(r'([0-9]+(\.[0-9]+)*)', callback_for_multiplier, return_value)
+                return_value = re.sub(r'([0-9]+(\.[0-9]+)*)', callback_for_multiplier, str(return_value))
             except:
                 pass
 
