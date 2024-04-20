@@ -42,7 +42,7 @@ class TFTUnitsProcessor:
         return get_string(self.strings_raw, string)
     
     def __get_unit(self, unit_id, unit_data):
-        #if unit_id != 'Characters/TFT6_Jayce':
+        #if unit_id != 'Characters/TFT11_Gnar':
         #    return
 
         #print(unit_id)
@@ -201,7 +201,14 @@ class TFTUnitsProcessor:
                     else:
                         calculated_value = parsed_bin
 
-                    spell_calc[spell_calc_key.lower()].append(calculated_value if not isinstance(calculated_value, (int, float)) and '%' in calculated_value else float(calculated_value))
+                    m_precision = getf(spell_calc_value, "mPrecision")
+
+                    if not isinstance(calculated_value, (int, float)) and '%' in calculated_value:
+                        spell_calc[spell_calc_key.lower()].append(calculated_value)
+                    elif m_precision:
+                        spell_calc[spell_calc_key.lower()].append(f"{calculated_value}|{m_precision}")
+                    else:
+                        spell_calc[spell_calc_key.lower()].append(float(calculated_value))
 
                 spell_calc[spell_calc_key.lower()] = self.__process_value_array(spell_calc[spell_calc_key.lower()])
                 spell_calc[hash_fnv1a(spell_calc_key.lower())] = spell_calc[spell_calc_key.lower()]
@@ -272,20 +279,25 @@ class TFTUnitsProcessor:
                 var_name = hash_fnv1a(var_name)
 
             if var_name in spell_calc:
+                current_spell_calc = spell_calc[var_name]
                 decimal_places = 0
 
                 if var_name in var_values:
                     decimal_places = 2
 
-                if isinstance(spell_calc[var_name], (int, float)):
-                    replacement = round_number(float(spell_calc[var_name]) * var_mod, decimal_places, True)
+                if isinstance(current_spell_calc, str) and '|' in current_spell_calc:
+                    decimal_places = int(spell_calc[var_name].split('|')[1])
+                    current_spell_calc = float(current_spell_calc.split('|')[0])
+
+                if isinstance(current_spell_calc, (int, float)):
+                    replacement = round_number(float(current_spell_calc) * var_mod, decimal_places, True)
                 else:
-                    if '/' in spell_calc[var_name] and not '%' in spell_calc[var_name]:
-                        replacement = '/'.join([round_number(float(x) * var_mod, decimal_places, True) for x in spell_calc[var_name].split('/')])
-                    elif '/' in spell_calc[var_name] and '%' in spell_calc[var_name]:
-                        replacement = re.sub(' *%/', '/', spell_calc[var_name])
+                    if '/' in current_spell_calc and not '%' in current_spell_calc:
+                        replacement = '/'.join([round_number(float(x) * var_mod, decimal_places, True) for x in current_spell_calc.split('/')])
+                    elif '/' in current_spell_calc and '%' in current_spell_calc:
+                        replacement = re.sub(' *%/', '/', current_spell_calc)
                     else:
-                        replacement = spell_calc[var_name]
+                        replacement = current_spell_calc
 
             if var_name == 'value' and var_name not in spell_calc:
                 replacement = '0'

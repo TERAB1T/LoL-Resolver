@@ -146,12 +146,6 @@ def round_number(num, decimal, to_string=False):
             return temp_result
     else:
         return num
-    
-def not_none(value, default_value):
-    if value is not None and value is not False:
-        return value
-    else:
-        return default_value
 
 def str_ireplace(before, after, string):
     return re.sub(str(before), str(after), str(string), flags=re.IGNORECASE)

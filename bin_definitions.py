@@ -101,7 +101,7 @@ class BinDefinitions:
 
         if 'mDisplayAsPercent' in current_block:
             if isinstance(return_value, (int, float)):
-                return_value = str_ireplace('@NUMBER@', round_number(return_value * 100, not_none(current_block.get('mPrecision'), 5)), self.__get_string('number_formatting_percentage_format'))
+                return_value = str_ireplace('@NUMBER@', round_number(return_value * 100, getf(current_block, 'mPrecision', 5)), self.__get_string('number_formatting_percentage_format'))
             else:
                 def callback_for_numbers(matches):
                     number = float(matches.group(1))
@@ -120,7 +120,7 @@ class BinDefinitions:
     
     def __ByCharLevelInterpolationCalculationPart(self, current_block, key=0):
         if 'mStartValue' not in current_block:
-            return not_none(current_block.get('mEndValue'), '0')
+            return getf(current_block, 'mEndValue', '0')
 
         formula_part_style_key = "tooltip_statsuidata_formulapartrangestyle" if key == 0 else "tooltip_statsuidata_formulapartrangestylebonus"
         return_value = self.__get_string(formula_part_style_key)
@@ -339,7 +339,7 @@ class BinDefinitions:
             end_value = level1_value
 
             for m_breakpoint in reversed(current_block['mBreakpoints']):
-                current_value = not_none(m_breakpoint.get('{d5fd07ed}'), not_none(m_breakpoint.get('{57fdc438}'), 0))
+                current_value = getf(m_breakpoint, '{d5fd07ed}', getf(m_breakpoint, '{57fdc438}', 0))
                 diff = last_level - m_breakpoint['mLevel'] + 1
                 end_value += diff * current_value
                 last_level -= diff
