@@ -86,18 +86,18 @@ class TFTUnitsProcessor:
             'traits': []
         }
 
-        if "{dac11dd4}" in unit_shop_data:
-            self.output_dict[unit_id_trimmed]['icon'] = image_to_png(unit_shop_data.get("{dac11dd4}").lower())
+        if getf(unit_shop_data, 'TeamPlannerPortraitPath'):
+            self.output_dict[unit_id_trimmed]['icon'] = image_to_png(getf(unit_shop_data, 'TeamPlannerPortraitPath').lower())
         elif getf(root_record, 'PortraitIcon'):
             self.output_dict[unit_id_trimmed]['icon'] = image_to_png(getf(root_record, 'PortraitIcon').lower())
 
-        if "{466dc3cc}" in unit_shop_data:
-            self.output_dict[unit_id_trimmed]['splashSmall'] = image_to_png(unit_shop_data.get("{466dc3cc}").lower())
+        if getf(unit_shop_data, 'PcSplashPath'):
+            self.output_dict[unit_id_trimmed]['splashSmall'] = image_to_png(getf(unit_shop_data, 'PcSplashPath').lower())
         elif getf(unit_shop_data, 'mIconPath'):
             self.output_dict[unit_id_trimmed]['splashSmall'] = image_to_png(getf(unit_shop_data, 'mIconPath').lower())
 
-        if "{16071366}" in unit_shop_data:
-            self.output_dict[unit_id_trimmed]['splashLarge'] = image_to_png(unit_shop_data.get("{16071366}").lower())
+        if getf(unit_shop_data, 'SquareSplashPath'):
+            self.output_dict[unit_id_trimmed]['splashLarge'] = image_to_png(getf(unit_shop_data, 'SquareSplashPath').lower())
         elif getf(unit_shop_data, 'mMobileIconPath'):
             self.output_dict[unit_id_trimmed]['splashLarge'] = image_to_png(getf(unit_shop_data, 'mMobileIconPath').lower())
 
@@ -132,8 +132,8 @@ class TFTUnitsProcessor:
                 spell_record_path = f'{unit_id}/Spells/{spell_name}'
                 self.__get_spell(unit_id_trimmed, unit_data, spell_record_path, unit_stats)
 
-        if "{df0ad83b}" in unit_shop_data:
-            self.output_dict[unit_id_trimmed]['abilityIcon'] = image_to_png(unit_shop_data.get("{df0ad83b}").lower())
+        if getf(unit_shop_data, 'AbilityIconPath'):
+            self.output_dict[unit_id_trimmed]['abilityIcon'] = image_to_png(getf(unit_shop_data, 'AbilityIconPath').lower())
         elif getf(unit_shop_data, 'mPortraitIconPath'):
             self.output_dict[unit_id_trimmed]['abilityIcon'] = image_to_png(getf(unit_shop_data, 'mPortraitIconPath').lower())
 
