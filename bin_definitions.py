@@ -472,8 +472,8 @@ class BinDefinitions:
         melee_value = 0
         ranged_value = 0
 
-        if "{f61974d2}" in current_block:
-            block_name = current_block["{f61974d2}"].replace('@', '')
+        if getf(current_block, 'MeleeResult'):
+            block_name = getf(current_block, 'MeleeResult').replace('@', '')
             temp_block = getf(self.all_calculations, block_name)
 
             if self.var_values.get(block_name.lower()):
@@ -482,8 +482,8 @@ class BinDefinitions:
             if temp_block:
                 melee_value = self.parse_values(temp_block)
 
-        if "{158508fb}" in current_block:
-            block_name = current_block["{158508fb}"].replace('@', '')
+        if getf(current_block, 'RangedResult'):
+            block_name = getf(current_block, 'RangedResult').replace('@', '')
             temp_block = getf(self.all_calculations, block_name)
 
             if self.var_values.get(block_name.lower()):
