@@ -41,7 +41,7 @@ def get_tftmap_file(version):
     
 def get_set_root(tft_data):
     tft_data_main = tft_data["{9fcfd7a6}"]
-    current_set_id = tft_data_main.get("{0d43af66}", tft_data_main.get("{2caa347b}", tft_data_main.get("mDefaultSetData")))
+    current_set_id = getf(tft_data_main, "mDefaultSetData", getf(tft_data_main, "DefaultSetData"))
     return tft_data[current_set_id]
 
 def filter_unit_props(tft_data):

@@ -57,8 +57,10 @@ class ItemsProcessor:
                 del filtered_strings[key]
 
                 if is_string:
-                    if int(number) in (1101, 1102, 1103) and self.__get_string(f"generatedtip_item_{number}_tooltipextended") is not False:
-                        value = self.__get_string(f"generatedtip_item_{number}_tooltipextended")
+                    if int(number) in (1101, 1102, 1103) and self.__get_string(f"generatedtip_item_{number}_tooltipextended") != '':
+                        value = self.__get_string(f"generatedtip_item_{number}_tooltipshopextended")
+                    elif int(number) in (1101, 1102, 1103) and self.__get_string(f"generatedtip_item_{number}_tooltipshopextended") != '':
+                        value = self.__get_string(f"generatedtip_item_{number}_tooltipshopextended")
 
                     value = recursive_replace(value)
 

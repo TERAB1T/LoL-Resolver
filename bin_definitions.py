@@ -346,7 +346,7 @@ class BinDefinitions:
 
             range_end = round_number(end_value, 5)
         else:
-            range_end = round_number(current_block['{02deb550}'] * 17 + level1_value, 5)
+            range_end = round_number(getf(current_block, 'mInitialBonusPerLevel', 0) * 17 + level1_value, 5)
 
         placeholders = {
             '@OpeningTag@': '<scaleLevel>',
@@ -414,7 +414,7 @@ class BinDefinitions:
         return re.sub(r'([0-9]+(\.[0-9]+)*)', callback_for_numbers, str(modified_block), flags=re.IGNORECASE)
     
     def __f3cbe7b2(self, current_block, key=0):
-        return self.__check_dict(self.parse_values(self.all_calculations[current_block['{88536426}']]))
+        return self.__check_dict(self.parse_values(self.all_calculations[getf(current_block, 'mSpellCalculationKey')]))
     
     def __803dae4c(self, current_block, key=0):
         if self.needs_calculation:
@@ -449,7 +449,7 @@ class BinDefinitions:
     def __e9a3c91d(self, current_block, key=0):
         return_value = self.__get_string("item_range_type_melee")
 
-        ranged_coef = self.parse_values(current_block['{68508370}'])
+        ranged_coef = self.parse_values(getf(current_block, 'mRangedMultiplier'))
         current_block_ranged = dict(current_block)
         current_block_ranged['mMultiplier'] = ranged_coef
 
