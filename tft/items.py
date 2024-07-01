@@ -182,7 +182,7 @@ class TFTItemsProcessor:
             aug_desc = self.__get_string(aug_desc_id)
 
             aug_icon = getf(aug_data, "mIconPath")
-            aug_icon_large = aug_data.get("{d434d358}", aug_icon)
+            aug_icon_large = getf(aug_data, "mArmoryIconOverridePath", aug_icon)
 
             aug_unit = aug_data.get("{f0021999}")
             aug_traits = getf(aug_data, "AssociatedTraits")
