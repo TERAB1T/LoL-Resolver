@@ -339,10 +339,14 @@ class BinDefinitions:
             end_value = level1_value
 
             for m_breakpoint in reversed(current_block['mBreakpoints']):
-                current_value = getf(m_breakpoint, '{d5fd07ed}', getf(m_breakpoint, '{57fdc438}', 0))
-                diff = last_level - m_breakpoint['mLevel'] + 1
-                end_value += diff * current_value
-                last_level -= diff
+                if getf(m_breakpoint, 'mBonusPerLevelAtAndAfter'):
+                    current_value = getf(m_breakpoint, 'mBonusPerLevelAtAndAfter')
+                    diff = last_level - m_breakpoint['mLevel'] + 1
+                    end_value += diff * current_value
+                    last_level -= diff
+                elif getf(m_breakpoint, 'mAdditionalBonusAtThisLevel'):
+                    current_value = getf(m_breakpoint, 'mAdditionalBonusAtThisLevel')
+                    end_value += current_value
 
             range_end = round_number(end_value, 5)
         else:
@@ -508,8 +512,8 @@ class BinDefinitions:
             current_ratio = current_block.get('mRatio', 1)
             current_value = self.__check_dict(self.parse_values(current_block['mSubpart']))
 
-            current_tag = current_block.get('mStyleTag', current_block.get('{992cd7eb}'))
-            current_icon = current_block.get('{a5749b52}')
+            current_tag = getf(current_block, 'mStyleTag')
+            current_icon = getf(current_block, 'mStyleTagIfScaled')
 
             if current_icon == 'noScale' and current_tag != 'noScale':
                 current_icon, current_tag = current_tag, current_icon
