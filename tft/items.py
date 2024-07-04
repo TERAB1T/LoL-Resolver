@@ -56,7 +56,7 @@ class TFTItemsProcessor:
             item_desc = self.__get_string(item_desc_id)
 
             item_icon = getf(item_data, "mIconPath")
-            item_unit = item_data.get("{f0021999}")
+            item_unit = getf(item_data, "AssociatedCharacterName")
             item_traits = getf(item_data, "AssociatedTraits")
 
             item_tags = getf(item_data, "ItemTags")
@@ -67,7 +67,7 @@ class TFTItemsProcessor:
             radiant_guess = re.sub(r'tft(\d+)', 'tft', radiant_guess)
 
             if item_tags:
-                if '{5efd6ee0}' in item_tags:
+                if 'component' in item_tags or hash_fnv1a('component') in item_tags:
                     item_type = 'Component'
                 elif '{44ace175}' in item_tags:
                     item_type = 'Artifact'
@@ -184,7 +184,7 @@ class TFTItemsProcessor:
             aug_icon = getf(aug_data, "mIconPath")
             aug_icon_large = getf(aug_data, "mArmoryIconOverridePath", aug_icon)
 
-            aug_unit = aug_data.get("{f0021999}")
+            aug_unit = getf(aug_data, "AssociatedCharacterName")
             aug_traits = getf(aug_data, "AssociatedTraits")
 
             aug_tags = getf(aug_data, "ItemTags")

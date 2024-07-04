@@ -32,8 +32,8 @@ class SwarmAugmentsProcessor:
         return get_string(self.strings_raw, string)
     
     def __get_augments(self):
-        augment_entries = [value for key, value in self.swarm_data.items() if value.get('__type') == 'AugmentData' or value.get('__type') == '{6dfab860}']
-        spellobject_entries = {key: value for key, value in self.swarm_data.items() if value.get('__type') == 'SpellObject' or value.get('__type') == '{5e7e5a06}'}
+        augment_entries = [value for key, value in self.swarm_data.items() if value.get('__type') == 'AugmentData' or value.get('__type') == hash_fnv1a('AugmentData')]
+        spellobject_entries = {key: value for key, value in self.swarm_data.items() if value.get('__type') == 'SpellObject' or value.get('__type') == hash_fnv1a('SpellObject')}
 
         for augment in augment_entries:
             self.output_dict[augment['AugmentNameId'].lower()] = {

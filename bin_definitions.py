@@ -39,8 +39,8 @@ class BinDefinitions:
             'StatByCoefficientCalculationPart',
             'StatBySubPartCalculationPart',
             '{f3cbe7b2}',
-            '{803dae4c}',
-            '{05abdfab}',
+            'ClampSubPartsCalculationPart',
+            'StatEfficiencyPerHundred',
             '{e9a3c91d}',
             '{4750ceb6}',
             'SubPartScaledProportionalToStat'
@@ -51,7 +51,7 @@ class BinDefinitions:
         elif block_type in [
             'BuffCounterByCoefficientCalculationPart',
             'BuffCounterByNamedDataValueCalculationPart',
-            '{663d5e00}'
+            'ByItemEpicnessCountCalculationPart'
             ]:
             return 0
         else:
@@ -420,7 +420,7 @@ class BinDefinitions:
     def __f3cbe7b2(self, current_block, key=0):
         return self.__check_dict(self.parse_values(self.all_calculations[getf(current_block, 'mSpellCalculationKey')]))
     
-    def __803dae4c(self, current_block, key=0):
+    def __ClampSubPartsCalculationPart(self, current_block, key=0):
         if self.needs_calculation:
             floor = current_block.get('mFloor')
             ceiling = current_block.get('mCeiling')
@@ -441,10 +441,10 @@ class BinDefinitions:
         
         return 0
     
-    def __05abdfab(self, current_block, key=0):
+    def __StatEfficiencyPerHundred(self, current_block, key=0):
         if self.needs_calculation:
             current_value = self.var_values.get(current_block['mDataValue'].lower(), 0)
-            current_coef = current_block['{bfe6ad01}'] # doesn't work well with mDisplayAsPercent
+            current_coef = getf(current_block, 'mBonusStatForEfficiency') # doesn't work well with mDisplayAsPercent
             
             return current_value # * current_coef
 

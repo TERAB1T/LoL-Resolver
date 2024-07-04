@@ -47,7 +47,7 @@ class TFTTraitsProcessor:
             trait_name_id = getf(trait_data, "mDisplayNameTra")
             trait_name = self.__get_string(trait_name_id)
 
-            effects_main_raw = trait_data.get("{6f4cf34d}", [])
+            effects_main_raw = getf(trait_data, "InnateTraitSets", [])
             effects_main = self.unit_props.copy()
 
             for effect in effects_main_raw:

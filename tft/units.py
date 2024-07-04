@@ -101,8 +101,13 @@ class TFTUnitsProcessor:
         elif getf(unit_shop_data, 'mMobileIconPath'):
             self.output_dict[unit_id_trimmed]['splashLarge'] = image_to_png(getf(unit_shop_data, 'mMobileIconPath').lower())
 
-        if "{b6b01440}" in root_record:
-            self.output_dict[unit_id_trimmed]['role'] = self.__get_string(self.tft_data[root_record["{b6b01440}"]]["{5969040c}"])
+        if getf(root_record, 'CharacterRole'):
+            character_role = getf(root_record, 'CharacterRole')
+            character_role_block = getf(self.tft_data, character_role, {})
+            character_role_name = getf(character_role_block, 'CharacterRoleNameTra')
+
+            if character_role_name:
+                self.output_dict[unit_id_trimmed]['role'] = self.__get_string(character_role_name)
 
         self.output_dict[unit_id_trimmed]['stats'] = {
             'health': round_number(unit_stats[11][1], 2),
