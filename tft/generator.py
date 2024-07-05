@@ -105,7 +105,7 @@ def download_unit(input_version, unit_id):
     temp_cache_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '_temp', input_version, 'units')
     temp_cache_file = f"{temp_cache_dir}/{unit_id.split('/')[1].lower()}.json"
 
-    if (os.path.isfile(temp_cache_file)):
+    if os.path.isfile(temp_cache_file):
         try:
             with open(temp_cache_file, encoding='utf-8') as f:
                 return (unit_id, ujson.load(f))

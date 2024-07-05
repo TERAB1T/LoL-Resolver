@@ -17,7 +17,6 @@ class ItemsProcessor:
         self.output_filepath = f"{self.output_dir}/{lang}.json"
         self.var_values = {}
 
-        self.__filter_items()
         self.__filter_strings()
         self.__filter_overlaps()
 
@@ -67,15 +66,6 @@ class ItemsProcessor:
                 filtered_strings[int(number)] = value
 
         return filtered_strings
-    
-    def __filter_items(self):
-        for key, value in list(self.items.items()):
-            if re.match(r'^\{[0-9a-f]{8}\}$', key) and "itemID" in value:
-                if hash_fnv1a("items/" + str(value["itemID"])) == key:
-                    self.items["Items/" + str(value["itemID"])] = value
-                    del self.items[key]
-
-        self.items = self.__filter_array(self.items, r'^Items/(\d+)$')
 
     def __filter_strings(self):
         for key, value in self.items.items():
@@ -233,6 +223,7 @@ class ItemsProcessor:
 
             self.strings[key] = {
                 'epicness': self.var_values[key].get('epicness', 0),
+                'modes': self.items[key]['lr_modes'],
                 'desc': self.strings[key]
             }
 
