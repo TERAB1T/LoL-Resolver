@@ -62,6 +62,7 @@ class TFTItemsProcessor:
             item_tags = getf(item_data, "ItemTags")
             item_type = None
             item_parent = None
+            item_cost = None
 
             radiant_guess = re.sub(r'(radiant|shadow|_genae)$', '', item_id.lower())
             radiant_guess = re.sub(r'tft(\d+)', 'tft', radiant_guess)
@@ -97,6 +98,11 @@ class TFTItemsProcessor:
                         item_parent = self.radiants[item_id.lower()]
                     elif radiant_guess in item_ids_lower:
                         item_parent = radiant_guess
+
+            if item_type == 'Charm':
+                shop_data_id = getf(item_data, "ShopData", '')
+                shop_data = getf(self.tft_data, shop_data_id, {})
+                item_cost = getf(shop_data, "BaseCost", 0)
 
             item_recipe_raw = getf(item_data, "mComposition")
             item_recipe = []
@@ -144,6 +150,9 @@ class TFTItemsProcessor:
 
             if item_parent:
                 self.output_dict[item_id.lower()]['parent'] = item_parent
+
+            if item_cost:
+                self.output_dict[item_id.lower()]['cost'] = item_cost
 
             if len(item_recipe):
                 if item_recipe[0] in item_ids_lower and item_recipe[1] in item_ids_lower:
