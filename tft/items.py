@@ -151,7 +151,7 @@ class TFTItemsProcessor:
             if item_parent:
                 self.output_dict[item_id.lower()]['parent'] = item_parent
 
-            if item_cost:
+            if item_cost or item_cost == 0:
                 self.output_dict[item_id.lower()]['cost'] = item_cost
 
             if len(item_recipe):
