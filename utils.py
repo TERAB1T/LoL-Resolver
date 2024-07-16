@@ -1,12 +1,17 @@
-from xxhash import xxh64_intdigest
+from xxhash import xxh64_intdigest, xxh3_64_intdigest
 import requests
 import ujson
 import re
 import os
 import redis
 
-def hash_xxhash(key, bits=39):
+def hash_xxhash64(key, bits=39):
     key_int = xxh64_intdigest(key.lower())
+    masked_key = key_int & ((1 << bits) - 1)
+    return "{" + f"{masked_key:010x}" + "}"
+
+def hash_xxhash3(key, bits=39):
+    key_int = xxh3_64_intdigest(key.lower())
     masked_key = key_int & ((1 << bits) - 1)
     return "{" + f"{masked_key:010x}" + "}"
 
@@ -116,14 +121,22 @@ def get_string(strings_array, id):
     if id in strings_array:
         return strings_array[id]
 
-    hashed_39 = hash_xxhash(id, 39)
-    hashed_40 = hash_xxhash(id, 40)
+    hashed3_39 = hash_xxhash3(id, 39)
+    hashed3_40 = hash_xxhash3(id, 40)
+    hashed64_39 = hash_xxhash64(id, 39)
+    hashed64_40 = hash_xxhash64(id, 40)
 
-    if hashed_39 in strings_array:
-        return strings_array[hashed_39]
+    if hashed3_39 in strings_array:
+        return strings_array[hashed3_39]
 
-    if hashed_40 in strings_array:
-        return strings_array[hashed_40]
+    if hashed3_40 in strings_array:
+        return strings_array[hashed3_40]
+
+    if hashed64_39 in strings_array:
+        return strings_array[hashed64_39]
+
+    if hashed64_40 in strings_array:
+        return strings_array[hashed64_40]
 
     if "_mod_1" in id:
         return get_string(strings_array, id.replace("_mod_1", "_mod_2"))
