@@ -9,6 +9,21 @@ from utils import *
 class AtlasProcessor:
     def __init__(self):
         pass
+    
+    def parse_struct_json(self, data):
+        parsed_data = []
+
+        for key, entry in data.items():
+            parsed_entry = {
+                'entry_name': key,
+                'x_start_percentage': entry['startX'],
+                'y_start_percentage': entry['startY'],
+                'x_end_percentage': entry['endX'],
+                'y_end_percentage': entry['endY']
+            }
+            parsed_data.append(parsed_entry)
+
+        return parsed_data
 
     def parse_struct(self, data):
         parsed_data = {}
@@ -40,7 +55,7 @@ class AtlasProcessor:
             offset += 20
             parsed_data['entries'].append(entry)
 
-        return parsed_data
+        return parsed_data['entries']
 
     def split_icons_from_atlas(self, atlas_file, parsed_data):
         try:
@@ -51,7 +66,7 @@ class AtlasProcessor:
             
             atlas_image = Image.open(BytesIO(response.content))
 
-            for entry in parsed_data['entries']:
+            for entry in parsed_data:
                 x_start_percentage = entry['x_start_percentage']
                 y_start_percentage = entry['y_start_percentage']
                 x_end_percentage = entry['x_end_percentage']
@@ -109,15 +124,25 @@ class AtlasProcessor:
         self.output_dir = os.path.join(output_dir, f"lol-items/{version}/icons")
         os.makedirs(self.output_dir, exist_ok=True)
 
-        url_bin = f"https://raw.communitydragon.org/{version}/game/assets/items/icons2d/autoatlas/largeicons/atlas_info.bin"
-        response = requests.get(url_bin)
+        parsed_data = []
+
+        url_json = f"https://raw.communitydragon.org/{version}/game/assets/items/icons2d/autoatlas/largeicons/atlas_info.bin.json"
+        response_json = requests.get(url_json)
+
+        if response_json.status_code == 200:
+            binary_data = ujson.loads(response_json.content)
+            parsed_data = self.parse_struct_json(binary_data)
+        else:
+            url_bin = f"https://raw.communitydragon.org/{version}/game/assets/items/icons2d/autoatlas/largeicons/atlas_info.bin"
+            response = requests.get(url_bin)
+            
+            if response.status_code != 200:
+                print(f"Atlas file not found: {version}")
+                return
         
-        if response.status_code != 200:
-            print(f"Atlas file not found: {version}")
-            return
-        
-        binary_data = response.content
-        parsed_data = self.parse_struct(binary_data)
+            binary_data = response.content
+            parsed_data = self.parse_struct(binary_data)
+
         atlas_file = f"https://raw.communitydragon.org/{version}/game/assets/items/icons2d/autoatlas/largeicons/atlas_0.png"
         self.split_icons_from_atlas(atlas_file, parsed_data)
 

@@ -4,8 +4,7 @@ import shutil
 import re
 from utils import cd_get_versions_clean
 from lol.atlas import AtlasProcessor
-from lol.generator import generate_lol_items
-from rgm.generator import generate_swarm_augments
+from lol.generator import generate_lol_items, generate_arena_augments, generate_swarm_augments
 from tft.generator import generate_tft_units, generate_tft_traits, generate_tft_items, generate_tft_augments
 
 def rm_temp_cache(version=''):
@@ -20,13 +19,15 @@ def main():
     subparsers = arg_parser.add_subparsers(dest="cmd")
 
     cmd_configs = {
+        "lol": {"help": "Generates League of Legends items, Arena augments, and Swarm augments.", "func": generate_lol_all, "extra_args": {"--icons": {"action": argparse.BooleanOptionalAction, "default": False, "help": "Generate item icons."}}},
         "lol-items": {"help": "Generates League of Legends items.", "func": generate_lol_items, "extra_args": {"--icons": {"action": argparse.BooleanOptionalAction, "default": False, "help": "Generate item icons."}}},
-        "swarm-augments": {"help": "Generates LoL Swarm augments.", "func": generate_swarm_augments},
         "tft": {"help": "Generates Teamfight Tactics units, traits, items, and augments.", "func": generate_tft_all},
         "tft-units": {"help": "Generates Teamfight Tactics units.", "func": generate_tft_units},
         "tft-traits": {"help": "Generates Teamfight Tactics traits.", "func": generate_tft_traits},
         "tft-items": {"help": "Generates Teamfight Tactics items.", "func": generate_tft_items},
         "tft-augments": {"help": "Generates Teamfight Tactics augments.", "func": generate_tft_augments},
+        "arena-augments": {"help": "Generates Arena augments.", "func": generate_arena_augments},
+        "swarm-augments": {"help": "Generates Swarm augments.", "func": generate_swarm_augments},
         "staticons": {"help": "Generates stat icons used in tooltips for abilities, items, etc.", "func": process_staticons}
     }
 
@@ -41,7 +42,7 @@ def main():
 
     if args.cmd in cmd_configs:
         extra_args = []
-        if args.cmd == "lol-items":
+        if args.cmd == "lol-items" or args.cmd == "lol":
             extra_args.append(args.icons)
 
         process_versions(args, cmd_configs[args.cmd]["func"], *extra_args)
@@ -68,6 +69,11 @@ def process_versions(args, generate_func, *extra_args):
         generate_func(version, output_dir, args.lang, args.cache, *extra_args)
         if re.match(r'^\d+\.\d+$', version) or version in ['latest', 'pbe']:
             rm_temp_cache(version)
+
+def generate_lol_all(version, output_dir, lang, cache, icons):
+    generate_lol_items(version, output_dir, lang, cache, icons)
+    generate_arena_augments(version, output_dir, lang, cache)
+    generate_swarm_augments(version, output_dir, lang, cache)
 
 def generate_tft_all(version, output_dir, lang, cache):
     generate_tft_units(version, output_dir, lang, cache)

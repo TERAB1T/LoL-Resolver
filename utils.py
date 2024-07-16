@@ -66,7 +66,7 @@ def get_last_modified(file_url):
         response = requests.head(file_url)
         return response.headers.get('Last-Modified')
     except requests.RequestException as e:
-        raise ValueError(f"An error occurred: {e}")
+        return False
 
 def get_final_url(version, urls):
     main_url = f"https://raw.communitydragon.org/{version}/game/"
@@ -212,6 +212,11 @@ def gen_handler(input_version, output_dir, languages, alias, urls, generate_vers
             }
 
         last_modified = get_last_modified(get_final_url(input_version, urls))
+
+        if not last_modified:
+            print(f"Version {input_version} for {alias} not found.")
+            return
+
         input_version_modified = "live" if input_version == "latest" else input_version
         response = requests.get(f"https://raw.communitydragon.org/status.{input_version_modified}.txt")
 
