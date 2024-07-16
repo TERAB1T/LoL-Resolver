@@ -85,6 +85,8 @@ class TFTItemsProcessor:
                     item_type = 'Shadow'
                 elif '{47df912f}' in item_tags:
                     item_type = 'Gadgeteen'
+                elif '{5b609ae2}' in item_tags:
+                    item_type = 'Charm'
 
                 if '{6ef5c598}' in item_tags or '{d30ba8ed}' in item_tags or '{47df912f}' in item_tags:
 
