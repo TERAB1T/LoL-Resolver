@@ -88,9 +88,10 @@ class TFTItemsProcessor:
                     item_type = 'Gadgeteen'
                 elif '{5b609ae2}' in item_tags:
                     item_type = 'Charm'
+                elif 'tft12_item_faerie_' in item_id.lower():
+                    item_type = 'Faerie'
 
-                if '{6ef5c598}' in item_tags or '{d30ba8ed}' in item_tags or '{47df912f}' in item_tags:
-
+                if item_type in ('Radiant', 'Shadow', 'Gadgeteen', 'Faerie'):
                     if not 'tft_item_seraphsembrace' in item_ids_lower:
                         self.radiants['TFT5_Item_BlueBuffRadiant'.lower()] = 'tft_item_bluebuff'
 

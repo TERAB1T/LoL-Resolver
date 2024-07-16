@@ -76,5 +76,7 @@
 	"tft5_item_ludensechoshadow": "tft_item_archangelsstaff",
 	"tft8_item_warmogs_genae": "tft_item_warmogsarmor",
 	"tft8_item_shojin_genae": "tft_item_spearofshojin",
-	"tft8_item_sunfire_genae": "tft_item_redbuff"
+	"tft8_item_sunfire_genae": "tft_item_redbuff",
+	"tft12_item_faerie_armorradiant": "tft12_item_faerie_armor",
+	"tft12_item_faerie_queenscrownradiant": "tft12_item_faerie_queenscrown"
 }
