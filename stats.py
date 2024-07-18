@@ -18,7 +18,7 @@ stats = {
     16: {'name': 'AdaptiveForce', 'icon': '%i:scaleAdaptiveForce%', 'openingTag': '<scaleadaptivedorce>', 'closingTag': '</scaleadaptivedorce>'},
     17: {'name': 'OmniVamp', 'icon': '%i:?%', 'openingTag': '<noscale>', 'closingTag': '</noscale>'},
     18: {'name': 'PhysicalVamp', 'icon': '%i:?%', 'openingTag': '<noscale>', 'closingTag': '</noscale>'},
-    19: {'name': 'MagicPenetrationFlat', 'icon': '%i:?%', 'openingTag': '<noscale>', 'closingTag': '</noscale>'},
+    19: {'name': 'MagicPenetrationFlat', 'icon': '%i:scaleMPen%', 'openingTag': '<scaleMPen>', 'closingTag': '</scaleMPen>'},
     20: {'name': 'MagicPenetrationPercent', 'icon': '%i:?%', 'openingTag': '<noscale>', 'closingTag': '</noscale>'},
     21: {'name': 'BonusMagicPenetrationPercent', 'icon': '%i:?%', 'openingTag': '<noscale>', 'closingTag': '</noscale>'},
     22: {'name': 'MagicLethality', 'icon': '%i:?%', 'openingTag': '<noscale>', 'closingTag': '</noscale>'},
@@ -29,8 +29,8 @@ stats = {
     27: {'name': 'Tenacity', 'icon': '%i:?%', 'openingTag': '<noscale>', 'closingTag': '</noscale>'},
     28: {'name': 'AttackRange', 'icon': '%i:?%', 'openingTag': '<noscale>', 'closingTag': '</noscale>'},
     29: {'name': 'HealthRegenRate', 'icon': '%i:?%', 'openingTag': '<noscale>', 'closingTag': '</noscale>'},
-    30: {'name': 'ResourceRegenRate', 'icon': '%i:?%', 'openingTag': '<noscale>', 'closingTag': '</noscale>'},
-    31: {'name': 'Unknown31', 'icon': '%i:?%', 'openingTag': '<noscale>', 'closingTag': '</noscale>'},
+    30: {'name': 'ResourceRegenRate', 'icon': '%i:scalePARR%', 'openingTag': '<noscale>', 'closingTag': '</noscale>'},
+    31: {'name': 'HealShieldPower', 'icon': '%i:scaleHealShield%', 'openingTag': '<noscale>', 'closingTag': '</noscale>'},
     32: {'name': 'Unknown32', 'icon': '%i:?%', 'openingTag': '<noscale>', 'closingTag': '</noscale>'},
     33: {'name': 'DodgeChance', 'icon': '%i:?%', 'openingTag': '<noscale>', 'closingTag': '</noscale>'}
 }
