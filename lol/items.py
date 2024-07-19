@@ -126,6 +126,21 @@ class ItemsProcessor:
         
         return re.sub(r'{{\s*(.*?)\s*}}', replace_callback, desc, flags=re.IGNORECASE)
     
+    def __beautify_desc(self, desc):
+        desc = re.sub(r'(<br>){3,}', '<br><br>', desc, flags=re.IGNORECASE)
+        desc = re.sub(r'(^(<br>)+)|((<br>)+$)', '', desc, flags=re.IGNORECASE)
+
+        desc = re.sub(r'(<br>)+(?=(<rules>|<flavortext>))', '', desc, flags=re.IGNORECASE)
+        desc = re.sub(r'(?<=</rules>)(<br>)+', '', desc, flags=re.IGNORECASE)
+        desc = re.sub(r'(?<=</flavortext>)(<br>)+', '', desc, flags=re.IGNORECASE)
+
+        desc = re.sub(r'(<br>)+(?=<li>)', '<br>', desc, flags=re.IGNORECASE)
+
+        desc = re.sub(r'<flavortext></flavortext>', '', desc, flags=re.IGNORECASE)
+        desc = re.sub(r'<section></section>', '', desc, flags=re.IGNORECASE)
+        desc = re.sub(r'<rules></rules>', '', desc, flags=re.IGNORECASE)
+        return desc
+    
     def __get_desc_raw(self, item_id):
         desc = self.__get_string(f'generatedtip_item_{item_id}_tooltipshop')
 
@@ -229,7 +244,7 @@ class ItemsProcessor:
                 'rank': getf(item_values, 'epicness', 0),
                 'modes': self.items[item_id]['lr_modes'],
                 'name': item_name,
-                'desc': desc
+                'desc': self.__beautify_desc(desc)
             }
 
             required_ally = getf(item_values, 'mRequiredAlly', '')
