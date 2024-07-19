@@ -62,7 +62,7 @@ class BinDefinitions:
             return '@CalcError@' #current_block
     
     def __GameCalculation(self, current_block, key=0):
-        mFormulaParts = {}
+        m_formula_parts = []
         calculated_tag = None
         calculated_icon = None
 
@@ -77,14 +77,22 @@ class BinDefinitions:
                 else:
                     calculated_value = block_calculation
 
-                mFormulaParts[i] = float(round_number(calculated_value, 5, True))
+                m_formula_parts.append(float(round_number(calculated_value, 5, True)))
             else:
-                mFormulaParts[i] = str(round_number(self.parse_values(value, i), 5, True))
+                current_value = self.parse_values(value, i)
+
+                if re.match(r'^-?\d*\.?\d*$', str(current_value)):
+                    current_value = float(current_value)
+
+                m_formula_parts.append(round_number(current_value, 5))
 
         if self.needs_calculation:
-            return_value = sum(mFormulaParts.values())
+            return_value = sum(m_formula_parts.values())
         else:
-            return_value = ' '.join(mFormulaParts.values())
+            if all(isinstance(x, (int, float)) for x in m_formula_parts):
+                return_value = sum(m_formula_parts)
+            else:
+                return_value = ' '.join(str(x) for x in m_formula_parts)
 
         if 'mMultiplier' in current_block:
             def callback_for_multiplier(matches):
@@ -102,6 +110,13 @@ class BinDefinitions:
         if 'mDisplayAsPercent' in current_block:
             if isinstance(return_value, (int, float)):
                 return_value = str_ireplace('@NUMBER@', round_number(return_value * 100, getf(current_block, 'mPrecision', 5)), self.__get_string('number_formatting_percentage_format'))
+            elif '%i:scaleLevel%' in return_value:
+                def callback_for_numbers(matches):
+                    number = float(matches.group(1))
+                    return round_number(number * 100, 5, True)
+                
+                return_value = re.sub(r'([0-9]+(\.[0-9]+)*)', callback_for_numbers, return_value)
+                return_value = str_ireplace('@NUMBER@', return_value.split('%i:scaleLevel%')[0], self.__get_string('number_formatting_percentage_format')) + '%i:scaleLevel%' + return_value.split('%i:scaleLevel%')[1]
             else:
                 def callback_for_numbers(matches):
                     number = float(matches.group(1))
