@@ -25,7 +25,7 @@ stats = {
     23: {'name': 'ArmorPenetrationFlat', 'icon': '%i:?%', 'openingTag': '<noscale>', 'closingTag': '</noscale>'},
     24: {'name': 'ArmorPenetrationPercent', 'icon': '%i:?%', 'openingTag': '<noscale>', 'closingTag': '</noscale>'},
     25: {'name': 'BonusArmorPenetrationPercent', 'icon': '%i:?%', 'openingTag': '<noscale>', 'closingTag': '</noscale>'},
-    26: {'name': 'PhysicalLethality', 'icon': '%i:scaleAPen%', 'openingTag': '<scaleAPen>', 'closingTag': '</scaleAPen>'},
+    26: {'name': 'PhysicalLethality', 'icon': '%i:scaleAPen%', 'openingTag': '<armorPen>', 'closingTag': '</armorPen>'},
     27: {'name': 'Tenacity', 'icon': '%i:?%', 'openingTag': '<noscale>', 'closingTag': '</noscale>'},
     28: {'name': 'AttackRange', 'icon': '%i:?%', 'openingTag': '<noscale>', 'closingTag': '</noscale>'},
     29: {'name': 'HealthRegenRate', 'icon': '%i:?%', 'openingTag': '<noscale>', 'closingTag': '</noscale>'},

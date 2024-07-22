@@ -176,11 +176,11 @@ class AtlasProcessor:
             output_styles = ''
             for key, value in styles.items():
                 color = getf(value, "color")
-                is_bold = getf(value, "bold")
+                #is_bold = getf(value, "bold")
                 is_italics = getf(value, "italics")
                 is_underline = getf(value, "underline")
 
-                if color or is_italics or is_bold or is_underline:
+                if color or is_italics or is_underline:
                     output_styles += key + '{'
 
                     if color:
@@ -189,8 +189,8 @@ class AtlasProcessor:
                     if is_italics:
                         output_styles += 'font-style: italic;'
 
-                    if is_bold:
-                        output_styles += 'font-weight: bold;'
+                    #if is_bold:
+                    #    output_styles += 'font-weight: bold;'
 
                     if is_underline:
                         output_styles += 'text-decoration: underline;'
