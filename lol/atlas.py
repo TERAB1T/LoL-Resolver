@@ -169,3 +169,34 @@ class AtlasProcessor:
 
         atlas_file = f"https://raw.communitydragon.org/{version}/game/" + re.sub(r'(\.tex|\.dds)$', '.png', fonts_json_def["iconTexture"].lower())
         self.split_staticons_from_atlas(atlas_file, fonts_json_def["icons"])
+
+        styles = getf(fonts_json_def, "styles")
+
+        if styles:
+            output_styles = ''
+            for key, value in styles.items():
+                color = getf(value, "color")
+                is_bold = getf(value, "bold")
+                is_italics = getf(value, "italics")
+                is_underline = getf(value, "underline")
+
+                if color or is_italics or is_bold or is_underline:
+                    output_styles += key + '{'
+
+                    if color:
+                        output_styles += f'color: rgb({color[2]}, {color[1]}, {color[0]});'
+
+                    if is_italics:
+                        output_styles += 'font-style: italic;'
+
+                    if is_bold:
+                        output_styles += 'font-weight: bold;'
+
+                    if is_underline:
+                        output_styles += 'text-decoration: underline;'
+
+                    output_styles += '}'
+
+            output_filepath = os.path.join(self.output_dir, f"styles.css")
+            with open(output_filepath, 'w', encoding='utf-8') as output_file:
+                output_file.write(output_styles)
