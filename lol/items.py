@@ -134,6 +134,9 @@ class ItemsProcessor:
         desc = re.sub(r'(?<=<rules>)(<br>)+', '', desc, flags=re.IGNORECASE)
         desc = re.sub(r'(?<=<flavortext>)(<br>)+', '', desc, flags=re.IGNORECASE)
         desc = re.sub(r'(?<=<section>)(<br>)+', '', desc, flags=re.IGNORECASE)
+
+        
+        desc = re.sub(r'(<br>)+(?=(</rules>|</flavortext>|</section>))', '', desc, flags=re.IGNORECASE)
         desc = re.sub(r'(?<=</rules>)(<br>)+', '', desc, flags=re.IGNORECASE)
         desc = re.sub(r'(?<=</flavortext>)(<br>)+', '', desc, flags=re.IGNORECASE)
         desc = re.sub(r'(?<=</section>)(<br>)+', '', desc, flags=re.IGNORECASE)
