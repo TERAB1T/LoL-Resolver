@@ -27,7 +27,7 @@ class ItemsProcessor:
             'status': 1,
             'data': dict(sorted(self.output_dict.items()))
         }
-        output_json = ujson.dumps(success_return, ensure_ascii=False, separators=(',', ':'), escape_forward_slashes=False, sort_keys=True)
+        output_json = ujson.dumps(success_return, ensure_ascii=False, separators=(',', ':'), escape_forward_slashes=False, sort_keys=True, indent=4)
 
         os.makedirs(self.output_dir, exist_ok=True)
         with open(self.output_filepath, 'w', encoding='utf-8') as output_file:
@@ -130,22 +130,14 @@ class ItemsProcessor:
         desc = re.sub(r'(<br>){3,}', '<br><br>', desc, flags=re.IGNORECASE)
         desc = re.sub(r'(^(<br>)+)|((<br>)+$)', '', desc, flags=re.IGNORECASE)
 
-        desc = re.sub(r'(<br>)+(?=(<rules>|<flavortext>|<section>))', '', desc, flags=re.IGNORECASE)
-        desc = re.sub(r'(?<=<rules>)(<br>)+', '', desc, flags=re.IGNORECASE)
-        desc = re.sub(r'(?<=<flavortext>)(<br>)+', '', desc, flags=re.IGNORECASE)
-        desc = re.sub(r'(?<=<section>)(<br>)+', '', desc, flags=re.IGNORECASE)
-
-        
-        desc = re.sub(r'(<br>)+(?=(</rules>|</flavortext>|</section>))', '', desc, flags=re.IGNORECASE)
-        desc = re.sub(r'(?<=</rules>)(<br>)+', '', desc, flags=re.IGNORECASE)
-        desc = re.sub(r'(?<=</flavortext>)(<br>)+', '', desc, flags=re.IGNORECASE)
-        desc = re.sub(r'(?<=</section>)(<br>)+', '', desc, flags=re.IGNORECASE)
+        desc = re.sub(r'(<br>)+(?=(</?rules>|</?flavortext>|</?section>))', '', desc, flags=re.IGNORECASE)
+        desc = re.sub(r'(</?rules>|</?flavortext>|</?section>)(<br>)+', r'\1', desc, flags=re.IGNORECASE)
 
         desc = re.sub(r'(<br>)+(?=<li>)', '<br>', desc, flags=re.IGNORECASE)
 
         desc = re.sub(r'<flavortext></flavortext>', '', desc, flags=re.IGNORECASE)
-        desc = re.sub(r'<section></section>', '', desc, flags=re.IGNORECASE)
         desc = re.sub(r'<rules></rules>', '', desc, flags=re.IGNORECASE)
+        desc = re.sub(r'<section></section>', '', desc, flags=re.IGNORECASE)
         return desc
     
     def __get_desc_raw(self, item_id):
