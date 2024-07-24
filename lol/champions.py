@@ -33,8 +33,27 @@ class ChampionsProcessor:
     def __get_string(self, string):
         return get_string(self.strings_raw, string)
     
+    def __desc_recursive_replace(self, desc, num_id):
+        def replace_callback(matches):
+            key = matches[1].strip().lower()
+            key = key.replace('@gamemodeinteger@', '1')
+
+            if num_id == 134: # Syndra
+                key = key.replace("@f3@", "0")
+            elif num_id == 141: # Kayn
+                key = key.replace("@f1@", "0")
+
+            str = self.__get_string(key)
+
+            if not str:
+                str = f'[[{key}]]'
+
+            return self.__desc_recursive_replace(str, num_id)
+        
+        return re.sub(r'{{\s*(.*?)\s*}}', replace_callback, desc, flags=re.IGNORECASE)
+    
     def __get_champion(self, champion_id, champion_data):
-        #if champion_id != 'Characters/Alistar':
+        #if champion_id != 'Characters/Kayn':
         #    return
 
         print(champion_id)
@@ -82,7 +101,7 @@ class ChampionsProcessor:
         self.__get_spell(num_id, champion_data, spell_names[4], 'r')
 
     def __get_spell(self, num_id, champion_data, spell_record_path, letter):
-        print(letter)
+        #print(letter)
 
         spell_record = getf(champion_data, spell_record_path, {})
         
@@ -98,11 +117,26 @@ class ChampionsProcessor:
             return
         
         spell_name = self.__get_string(getf(m_loc_keys, "keyName"))
-        spell_desc_main = self.__get_string(getf(m_loc_keys, "keyTooltip", getf(m_loc_keys, "keySummary")))
+        spell_desc_main = ''
+
+        desc_summary = getf(m_loc_keys, "keySummary")
+        desc_tooltip = getf(m_loc_keys, "keyTooltip")
+        desc_tooltip_below_line = getf(m_loc_keys, "keyTooltipExtendedBelowLine")
+        desc_tooltip_extended = getf(m_loc_keys, "keyTooltipExtended")
+
+        if desc_tooltip_extended:
+            spell_desc_main = self.__get_string(desc_tooltip_extended)
+        elif desc_tooltip:
+            spell_desc_main = self.__get_string(desc_tooltip)
+        elif desc_summary:
+            spell_desc_main = self.__get_string(desc_summary)
+
+        if desc_tooltip_below_line:
+            spell_desc_main += '<br><br>' + self.__get_string(desc_tooltip_below_line)
 
         output_spell = {
             'name': spell_name,
-            'desc': spell_desc_main
+            'desc': self.__desc_recursive_replace(spell_desc_main, num_id)
         }
 
         self.output_dict[num_id]['abilities'][letter].append(output_spell)
