@@ -26,12 +26,14 @@ class BinDefinitions:
 
         known_types = [
             'GameCalculation',
+            'GameCalculationConditional',
             'ByCharLevelInterpolationCalculationPart',
             'NamedDataValueCalculationPart',
             'NumberCalculationPart',
             'EffectValueCalculationPart',
             'AbilityResourceByCoefficientCalculationPart',
             'ByCharLevelBreakpointsCalculationPart',
+            'ByCharLevelFormulaCalculationPart',
             'ProductOfSubPartsCalculationPart',
             'SumOfSubPartsCalculationPart',
             'GameCalculationModified',
@@ -101,6 +103,9 @@ class BinDefinitions:
             
             mMultiplier = self.parse_values(current_block['mMultiplier'])
 
+            if not mMultiplier:
+                mMultiplier = 1
+
             try:
                 mMultiplier = float(mMultiplier)
                 return_value = re.sub(r'([0-9]+(\.[0-9]+)*)', callback_for_multiplier, str(return_value))
@@ -132,6 +137,10 @@ class BinDefinitions:
             }
         else:
             return return_value
+        
+    def __GameCalculationConditional(self, current_block, key=0):
+        default_game_calculation = getf(current_block, 'mDefaultGameCalculation')
+        return self.parse_values(self.all_calculations[default_game_calculation], key)
     
     def __ByCharLevelInterpolationCalculationPart(self, current_block, key=0):
         if 'mStartValue' not in current_block:
@@ -177,7 +186,7 @@ class BinDefinitions:
         return return_value
     
     def __NumberCalculationPart(self, current_block, key=0):
-        return current_block['mNumber']
+        return getf(current_block, 'mNumber', 0)
     
     def __EffectValueCalculationPart(self, current_block, key=0):
         effect_key = f"effect{current_block['mEffectIndex']}amount"
@@ -252,7 +261,7 @@ class BinDefinitions:
         if stat_formula:
             icon_modifier = self.__get_string(f'tooltip_statsuidata_{stat_types[stat_formula]}iconmodifier')
 
-        value = current_block['mCoefficient']
+        value = getf(current_block, 'mCoefficient', 1.0)
 
         try:
             value = float(value) * 100
@@ -354,9 +363,14 @@ class BinDefinitions:
             end_value = level1_value
 
             for m_breakpoint in reversed(current_block['mBreakpoints']):
+                m_level = getf(m_breakpoint, 'mLevel', 0)
+
+                if m_level > last_level:
+                    continue
+
                 if getf(m_breakpoint, 'mBonusPerLevelAtAndAfter'):
                     current_value = getf(m_breakpoint, 'mBonusPerLevelAtAndAfter')
-                    diff = last_level - m_breakpoint['mLevel'] + 1
+                    diff = last_level - m_level + 1
                     end_value += diff * current_value
                     last_level -= diff
                 elif getf(m_breakpoint, 'mAdditionalBonusAtThisLevel'):
@@ -377,6 +391,33 @@ class BinDefinitions:
 
         for placeholder, replacement in placeholders.items():
             return_value = str_ireplace(placeholder, replacement, return_value)
+
+        return return_value
+    
+    def __ByCharLevelFormulaCalculationPart(self, current_block, key=0):
+        m_values = getf(current_block, 'mValues', [0] * 18)
+        start_value = m_values[1]
+        end_value = m_values[18]
+
+        if not start_value:
+            start_value = 0
+
+        if not end_value:
+            end_value = m_values[len(m_values) - 1]
+
+        formula_part_style_key = "tooltip_statsuidata_formulapartrangestyle" if key == 0 else "tooltip_statsuidata_formulapartrangestylebonus"
+        return_value = self.__get_string(formula_part_style_key)
+
+        placeholders = {
+            '@OpeningTag@': '<scaleLevel>',
+            '@RangeStart@': round_number(float(start_value), 5),
+            '@RangeEnd@': round_number(float(end_value), 5),
+            '@Icon@': '%i:scaleLevel%',
+            '@ClosingTag@': '</scaleLevel>'
+        }
+
+        for placeholder, value in placeholders.items():
+            return_value = str_ireplace(placeholder, value, return_value)
 
         return return_value
     
@@ -411,13 +452,40 @@ class BinDefinitions:
             if isinstance(parsed_value, (int, float)):
                 total_sum += parsed_value
             else:
-                return 0
+                return self.__SumOfSubPartsCalculationPart_str(current_block)
         
         return total_sum
+    
+    def __SumOfSubPartsCalculationPart_str(self, current_block):
+        total_sum = ''
+
+        for subpart in current_block['mSubparts']:
+            formula_part_style_key = "tooltip_statsuidata_formulapartstyle" if total_sum == '' else "tooltip_statsuidata_formulapartstylebonus"
+            return_value = self.__get_string(formula_part_style_key)
+
+            parsed_value = self.__check_dict(self.parse_values(subpart))
+
+            placeholders = {
+                '@OpeningTag@': '',
+                '@IconModifier@': '',
+                '@Icon@': '',
+                '@ClosingTag@': '',
+                '@Value@': str(parsed_value)
+            }
+
+            for placeholder, replacement in placeholders.items():
+                return_value = str_ireplace(placeholder, replacement, return_value)
+                
+            total_sum += return_value if total_sum == '' else ' ' + return_value
+        
+        return f'({total_sum})'
 
     def __GameCalculationModified(self, current_block, key=0):
         multiplier = self.__check_dict(self.parse_values(current_block['mMultiplier']))
         modified_block = self.__check_dict(self.parse_values(self.all_calculations[current_block['mModifiedGameCalculation']]))
+
+        if not multiplier:
+            multiplier = 1
 
         try:
             multiplier = float(multiplier)

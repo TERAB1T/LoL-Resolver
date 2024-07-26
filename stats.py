@@ -7,7 +7,7 @@ stats = {
     5: {'name': 'MagicResist', 'icon': '%i:scaleMR%', 'openingTag': '<scaleMR>', 'closingTag': '</scaleMR>'},
     6: {'name': 'MoveSpeed', 'icon': '%i:scaleMS%', 'openingTag': '<noscale>', 'closingTag': '</noscale>'},
     7: {'name': 'CritChance', 'icon': '%i:scaleCrit%', 'openingTag': '<attention>', 'closingTag': '</attention>'},
-    8: {'name': 'CritDamage', 'icon': '%i:?%', 'openingTag': '<noscale>', 'closingTag': '</noscale>'},
+    8: {'name': 'CritDamage', 'icon': '%i:scaleCritMult%', 'openingTag': '<scaleCritMult>', 'closingTag': '</scaleCritMult>'},
     9: {'name': 'CooldownReduction', 'icon': '%i:cooldown%', 'openingTag': '<noscale>', 'closingTag': '</noscale>'},
     10: {'name': 'AbilityHaste', 'icon': '%i:scaleHealth%', 'openingTag': '<scalehealth>', 'closingTag': '</scalehealth>'},
     11: {'name': 'MaxHealth', 'icon': '%i:scaleHealth%', 'openingTag': '<scalehealth>', 'closingTag': '</scalehealth>'},

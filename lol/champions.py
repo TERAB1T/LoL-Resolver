@@ -52,8 +52,70 @@ class ChampionsProcessor:
         
         return re.sub(r'{{\s*(.*?)\s*}}', replace_callback, desc, flags=re.IGNORECASE)
     
+    def __get_spells_values(self, champion_data):
+        spells_values = {}
+
+        for spell_raw in champion_data.values():
+            spell_type = getf(spell_raw, '__type', '')
+            spell_data = getf(spell_raw, 'mSpell')
+            spell_id = getf(spell_raw, 'mScriptName', '').lower()
+
+            if spell_type != 'SpellObject' or not spell_data or not spell_id:
+                continue
+            
+            spells_values[spell_id] = {}
+
+            cast_range = getf(spell_data, 'castRange', [0] * 7)
+            spells_values[spell_id]['castrange'] = cast_range
+
+            cooldown = getf(spell_data, 'cooldownTime', [0] * 7)
+            spells_values[spell_id]['cooldowntime'] = cooldown
+            spells_values[spell_id]['cooldown'] = cooldown
+
+            m_max_ammo = getf(spell_data, 'mMaxAmmo', [0] * 7)
+            spells_values[spell_id]['maxammo'] = m_max_ammo
+
+            m_ammo_recharge_time = getf(spell_data, 'mAmmoRechargeTime', [0] * 7)
+            spells_values[spell_id]['ammorechargetime'] = m_ammo_recharge_time
+
+            mana = getf(spell_data, 'mana', [0] * 7)
+            spells_values[spell_id]['cost'] = [0] + mana + [0]
+
+            m_effect_amount = getf(spell_data, 'mEffectAmount', [])
+            for effect_key, effect_value in enumerate(m_effect_amount):
+                values = getf(effect_value, 'value', [0] * 7)
+                spells_values[spell_id][f'effect{effect_key + 1}amount'] = values
+
+            m_data_values = getf(spell_data, 'mDataValues', [])
+            for data_value in m_data_values:
+                m_name = getf(data_value, 'mName')
+                m_values = getf(data_value, 'mValues', [0] * 7)
+                
+                if m_name:
+                    spells_values[spell_id][m_name.lower()] = m_values
+
+            m_item_calculations = getf(spell_data, 'mSpellCalculations', {})
+
+            for spell_level in range(7):
+                spell_values_level = {}
+
+                for effect_key, effect_value in spells_values[spell_id].items():
+                    spell_values_level[effect_key] = effect_value[spell_level]
+
+                for effect_key, effect_value in m_item_calculations.items():
+                    if not effect_key.lower() in spells_values[spell_id]:
+                        spells_values[spell_id][effect_key.lower()] = [0] * 7
+
+                    #print(effect_key.lower())
+                    bin_definitions = BinDefinitions(self.strings_raw, spell_values_level, m_item_calculations)
+                    spells_values[spell_id][effect_key.lower()][spell_level] = bin_definitions.parse_values(effect_value)
+
+            #print(spell_id)
+            #print(spells_values[spell_id])
+        return spells_values
+    
     def __get_champion(self, champion_id, champion_data):
-        #if champion_id != 'Characters/Kayn':
+        #if champion_id != 'Characters/Shen':
         #    return
 
         print(champion_id)
@@ -82,6 +144,8 @@ class ChampionsProcessor:
         if not num_id:
             return
         
+        spells_values = self.__get_spells_values(champion_data)
+        
         self.output_dict[num_id] = {
             'id': champion_id.split("/")[1],
             'name': self.__get_string(getf(root_record, "name")),
@@ -94,16 +158,17 @@ class ChampionsProcessor:
             }
         }
 
-        self.__get_spell(num_id, champion_data, spell_names[0], 'p')
-        self.__get_spell(num_id, champion_data, spell_names[1], 'q')
-        self.__get_spell(num_id, champion_data, spell_names[2], 'w')
-        self.__get_spell(num_id, champion_data, spell_names[3], 'e')
-        self.__get_spell(num_id, champion_data, spell_names[4], 'r')
+        self.__get_spell(num_id, champion_data, spells_values, spell_names[0], 'p')
+        self.__get_spell(num_id, champion_data, spells_values, spell_names[1], 'q')
+        self.__get_spell(num_id, champion_data, spells_values, spell_names[2], 'w')
+        self.__get_spell(num_id, champion_data, spells_values, spell_names[3], 'e')
+        self.__get_spell(num_id, champion_data, spells_values, spell_names[4], 'r')
 
-    def __get_spell(self, num_id, champion_data, spell_record_path, letter):
+    def __get_spell(self, num_id, champion_data, spells_values, spell_record_path, letter):
         #print(letter)
 
         spell_record = getf(champion_data, spell_record_path, {})
+        spell_id = getf(spell_record, 'mScriptName', '').lower()
         
         m_spell = getf(spell_record, "mSpell", {})
         m_client_data = getf(m_spell, "mClientData", {})
@@ -136,7 +201,53 @@ class ChampionsProcessor:
 
         output_spell = {
             'name': spell_name,
-            'desc': self.__desc_recursive_replace(spell_desc_main, num_id)
+            #'desc': self.__desc_recursive_replace(spell_desc_main, num_id)
+            'desc': self.__generate_desc(self.__desc_recursive_replace(spell_desc_main, num_id), spell_id, spells_values)
         }
 
         self.output_dict[num_id]['abilities'][letter].append(output_spell)
+
+    def __generate_desc(self, desc, spell_id, effects):
+        def replace_callback(matches):
+            nonlocal spell_id
+            current_spell_id = spell_id
+            search_result = matches.group(2).lower()
+            replacement = '@' + search_result + '@'
+
+            if search_result.startswith('spell.'):
+                search_result = search_result.replace('spell.', '')
+                current_spell_id = search_result.split(':')[0]
+                search_result = search_result.split(':')[1]
+
+            #print(current_spell_id, search_result)
+
+            var_name = search_result.split('*')[0].split('.')[0]
+            var_mod = search_result.split('*')[1] if '*' in search_result else '1'
+
+            if var_mod == '100%':
+                var_mod = 100
+
+            try:
+                var_mod = float(var_mod)
+            except:
+                var_mod = 1
+
+            replacement = getf(effects[current_spell_id], var_name)
+
+            if replacement == None:
+                return '@' + matches.group(2) + '@'
+            else:
+                replacement = replacement[1]
+
+            if isinstance(replacement, (int, float)):
+                replacement = round_number(float(replacement) * var_mod, 5, True)
+
+            return replacement
+
+        desc = re.sub(r' size=\'\d+\'', '', desc, flags=re.IGNORECASE)
+        desc = re.sub(r'(<br>){3,}', '<br><br>', desc, flags=re.IGNORECASE)
+        desc = re.sub(r'(^(<br>)+)|((<br>)+$)', '', desc, flags=re.IGNORECASE)
+        desc = re.sub(r'@spell\.[a-z]+([QWER]):hotkey@', '\\1', desc, flags=re.IGNORECASE)
+        desc = re.sub(r'@SpellModifierDescriptionAppend@', '', desc, flags=re.IGNORECASE)
+
+        return re.sub(r'(@)(.*?)(@)', replace_callback, desc, flags=re.IGNORECASE)
