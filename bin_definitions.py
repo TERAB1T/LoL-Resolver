@@ -430,6 +430,9 @@ class BinDefinitions:
         m_part1 = self.__check_dict(self.parse_values(current_block['mPart1']))
         m_part2 = self.__check_dict(self.parse_values(current_block['mPart2']))
 
+        if m_part2 == '1':
+            return m_part1
+
         try:
             m_part1 = float(m_part1)
             m_part2 = float(m_part2)
