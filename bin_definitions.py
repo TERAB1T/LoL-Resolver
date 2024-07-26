@@ -357,6 +357,7 @@ class BinDefinitions:
         return_value = self.__get_string(formula_part_style_key)
 
         level1_value = current_block.get('mLevel1Value', 0)
+        range_end = level1_value
 
         if 'mBreakpoints' in current_block:
             last_level = 18
@@ -378,14 +379,18 @@ class BinDefinitions:
                     end_value += current_value
 
             range_end = round_number(end_value, 5)
-        else:
-            range_end = round_number(getf(current_block, 'mInitialBonusPerLevel', 0) * 17 + level1_value, 5)
+
+        if getf(current_block, 'mInitialBonusPerLevel') and level1_value == range_end:
+            range_end = round_number(getf(current_block, 'mInitialBonusPerLevel') * 17 + level1_value, 5)
+        
+        if level1_value == range_end:
+            return round_number(float(level1_value), 5)
 
         placeholders = {
             '@OpeningTag@': '<scaleLevel>',
             '@RangeStart@': round_number(float(level1_value), 5),
             '@Icon@': '%i:scaleLevel%',
-            '@RangeEnd@': range_end,
+            '@RangeEnd@': round_number(float(range_end), 5),
             '@ClosingTag@': '</scaleLevel>'
         }
 
