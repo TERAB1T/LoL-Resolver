@@ -85,9 +85,9 @@ def get_final_url(version, urls):
             pass
     return None
 
-def cd_get_strings_file(version, lang):
+def cd_get_strings_file(version, lang, game='lol'):
     temp_cache_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '_temp', version, 'lang')
-    temp_cache_file = f"{temp_cache_dir}/{lang}.json"
+    temp_cache_file = f"{temp_cache_dir}/{game}_{lang}.json"
 
     if (os.path.isfile(temp_cache_file)):
         try:
@@ -96,7 +96,11 @@ def cd_get_strings_file(version, lang):
         except Exception as e:
             pass
 
-    urls = [f"{lang}/data/menu/en_us/main.stringtable.json", f"data/menu/main_{lang}.stringtable.json", f"data/menu/fontconfig_{lang}.txt.json"]
+    if game == 'tft':
+        urls = [f"{lang}/data/menu/en_us/tft.stringtable.json", f"{lang}/data/menu/en_us/main.stringtable.json", f"data/menu/main_{lang}.stringtable.json", f"data/menu/fontconfig_{lang}.txt.json"]
+    else:
+        urls = [f"{lang}/data/menu/en_us/lol.stringtable.json", f"{lang}/data/menu/en_us/main.stringtable.json", f"data/menu/main_{lang}.stringtable.json", f"data/menu/fontconfig_{lang}.txt.json"]
+
     final_url = get_final_url(version, urls)
 
     if not final_url:

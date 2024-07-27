@@ -42,6 +42,7 @@ class BinDefinitions:
             'StatBySubPartCalculationPart',
             '{f3cbe7b2}',
             'ClampSubPartsCalculationPart',
+            'ExponentSubPartsCalculationPart',
             'StatEfficiencyPerHundred',
             '{e9a3c91d}',
             '{4750ceb6}',
@@ -89,7 +90,7 @@ class BinDefinitions:
                 m_formula_parts.append(round_number(current_value, 5))
 
         if self.needs_calculation:
-            return_value = sum(m_formula_parts.values())
+            return_value = sum(m_formula_parts)
         else:
             if all(isinstance(x, (int, float)) for x in m_formula_parts):
                 return_value = sum(m_formula_parts)
@@ -545,6 +546,15 @@ class BinDefinitions:
                 return calculated_subparts
             
             return 0
+        
+        return 0
+    
+    def __ExponentSubPartsCalculationPart(self, current_block, key=0):
+        if self.needs_calculation:
+            part1 = self.parse_values(getf(current_block, 'part1'))
+            part2 = self.parse_values(getf(current_block, 'part2'))
+            
+            return part1 ** part2
         
         return 0
     

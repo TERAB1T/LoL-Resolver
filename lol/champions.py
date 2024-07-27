@@ -23,7 +23,7 @@ class ChampionsProcessor:
             'status': 1,
             'data': dict(sorted(self.output_dict.items()))
         }
-        output_json = ujson.dumps(success_return, ensure_ascii=False, separators=(',', ':'), escape_forward_slashes=False, indent=4)
+        output_json = ujson.dumps(success_return, ensure_ascii=False, separators=(',', ':'), escape_forward_slashes=False)
 
         os.makedirs(self.output_dir, exist_ok=True)
         with open(self.output_filepath, 'w', encoding='utf-8') as output_file:
@@ -117,7 +117,7 @@ class ChampionsProcessor:
         #if champion_id != 'Characters/Jayce':
         #    return
 
-        print(champion_id)
+        #print(champion_id)
         
         champion_id_trimmed = champion_id.split("/")[1].lower()
 

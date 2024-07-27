@@ -80,7 +80,7 @@ def generate_version_champions(input_version, output_dir, languages):
             print(f" — This language is not supported. Supported languages: {', '.join(supported_langs)}.")
             continue
         else:
-            strings = cd_get_strings_file(input_version, lang)
+            strings = cd_get_strings_file(input_version, lang, 'lol')
             processor = ChampionsProcessor(input_version, output_dir, lang, champion_list, strings)
             print(" — Done!")
 
@@ -175,7 +175,7 @@ def generate_version_items(input_version, output_dir, languages):
             print(f" — This language is not supported. Supported languages: {', '.join(supported_langs)}.")
             continue
         else:
-            strings = cd_get_strings_file(input_version, lang)
+            strings = cd_get_strings_file(input_version, lang, 'lol')
             processor = ItemsProcessor(input_version, output_dir, lang, maps, modes, strings)
             print(" — Done!")
 
@@ -203,7 +203,7 @@ def generate_version_arena_augments(input_version, output_dir, languages):
             print(f" — This language is not supported. Supported languages: {', '.join(supported_langs)}.")
             continue
         else:
-            strings = cd_get_strings_file(input_version, lang)
+            strings = cd_get_strings_file(input_version, lang, 'lol')
             processor = RGMAugmentsProcessor(input_version, output_dir, 'arena', lang, arena_data, strings)
             print(" — Done!")
 
@@ -229,7 +229,7 @@ def generate_version_swarm_augments(input_version, output_dir, languages):
             print(f" — This language is not supported. Supported languages: {', '.join(supported_langs)}.")
             continue
         else:
-            strings = cd_get_strings_file(input_version, lang)
+            strings = cd_get_strings_file(input_version, lang, 'lol')
             processor = RGMAugmentsProcessor(input_version, output_dir, 'swarm', lang, swarm_data, strings)
             print(" — Done!")
 

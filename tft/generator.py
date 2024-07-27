@@ -76,7 +76,7 @@ def generate_version_units(input_version, output_dir, languages):
             print(f" — This language is not supported. Supported languages: {', '.join(supported_langs)}.")
             continue
         else:
-            strings = cd_get_strings_file(input_version, lang)
+            strings = cd_get_strings_file(input_version, lang, 'tft')
             processor = TFTUnitsProcessor(input_version, output_dir, lang, tft_data, unit_list, unit_props, strings)
             print(" — Done!")
 
@@ -155,7 +155,7 @@ def generate_version_traits(input_version, output_dir, languages):
             print(f" — This language is not supported. Supported languages: {', '.join(supported_langs)}.")
             continue
         else:
-            strings = cd_get_strings_file(input_version, lang)
+            strings = cd_get_strings_file(input_version, lang, 'tft')
             processor = TFTTraitsProcessor(input_version, output_dir, lang, tft_data, trait_list, trait_units, unit_props, strings)
             print(" — Done!")
 
@@ -242,7 +242,7 @@ def generate_version_items(input_version, output_dir, languages):
             print(f" — This language is not supported. Supported languages: {', '.join(supported_langs)}.")
             continue
         else:
-            strings = cd_get_strings_file(input_version, lang)
+            strings = cd_get_strings_file(input_version, lang, 'tft')
             processor = TFTItemsProcessor(input_version, output_dir, lang, tft_data, items, "items", unit_props, strings)
             print(" — Done!")
 
@@ -266,7 +266,7 @@ def generate_version_augments(input_version, output_dir, languages):
             print(f" — This language is not supported. Supported languages: {', '.join(supported_langs)}.")
             continue
         else:
-            strings = cd_get_strings_file(input_version, lang)
+            strings = cd_get_strings_file(input_version, lang, 'tft')
             processor = TFTItemsProcessor(input_version, output_dir, lang, tft_data, items, "augments", unit_props, strings)
             print(" — Done!")
 
