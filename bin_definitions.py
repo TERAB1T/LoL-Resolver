@@ -26,12 +26,14 @@ class BinDefinitions:
 
         known_types = [
             'GameCalculation',
+            'GameCalculationConditional',
             'ByCharLevelInterpolationCalculationPart',
             'NamedDataValueCalculationPart',
             'NumberCalculationPart',
             'EffectValueCalculationPart',
             'AbilityResourceByCoefficientCalculationPart',
             'ByCharLevelBreakpointsCalculationPart',
+            'ByCharLevelFormulaCalculationPart',
             'ProductOfSubPartsCalculationPart',
             'SumOfSubPartsCalculationPart',
             'GameCalculationModified',
@@ -40,6 +42,7 @@ class BinDefinitions:
             'StatBySubPartCalculationPart',
             '{f3cbe7b2}',
             'ClampSubPartsCalculationPart',
+            'ExponentSubPartsCalculationPart',
             'StatEfficiencyPerHundred',
             '{e9a3c91d}',
             '{4750ceb6}',
@@ -87,7 +90,7 @@ class BinDefinitions:
                 m_formula_parts.append(round_number(current_value, 5))
 
         if self.needs_calculation:
-            return_value = sum(m_formula_parts.values())
+            return_value = sum(m_formula_parts)
         else:
             if all(isinstance(x, (int, float)) for x in m_formula_parts):
                 return_value = sum(m_formula_parts)
@@ -100,6 +103,9 @@ class BinDefinitions:
                 return round_number(number * mMultiplier, 5, True)
             
             mMultiplier = self.parse_values(current_block['mMultiplier'])
+
+            if not mMultiplier:
+                mMultiplier = 1
 
             try:
                 mMultiplier = float(mMultiplier)
@@ -132,6 +138,10 @@ class BinDefinitions:
             }
         else:
             return return_value
+        
+    def __GameCalculationConditional(self, current_block, key=0):
+        default_game_calculation = getf(current_block, 'mDefaultGameCalculation')
+        return self.parse_values(self.all_calculations[default_game_calculation], key)
     
     def __ByCharLevelInterpolationCalculationPart(self, current_block, key=0):
         if 'mStartValue' not in current_block:
@@ -177,7 +187,7 @@ class BinDefinitions:
         return return_value
     
     def __NumberCalculationPart(self, current_block, key=0):
-        return current_block['mNumber']
+        return getf(current_block, 'mNumber', 0)
     
     def __EffectValueCalculationPart(self, current_block, key=0):
         effect_key = f"effect{current_block['mEffectIndex']}amount"
@@ -252,7 +262,7 @@ class BinDefinitions:
         if stat_formula:
             icon_modifier = self.__get_string(f'tooltip_statsuidata_{stat_types[stat_formula]}iconmodifier')
 
-        value = current_block['mCoefficient']
+        value = getf(current_block, 'mCoefficient', 1.0)
 
         try:
             value = float(value) * 100
@@ -348,15 +358,21 @@ class BinDefinitions:
         return_value = self.__get_string(formula_part_style_key)
 
         level1_value = current_block.get('mLevel1Value', 0)
+        range_end = level1_value
 
         if 'mBreakpoints' in current_block:
             last_level = 18
             end_value = level1_value
 
             for m_breakpoint in reversed(current_block['mBreakpoints']):
+                m_level = getf(m_breakpoint, 'mLevel', 0)
+
+                if m_level > last_level:
+                    continue
+
                 if getf(m_breakpoint, 'mBonusPerLevelAtAndAfter'):
                     current_value = getf(m_breakpoint, 'mBonusPerLevelAtAndAfter')
-                    diff = last_level - m_breakpoint['mLevel'] + 1
+                    diff = last_level - m_level + 1
                     end_value += diff * current_value
                     last_level -= diff
                 elif getf(m_breakpoint, 'mAdditionalBonusAtThisLevel'):
@@ -364,14 +380,18 @@ class BinDefinitions:
                     end_value += current_value
 
             range_end = round_number(end_value, 5)
-        else:
-            range_end = round_number(getf(current_block, 'mInitialBonusPerLevel', 0) * 17 + level1_value, 5)
+
+        if getf(current_block, 'mInitialBonusPerLevel') and level1_value == range_end:
+            range_end = round_number(getf(current_block, 'mInitialBonusPerLevel') * 17 + level1_value, 5)
+        
+        if level1_value == range_end:
+            return round_number(float(level1_value), 5)
 
         placeholders = {
             '@OpeningTag@': '<scaleLevel>',
             '@RangeStart@': round_number(float(level1_value), 5),
             '@Icon@': '%i:scaleLevel%',
-            '@RangeEnd@': range_end,
+            '@RangeEnd@': round_number(float(range_end), 5),
             '@ClosingTag@': '</scaleLevel>'
         }
 
@@ -380,9 +400,39 @@ class BinDefinitions:
 
         return return_value
     
+    def __ByCharLevelFormulaCalculationPart(self, current_block, key=0):
+        m_values = getf(current_block, 'mValues', [0] * 18)
+        start_value = m_values[1]
+        end_value = m_values[18]
+
+        if not start_value:
+            start_value = 0
+
+        if not end_value:
+            end_value = m_values[len(m_values) - 1]
+
+        formula_part_style_key = "tooltip_statsuidata_formulapartrangestyle" if key == 0 else "tooltip_statsuidata_formulapartrangestylebonus"
+        return_value = self.__get_string(formula_part_style_key)
+
+        placeholders = {
+            '@OpeningTag@': '<scaleLevel>',
+            '@RangeStart@': round_number(float(start_value), 5),
+            '@RangeEnd@': round_number(float(end_value), 5),
+            '@Icon@': '%i:scaleLevel%',
+            '@ClosingTag@': '</scaleLevel>'
+        }
+
+        for placeholder, value in placeholders.items():
+            return_value = str_ireplace(placeholder, value, return_value)
+
+        return return_value
+    
     def __ProductOfSubPartsCalculationPart(self, current_block, key=0):
         m_part1 = self.__check_dict(self.parse_values(current_block['mPart1']))
         m_part2 = self.__check_dict(self.parse_values(current_block['mPart2']))
+
+        if m_part2 == '1':
+            return m_part1
 
         try:
             m_part1 = float(m_part1)
@@ -393,7 +443,23 @@ class BinDefinitions:
         if isinstance(m_part1, (int, float)) and isinstance(m_part2, (int, float)):
             return round_number(m_part1 * m_part2, 5)
         else:
-            return 0
+            return self.__ProductOfSubPartsCalculationPart_str(current_block)
+        
+    def __ProductOfSubPartsCalculationPart_str(self, current_block):
+        m_part1 = self.__check_dict(self.parse_values(current_block['mPart1']))
+        m_part2 = self.__check_dict(self.parse_values(current_block['mPart2']))
+
+        try:
+            m_part1 = round_number(float(m_part1), 5)
+        except:
+            pass
+
+        try:
+            m_part2 = round_number(float(m_part2), 5)
+        except:
+            pass
+
+        return f'({str(m_part1)} * {str(m_part2)})'
     
     def __SumOfSubPartsCalculationPart(self, current_block, key=0):
         if len(current_block['mSubparts']) == 1:
@@ -411,13 +477,40 @@ class BinDefinitions:
             if isinstance(parsed_value, (int, float)):
                 total_sum += parsed_value
             else:
-                return 0
+                return self.__SumOfSubPartsCalculationPart_str(current_block)
         
         return total_sum
+    
+    def __SumOfSubPartsCalculationPart_str(self, current_block):
+        total_sum = ''
+
+        for subpart in current_block['mSubparts']:
+            formula_part_style_key = "tooltip_statsuidata_formulapartstyle" if total_sum == '' else "tooltip_statsuidata_formulapartstylebonus"
+            return_value = self.__get_string(formula_part_style_key)
+
+            parsed_value = self.__check_dict(self.parse_values(subpart))
+
+            placeholders = {
+                '@OpeningTag@': '',
+                '@IconModifier@': '',
+                '@Icon@': '',
+                '@ClosingTag@': '',
+                '@Value@': str(parsed_value)
+            }
+
+            for placeholder, replacement in placeholders.items():
+                return_value = str_ireplace(placeholder, replacement, return_value)
+                
+            total_sum += return_value if total_sum == '' else ' ' + return_value
+        
+        return f'({total_sum})'
 
     def __GameCalculationModified(self, current_block, key=0):
         multiplier = self.__check_dict(self.parse_values(current_block['mMultiplier']))
         modified_block = self.__check_dict(self.parse_values(self.all_calculations[current_block['mModifiedGameCalculation']]))
+
+        if not multiplier:
+            multiplier = 1
 
         try:
             multiplier = float(multiplier)
@@ -453,6 +546,15 @@ class BinDefinitions:
                 return calculated_subparts
             
             return 0
+        
+        return 0
+    
+    def __ExponentSubPartsCalculationPart(self, current_block, key=0):
+        if self.needs_calculation:
+            part1 = self.parse_values(getf(current_block, 'part1'))
+            part2 = self.parse_values(getf(current_block, 'part2'))
+            
+            return part1 ** part2
         
         return 0
     
