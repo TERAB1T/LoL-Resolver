@@ -55,67 +55,66 @@ class ChampionsProcessor:
     def __get_spells_values(self, champion_data):
         spells_values = {}
 
-        for spell_raw in champion_data.values():
-            spell_type = getf(spell_raw, '__type', '')
-            spell_data = getf(spell_raw, 'mSpell')
-            spell_id = getf(spell_raw, 'mScriptName', '').lower()
+        def add_spell_value(spell_dict, key, value):
+            spell_dict[key] = value
+            spell_dict[hash_fnv1a(key)] = value
 
-            if spell_type != 'SpellObject' or not spell_data or not spell_id:
+        for spell_record in champion_data.values():
+            spell_type = getf(spell_record, '__type', '')
+            if spell_type != 'SpellObject':
+                continue
+
+            spell_data = getf(spell_record, 'mSpell')
+            spell_id = getf(spell_record, 'mScriptName', '').lower()
+
+            if not spell_data or not spell_id:
                 continue
             
             spells_values[spell_id] = {}
 
-            cast_range = getf(spell_data, 'castRange', [0] * 7)
-            spells_values[spell_id]['castrange'] = cast_range
+            spell_params = {
+                'castrange': getf(spell_data, 'castRange', [0] * 7),
+                'cooldowntime': getf(spell_data, 'cooldownTime', [0] * 7),
+                'cooldown': getf(spell_data, 'cooldownTime', [0] * 7),
+                'maxammo': getf(spell_data, 'mMaxAmmo', [0] * 7),
+                'ammorechargetime': getf(spell_data, 'mAmmoRechargeTime', [0] * 7),
+                'cost': [0] + getf(spell_data, 'mana', [0] * 7) + [0]
+            }
 
-            cooldown = getf(spell_data, 'cooldownTime', [0] * 7)
-            spells_values[spell_id]['cooldowntime'] = cooldown
-            spells_values[spell_id]['cooldown'] = cooldown
-
-            m_max_ammo = getf(spell_data, 'mMaxAmmo', [0] * 7)
-            spells_values[spell_id]['maxammo'] = m_max_ammo
-
-            m_ammo_recharge_time = getf(spell_data, 'mAmmoRechargeTime', [0] * 7)
-            spells_values[spell_id]['ammorechargetime'] = m_ammo_recharge_time
-
-            mana = getf(spell_data, 'mana', [0] * 7)
-            spells_values[spell_id]['cost'] = [0] + mana + [0]
+            for param, value in spell_params.items():
+                add_spell_value(spells_values[spell_id], param, value)
 
             m_effect_amount = getf(spell_data, 'mEffectAmount', [])
             for effect_key, effect_value in enumerate(m_effect_amount):
+                effect_name = f'effect{effect_key + 1}amount'
                 values = getf(effect_value, 'value', [0] * 7)
-                spells_values[spell_id][f'effect{effect_key + 1}amount'] = values
+                add_spell_value(spells_values[spell_id], effect_name, values)
 
             m_data_values = getf(spell_data, 'mDataValues', [])
             for data_value in m_data_values:
-                m_name = getf(data_value, 'mName')
+                m_name = getf(data_value, 'mName', '').lower()
                 m_values = getf(data_value, 'mValues', [0] * 7)
-                
                 if m_name:
-                    spells_values[spell_id][m_name.lower()] = m_values
+                    add_spell_value(spells_values[spell_id], m_name, m_values)
 
             m_item_calculations = getf(spell_data, 'mSpellCalculations', {})
-
             for spell_level in range(7):
-                spell_values_level = {}
-
-                for effect_key, effect_value in spells_values[spell_id].items():
-                    spell_values_level[effect_key] = effect_value[spell_level]
+                spell_values_level = {key: value[spell_level] for key, value in spells_values[spell_id].items()}
 
                 for effect_key, effect_value in m_item_calculations.items():
-                    if not effect_key.lower() in spells_values[spell_id]:
-                        spells_values[spell_id][effect_key.lower()] = [0] * 7
+                    if effect_key.lower() not in spells_values[spell_id]:
+                        add_spell_value(spells_values[spell_id], effect_key.lower(), [0] * 7)
 
-                    #print(effect_key.lower())
                     bin_definitions = BinDefinitions(self.strings_raw, spell_values_level, m_item_calculations)
                     spells_values[spell_id][effect_key.lower()][spell_level] = bin_definitions.parse_values(effect_value)
+                    spells_values[spell_id][hash_fnv1a(effect_key.lower())][spell_level] = spells_values[spell_id][effect_key.lower()][spell_level]
 
             #print(spell_id)
             #print(spells_values[spell_id])
         return spells_values
     
     def __get_champion(self, champion_id, champion_data):
-        #if champion_id != 'Characters/FiddleSticks':
+        #if champion_id != 'Characters/Jayce':
         #    return
 
         print(champion_id)
@@ -201,10 +200,17 @@ class ChampionsProcessor:
         if desc_tooltip_below_line:
             spell_desc_main += '<br><br>' + self.__get_string(desc_tooltip_below_line)
 
+
+        spell_icons = getf(m_spell, 'mImgIconName', [])
+        spell_icons = [image_to_png(icon) for icon in spell_icons]
+        spell_icons = list(dict.fromkeys(spell_icons))
+
+
         output_spell = {
             'name': spell_name,
             #'desc': self.__desc_recursive_replace(spell_desc_main, num_id)
-            'desc': self.__generate_desc(self.__desc_recursive_replace(spell_desc_main, num_id), spell_id, spells_values)
+            'desc': self.__generate_desc(self.__desc_recursive_replace(spell_desc_main, num_id), spell_id, spells_values),
+            'icons': spell_icons
         }
 
         self.output_dict[num_id]['abilities'][letter].append(output_spell)

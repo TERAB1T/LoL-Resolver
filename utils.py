@@ -28,7 +28,7 @@ def hash_fnv1a(key):
     return '{' + f"{hash_value:08x}" + '}'
 
 def image_to_png(url):
-    return re.sub(r'\.(tex|dds)', '.png', url, flags=re.IGNORECASE)
+    return re.sub(r'\.(tex|dds)', '.png', url, flags=re.IGNORECASE).lower()
 
 def cd_get_languages(version):
     url = f"https://raw.communitydragon.org/json/{version}/game/"
