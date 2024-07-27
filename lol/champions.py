@@ -115,7 +115,7 @@ class ChampionsProcessor:
         return spells_values
     
     def __get_champion(self, champion_id, champion_data):
-        #if champion_id != 'Characters/Shen':
+        #if champion_id != 'Characters/FiddleSticks':
         #    return
 
         print(champion_id)
@@ -166,6 +166,8 @@ class ChampionsProcessor:
 
     def __get_spell(self, num_id, champion_data, spells_values, spell_record_path, letter):
         #print(letter)
+
+        spell_record_path = spell_record_path.replace('Characters/FiddleSticks', 'Characters/Fiddlesticks')
 
         spell_record = getf(champion_data, spell_record_path, {})
         spell_id = getf(spell_record, 'mScriptName', '').lower()
