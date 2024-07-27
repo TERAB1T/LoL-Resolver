@@ -442,7 +442,23 @@ class BinDefinitions:
         if isinstance(m_part1, (int, float)) and isinstance(m_part2, (int, float)):
             return round_number(m_part1 * m_part2, 5)
         else:
-            return 0
+            return self.__ProductOfSubPartsCalculationPart_str(current_block)
+        
+    def __ProductOfSubPartsCalculationPart_str(self, current_block):
+        m_part1 = self.__check_dict(self.parse_values(current_block['mPart1']))
+        m_part2 = self.__check_dict(self.parse_values(current_block['mPart2']))
+
+        try:
+            m_part1 = round_number(float(m_part1), 5)
+        except:
+            pass
+
+        try:
+            m_part2 = round_number(float(m_part2), 5)
+        except:
+            pass
+
+        return f'({str(m_part1)} * {str(m_part2)})'
     
     def __SumOfSubPartsCalculationPart(self, current_block, key=0):
         if len(current_block['mSubparts']) == 1:

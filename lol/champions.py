@@ -163,6 +163,23 @@ class ChampionsProcessor:
         self.__get_spell(num_id, champion_data, spells_values, spell_names[3], 'e')
         self.__get_spell(num_id, champion_data, spells_values, spell_names[4], 'r')
 
+
+        if num_id == 60: # Elise
+            self.__get_spell(num_id, champion_data, spells_values, 'Characters/Elise/Spells/EliseSpiderQAbility/EliseSpiderQCast', 'q')
+            self.__get_spell(num_id, champion_data, spells_values, 'Characters/Elise/Spells/EliseSpiderWAbility/EliseSpiderW', 'w')
+            self.__get_spell(num_id, champion_data, spells_values, 'Characters/Elise/Spells/EliseSpiderEAbility/EliseSpiderE', 'e')
+
+        if num_id == 76: # Nidalee
+            self.__get_spell(num_id, champion_data, spells_values, 'Characters/Nidalee/Spells/Takedown', 'q')
+            self.__get_spell(num_id, champion_data, spells_values, 'Characters/Nidalee/Spells/Pounce', 'w')
+            self.__get_spell(num_id, champion_data, spells_values, 'Characters/Nidalee/Spells/Swipe', 'e')
+
+        if num_id == 126: # Jayce
+            self.__get_spell(num_id, champion_data, spells_values, 'Characters/Jayce/Spells/JayceShockBlastAbility/JayceShockBlast', 'q')
+            self.__get_spell(num_id, champion_data, spells_values, 'Characters/Jayce/Spells/JayceHyperChargeAbility/JayceHyperCharge', 'w')
+            self.__get_spell(num_id, champion_data, spells_values, 'Characters/Jayce/Spells/JayceAccelerationGateAbility/JayceAccelerationGate', 'e')
+            self.__get_spell(num_id, champion_data, spells_values, 'Characters/Jayce/Spells/JayceStanceHtGAbility/JayceStanceGtH', 'r')
+
     def __get_spell(self, num_id, champion_data, spells_values, spell_record_path, letter):
         #print(letter)
 
@@ -197,6 +214,17 @@ class ChampionsProcessor:
         elif desc_summary:
             spell_desc_main = self.__get_string(desc_summary)
 
+
+        if num_id == 60 and letter in ['q', 'w', 'e']: # Elise
+            spell_desc_main = self.__get_string(desc_tooltip)
+        
+        if num_id == 76 and letter in ['q', 'w', 'e']: # Nidalee
+            spell_desc_main = self.__get_string(desc_tooltip)
+
+        if num_id == 126 and letter in ['q', 'w', 'e', 'r']: # Jayce
+            spell_desc_main = self.__get_string(desc_tooltip) 
+
+
         if desc_tooltip_below_line:
             spell_desc_main += '<br><br>' + self.__get_string(desc_tooltip_below_line)
 
@@ -208,7 +236,7 @@ class ChampionsProcessor:
 
         output_spell = {
             'name': spell_name,
-            #'desc': self.__desc_recursive_replace(spell_desc_main, num_id)
+            #'desc': self.__desc_recursive_replace(spell_desc_main, num_id),
             'desc': self.__generate_desc(self.__desc_recursive_replace(spell_desc_main, num_id), spell_id, spells_values),
             'icons': spell_icons
         }
@@ -255,6 +283,7 @@ class ChampionsProcessor:
         desc = re.sub(r' size=\'\d+\'', '', desc, flags=re.IGNORECASE)
         desc = re.sub(r'(<br>){3,}', '<br><br>', desc, flags=re.IGNORECASE)
         desc = re.sub(r'(^(<br>)+)|((<br>)+$)', '', desc, flags=re.IGNORECASE)
+        desc = re.sub(r'(<rules>|<flavortext>|<section>)(<br>)+', r'\1', desc, flags=re.IGNORECASE)
         desc = re.sub(r'@spell\.[a-z]+([QWER]):hotkey@', '\\1', desc, flags=re.IGNORECASE)
         desc = re.sub(r'@SpellModifierDescriptionAppend@', '', desc, flags=re.IGNORECASE)
 
