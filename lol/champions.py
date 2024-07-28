@@ -114,7 +114,7 @@ class ChampionsProcessor:
         return spells_values
     
     def __get_champion(self, champion_id, champion_data):
-        #if champion_id != 'Characters/Jayce':
+        #if champion_id != 'Characters/Strawberry_Leona':
         #    return
 
         #print(champion_id)
@@ -125,18 +125,16 @@ class ChampionsProcessor:
         root_record = getf(champion_data, root_record_path)
         if not root_record:
             return
-        
+
         spell_names = getf(root_record, "spellNames")
+        
         if not spell_names:
             return
         else:
             spell_names = [f'{champion_id}/Spells/{spell_name}' for spell_name in spell_names]
 
-        passive_name = getf(root_record, 'mCharacterPassiveSpell')
-        if not passive_name:
-            return
-        else:
-            spell_names.insert(0, passive_name)
+        passive_name = getf(root_record, 'mCharacterPassiveSpell', '')
+        spell_names.insert(0, passive_name)
         
         character_tool_data = getf(root_record, "characterToolData", {})
         num_id = getf(character_tool_data, "championId")
