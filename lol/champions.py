@@ -114,7 +114,7 @@ class ChampionsProcessor:
         return spells_values
     
     def __get_champion(self, champion_id, champion_data):
-        #if champion_id != 'Characters/Strawberry_Leona':
+        #if champion_id != 'Characters/Strawberry_Riven':
         #    return
 
         #print(champion_id)
@@ -127,7 +127,6 @@ class ChampionsProcessor:
             return
 
         spell_names = getf(root_record, "spellNames")
-        
         if not spell_names:
             return
         else:

@@ -120,6 +120,9 @@ def cd_get_strings_file(version, lang, game='lol'):
         return
 
 def get_string(strings_array, id):
+    if not id:
+        return ''
+    
     id = id.lower()
 
     if id in strings_array:
