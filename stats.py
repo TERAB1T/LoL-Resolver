@@ -39,3 +39,8 @@ stat_types = {
     1: 'base',
     2: 'bonus'
 }
+
+ability_resources = {
+    0: 'mp',
+    1: 'energy'
+}

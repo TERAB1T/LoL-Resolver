@@ -23,7 +23,7 @@ class ChampionsProcessor:
             'status': 1,
             'data': dict(sorted(self.output_dict.items()))
         }
-        output_json = ujson.dumps(success_return, ensure_ascii=False, separators=(',', ':'), escape_forward_slashes=False)
+        output_json = ujson.dumps(success_return, ensure_ascii=False, separators=(',', ':'), escape_forward_slashes=False, indent=4)
 
         os.makedirs(self.output_dir, exist_ok=True)
         with open(self.output_filepath, 'w', encoding='utf-8') as output_file:
@@ -114,7 +114,7 @@ class ChampionsProcessor:
         return spells_values
     
     def __get_champion(self, champion_id, champion_data):
-        #if champion_id != 'Characters/Strawberry_Riven':
+        #if champion_id != 'Characters/Renata':
         #    return
 
         #print(champion_id)
@@ -140,7 +140,11 @@ class ChampionsProcessor:
         if not num_id:
             return
         
+        primary_ability_resource = getf(root_record, "primaryAbilityResource", {})
+        ar_type = getf(primary_ability_resource, "arType")
+        
         spells_values = self.__get_spells_values(champion_data)
+        spells_values['ar_type'] = ar_type
         
         self.output_dict[num_id] = {
             'id': champion_id.split("/")[1],
@@ -190,8 +194,6 @@ class ChampionsProcessor:
         m_tooltip_data = getf(m_client_data, "mTooltipData", {})
         m_loc_keys = getf(m_tooltip_data, "mLocKeys")
         m_lists = getf(m_tooltip_data, "mLists", {})
-        m_data_values = getf(m_spell, "mDataValues", [])
-        m_spell_calc = getf(m_spell, "mSpellCalculations")
 
         if not m_loc_keys:
             return
@@ -231,14 +233,76 @@ class ChampionsProcessor:
         spell_icons = list(dict.fromkeys(spell_icons))
 
 
+        spell_desc_scaling_raw = getf(m_lists, "LevelUp", {})
+        spell_desc_scaling = self.__process_spell_scaling(spell_desc_scaling_raw, spell_id, spells_values)
+
+
         output_spell = {
             'name': spell_name,
             #'desc': self.__desc_recursive_replace(spell_desc_main, num_id),
-            'desc': self.__generate_desc(self.__desc_recursive_replace(spell_desc_main, num_id), spell_id, spells_values),
+            'desc': self.__generate_desc(self.__desc_recursive_replace(spell_desc_main, num_id), spell_id, spells_values) + spell_desc_scaling,
             'icons': spell_icons
         }
 
         self.output_dict[num_id]['abilities'][letter].append(output_spell)
+
+    def __process_spell_scaling(self, spell_desc_scaling_raw, spell_id, spells_values):
+        scaling_elements = spell_desc_scaling_raw.get("elements")
+        scaling_levels = 1 + spell_desc_scaling_raw.get("levelCount", 5)
+        if not scaling_elements:
+            return ""
+        
+        return_array = []
+
+        for element in scaling_elements:
+            element_style = getf(element, 'Style')
+            name_override = getf(element, 'nameOverride')
+            element_type = getf(element, 'type', '').lower()
+
+
+            if element_type == 'effect%damount':
+                type_index = getf(element, 'typeIndex', 1)
+                element_type = f'effect{type_index}amount'
+
+            if element_type == 'ammorechargetime':
+                name_override = 'spell_listtype_rechargetime'
+
+            if element_type == 'cooldown':
+                name_override = 'spell_listtype_cooldown'
+
+            if element_type == 'castrange':
+                name_override = 'spell_listtype_range'
+
+            if element_type == 'cost':
+                name_override = 'spell_listtype_cost'
+
+            if element_type == 'basecost':
+                if not name_override:
+                    name_override = 'spell_listtype_cost'
+                if not getf(spells_values[spell_id], element_type):
+                    element_type = 'cost'
+                
+
+            current_string = '<scalingcontainer><scalingblock>' + self.__get_string(name_override) + '</scalingblock>'
+            current_string = self.__desc_recursive_replace(current_string, 0)
+
+            if '@AbilityResourceName@' in current_string:
+                ar_type = spells_values['ar_type']
+                if ar_type != 0 and ar_type != 1:
+                    ar_type = 0
+                current_string = current_string.replace('@AbilityResourceName@', self.__get_string(f'game_ability_resource_{ability_resources[ar_type]}'))
+
+            if not element_style:
+                values = [str(round_number(spells_values[spell_id][element_type][i], 2)) for i in range(1, scaling_levels)]
+                current_string += f"<scalingblock>[{'/'.join(values)}]</scalingblock>"
+            elif element_style == 1:
+                multiplier = element.get("multiplier", 1)
+                values = [str(round_number(spells_values[spell_id][element_type][i] * multiplier, 2)) for i in range(1, scaling_levels)]
+                current_string += f"<scalingblock>[{str_ireplace('@NUMBER@', '/'.join(values), self.__get_string('number_formatting_percentage_format'))}]</scalingblock>"
+
+            return_array.append(current_string + '</scalingcontainer>')
+
+        return '<hr>' + ''.join(return_array)
 
     def __generate_desc(self, desc, spell_id, effects):
         def replace_callback(matches):

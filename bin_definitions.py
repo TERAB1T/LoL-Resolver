@@ -30,6 +30,7 @@ class BinDefinitions:
             'ByCharLevelInterpolationCalculationPart',
             'NamedDataValueCalculationPart',
             'NumberCalculationPart',
+            'CooldownMultiplierCalculationPart',
             'EffectValueCalculationPart',
             'AbilityResourceByCoefficientCalculationPart',
             'ByCharLevelBreakpointsCalculationPart',
@@ -188,6 +189,9 @@ class BinDefinitions:
     
     def __NumberCalculationPart(self, current_block, key=0):
         return getf(current_block, 'mNumber', 0)
+    
+    def __CooldownMultiplierCalculationPart(self, current_block, key=0):
+        return 1.0
     
     def __EffectValueCalculationPart(self, current_block, key=0):
         effect_key = f"effect{current_block['mEffectIndex']}amount"
