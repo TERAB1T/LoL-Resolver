@@ -5,7 +5,7 @@ stats = {
     3: {'name': 'AttackSpeed', 'icon': '%i:scaleAS%', 'openingTag': '<noscale>', 'closingTag': '</noscale>'},
     4: {'name': 'AttackWindupTime', 'icon': '%i:scaleMR%', 'openingTag': '<scaleMR>', 'closingTag': '</scaleMR>'},
     5: {'name': 'MagicResist', 'icon': '%i:scaleMR%', 'openingTag': '<scaleMR>', 'closingTag': '</scaleMR>'},
-    6: {'name': 'MoveSpeed', 'icon': '%i:scaleMS%', 'openingTag': '<noscale>', 'closingTag': '</noscale>'},
+    6: {'name': 'MoveSpeed', 'icon': '%i:scaleMS%', 'openingTag': '<scaleMS>', 'closingTag': '</scaleMS>'},
     7: {'name': 'CritChance', 'icon': '%i:scaleCrit%', 'openingTag': '<attention>', 'closingTag': '</attention>'},
     8: {'name': 'CritDamage', 'icon': '%i:scaleCritMult%', 'openingTag': '<scaleCritMult>', 'closingTag': '</scaleCritMult>'},
     9: {'name': 'CooldownReduction', 'icon': '%i:cooldown%', 'openingTag': '<noscale>', 'closingTag': '</noscale>'},

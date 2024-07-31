@@ -27,6 +27,12 @@ def hash_fnv1a(key):
 
     return '{' + f"{hash_value:08x}" + '}'
 
+def is_fnv1a(hash):
+    if not hash:
+        return False
+    
+    return re.match(r'^\{[0-9a-f]{8}\}$', hash)
+
 def image_to_png(url):
     return re.sub(r'\.(tex|dds)', '.png', url, flags=re.IGNORECASE).lower()
 

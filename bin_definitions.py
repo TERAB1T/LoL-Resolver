@@ -33,6 +33,7 @@ class BinDefinitions:
             'CooldownMultiplierCalculationPart',
             'EffectValueCalculationPart',
             'AbilityResourceByCoefficientCalculationPart',
+            'BuffCounterByNamedDataValueCalculationPart',
             'ByCharLevelBreakpointsCalculationPart',
             'ByCharLevelFormulaCalculationPart',
             'ProductOfSubPartsCalculationPart',
@@ -54,7 +55,6 @@ class BinDefinitions:
             return getattr(self, f'_BinDefinitions__{block_type.strip("{}")}')(current_block, key)
         elif block_type in [
             'BuffCounterByCoefficientCalculationPart',
-            'BuffCounterByNamedDataValueCalculationPart',
             'ByItemEpicnessCountCalculationPart'
             ]:
             return 0
@@ -130,6 +130,7 @@ class BinDefinitions:
                     return str_ireplace('@NUMBER@', round_number(number * 100, 5, True), self.__get_string('number_formatting_percentage_format'))
 
                 return_value = re.sub(r'^([0-9]+(\.[0-9]+)*)', callback_for_numbers, return_value)
+                #return_value = f'({return_value} * 100)%'
 
         if calculated_tag and calculated_icon:
             return {
@@ -350,6 +351,26 @@ class BinDefinitions:
             '@Icon@': '%i:scaleMana%',
             '@ClosingTag@': '</scalemana>',
             '@Value@': round_number(value, 5)
+        }
+
+        for placeholder, replacement in placeholders.items():
+            return_value = str_ireplace(placeholder, replacement, return_value)
+
+        return return_value
+    
+    def __BuffCounterByNamedDataValueCalculationPart(self, current_block, key=0):
+        formula_part_style_key = "tooltip_statsuidata_formulapartstylepercent" if key == 0 else "tooltip_statsuidata_formulapartstylebonuspercent"
+        return_value = self.__get_string(formula_part_style_key)
+
+        icon = getf(current_block, 'mIconKey', '')
+        value = self.var_values.get(getf(current_block, 'mDataValue').lower(), 0)
+
+        placeholders = {
+            '@IconModifier@': '',
+            '@OpeningTag@': '',
+            '@Icon@': icon,
+            '@ClosingTag@': '',
+            '@Value@': round_number(value * 100, 5)
         }
 
         for placeholder, replacement in placeholders.items():

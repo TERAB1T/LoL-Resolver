@@ -42,6 +42,8 @@ class ChampionsProcessor:
                 key = key.replace("@f3@", "0")
             elif num_id == 141: # Kayn
                 key = key.replace("@f1@", "0")
+            elif num_id == 523: # Aphelios
+                key = re.sub(r'gunshortdesc_@f(\d+)@', 'gunshortdesc_\\1', key, flags=re.IGNORECASE)
 
             str = self.__get_string(key)
 
@@ -57,7 +59,9 @@ class ChampionsProcessor:
 
         def add_spell_value(spell_dict, key, value):
             spell_dict[key] = value
-            spell_dict[hash_fnv1a(key)] = value
+
+            if not is_fnv1a(key):
+                spell_dict[hash_fnv1a(key)] = value
 
         for spell_record in champion_data.values():
             spell_type = getf(spell_record, '__type', '')
@@ -107,14 +111,16 @@ class ChampionsProcessor:
 
                     bin_definitions = BinDefinitions(self.strings_raw, spell_values_level, m_item_calculations)
                     spells_values[spell_id][effect_key.lower()][spell_level] = bin_definitions.parse_values(effect_value)
-                    spells_values[spell_id][hash_fnv1a(effect_key.lower())][spell_level] = spells_values[spell_id][effect_key.lower()][spell_level]
+
+                    if not is_fnv1a(effect_key):
+                        spells_values[spell_id][hash_fnv1a(effect_key.lower())][spell_level] = spells_values[spell_id][effect_key.lower()][spell_level]
 
             #print(spell_id)
             #print(spells_values[spell_id])
         return spells_values
     
     def __get_champion(self, champion_id, champion_data):
-        #if champion_id != 'Characters/Renata':
+        #if champion_id != 'Characters/AurelionSol':
         #    return
 
         #print(champion_id)
@@ -292,12 +298,13 @@ class ChampionsProcessor:
                     ar_type = 0
                 current_string = current_string.replace('@AbilityResourceName@', self.__get_string(f'game_ability_resource_{ability_resources[ar_type]}'))
 
+
+            multiplier = element.get("multiplier", 1)
+            values = [str(round_number(spells_values[spell_id][element_type][i] * multiplier, 2)) for i in range(1, scaling_levels)]
+
             if not element_style:
-                values = [str(round_number(spells_values[spell_id][element_type][i], 2)) for i in range(1, scaling_levels)]
                 current_string += f"<scalingblock>[{'/'.join(values)}]</scalingblock>"
             elif element_style == 1:
-                multiplier = element.get("multiplier", 1)
-                values = [str(round_number(spells_values[spell_id][element_type][i] * multiplier, 2)) for i in range(1, scaling_levels)]
                 current_string += f"<scalingblock>[{str_ireplace('@NUMBER@', '/'.join(values), self.__get_string('number_formatting_percentage_format'))}]</scalingblock>"
 
             return_array.append(current_string + '</scalingcontainer>')
@@ -318,8 +325,14 @@ class ChampionsProcessor:
 
             #print(current_spell_id, search_result)
 
-            var_name = search_result.split('*')[0].split('.')[0]
+            decimals = 2
+            var_name = search_result.split('*')[0]
             var_mod = search_result.split('*')[1] if '*' in search_result else '1'
+
+            if '.' in var_name:
+                var_name, decimals = tuple(var_name.split('.'))
+            if '|' in var_name:
+                var_name, decimals = tuple(var_name.split('|'))
 
             if var_mod == '100%':
                 var_mod = 100
@@ -337,7 +350,7 @@ class ChampionsProcessor:
                 replacement = replacement[1]
 
             if isinstance(replacement, (int, float)):
-                replacement = round_number(float(replacement) * var_mod, 5, True)
+                replacement = round_number(float(replacement) * var_mod, int(decimals), True)
 
             return replacement
 
