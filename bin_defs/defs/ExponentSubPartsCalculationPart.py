@@ -10,8 +10,5 @@ class ExponentSubPartsCalculationPart(BinCalculation):
     def calc_float(self, current_block, key):
         part1 = self.calc_values(getf(current_block, 'part1'), 0, 'float')
         part2 = self.calc_values(getf(current_block, 'part2'), 0, 'float')
-
-        part1 = float(part1)
-        part2 = float(part2)
             
         return part1 ** part2

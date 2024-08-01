@@ -29,7 +29,6 @@ class SubPartScaledProportionalToStat(BinCalculation):
         current_stat = self.champion_stats[current_block.get('mStat', 0)]
         current_ratio = current_block.get('mRatio', 1)
         current_value = self.check_dict(self.calc_values(current_block['mSubpart'], 0, 'float'))
-        current_value = float(current_value)
 
         current_tag = getf(current_block, 'mStyleTag')
         current_icon = getf(current_block, 'mStyleTagIfScaled')
@@ -43,5 +42,4 @@ class SubPartScaledProportionalToStat(BinCalculation):
                 'tag': current_tag,
                 'icon': current_icon
             }
-        
         return current_stat * current_ratio * current_value

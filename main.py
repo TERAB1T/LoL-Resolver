@@ -8,13 +8,13 @@ from lol.generator import generate_lol_champions, generate_lol_items, generate_a
 from tft.generator import generate_tft_units, generate_tft_traits, generate_tft_items, generate_tft_augments
 
 def rm_temp_cache(version=''):
-    #return
+    return
     temp_cache_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '_temp', version)
 
     if os.path.exists(temp_cache_dir):
         shutil.rmtree(temp_cache_dir)
 
-#@timer_func
+@timer_func
 def main():
     arg_parser = argparse.ArgumentParser()
     subparsers = arg_parser.add_subparsers(dest="cmd")

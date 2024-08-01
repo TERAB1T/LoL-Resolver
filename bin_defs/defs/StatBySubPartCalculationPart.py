@@ -39,7 +39,6 @@ class StatBySubPartCalculationPart(BinCalculation):
     def calc_float(self, current_block, key):
         current_stat = self.champion_stats[current_block.get('mStat', 0)]
         current_value = self.check_dict(self.calc_values(current_block['mSubpart'], 0, 'float'))
-        current_value = float(current_value)
 
         stat_formula = current_block.get('mStatFormula', 1)
 

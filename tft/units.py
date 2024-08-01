@@ -42,7 +42,7 @@ class TFTUnitsProcessor:
         return get_string(self.strings_raw, string)
     
     def __get_unit(self, unit_id, unit_data):
-        #if unit_id != 'Characters/TFT11_Gnar':
+        #if unit_id != 'Characters/TFT12_Zilean':
         #    return
 
         #print(unit_id)
