@@ -3,7 +3,7 @@ import re
 import ujson
 from utils import *
 from stats import *
-from bin_definitions import BinDefinitions
+from bin_defs.bin_main import BinDefinitions
 
 class RGMAugmentsProcessor:
     def __init__(self, version, output_dir, map_type, lang, data, strings):
@@ -87,7 +87,7 @@ class RGMAugmentsProcessor:
                 
                 for effect_key, effect_value in m_spell_calculations.items():
                     bin_definitions = BinDefinitions(self.strings_raw, effects, m_spell_calculations)
-                    effects[effect_key.lower()] = bin_definitions.parse_values(effect_value)
+                    effects[effect_key.lower()] = bin_definitions.calc_values(effect_value)
 
         desc = self.__generate_desc(desc, effects)
 

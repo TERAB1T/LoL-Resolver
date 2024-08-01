@@ -3,7 +3,7 @@ import re
 import ujson
 from utils import *
 from stats import *
-from bin_definitions import BinDefinitions
+from bin_defs.bin_main import BinDefinitions
 
 class ItemsProcessor:
     def __init__(self, version, output_dir, lang, maps, modes, strings):
@@ -224,7 +224,7 @@ class ItemsProcessor:
             m_item_calculations.update(getf(item_values, 'StringCalculations', {}))
             for effect_key, effect_value in m_item_calculations.items():
                 bin_definitions = BinDefinitions(self.strings_raw, item_calc, m_item_calculations)
-                item_calc[effect_key.lower()] = bin_definitions.parse_values(effect_value)
+                item_calc[effect_key.lower()] = bin_definitions.calc_values(effect_value)
 
             # Generating output
 

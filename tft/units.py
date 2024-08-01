@@ -3,7 +3,7 @@ import re
 import ujson
 from utils import *
 from stats import *
-from bin_definitions import BinDefinitions
+from bin_defs.bin_main import BinDefinitions
 
 class TFTUnitsProcessor:
     def __init__(self, version, output_dir, lang, tft_data, unit_list, unit_properties, strings):
@@ -191,9 +191,9 @@ class TFTUnitsProcessor:
                 for i in range(1, scaling_levels):
                     current_var_values = {key: value[i] for key, value in var_values.items()}
                     current_unit_stats = {key: value[i] for key, value in unit_stats.items()}
-                    bin_definitions = BinDefinitions(self.strings_raw, current_var_values, m_spell_calc, current_unit_stats, True)
 
-                    parsed_bin = bin_definitions.parse_values(spell_calc_value)
+                    bin_definitions = BinDefinitions(self.strings_raw, current_var_values, m_spell_calc, current_unit_stats, 'float')
+                    parsed_bin = bin_definitions.calc_values(spell_calc_value)
 
                     if isinstance(parsed_bin, dict):
                         calculated_value = parsed_bin['value']

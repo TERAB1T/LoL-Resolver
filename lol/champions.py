@@ -3,7 +3,7 @@ import re
 import ujson
 from utils import *
 from stats import *
-from bin_definitions import BinDefinitions
+from bin_defs.bin_main import BinDefinitions
 
 class ChampionsProcessor:
     def __init__(self, version, output_dir, lang, champion_list, strings):
@@ -110,7 +110,7 @@ class ChampionsProcessor:
                         add_spell_value(spells_values[spell_id], effect_key.lower(), [0] * 7)
 
                     bin_definitions = BinDefinitions(self.strings_raw, spell_values_level, m_item_calculations)
-                    spells_values[spell_id][effect_key.lower()][spell_level] = bin_definitions.parse_values(effect_value)
+                    spells_values[spell_id][effect_key.lower()][spell_level] = bin_definitions.calc_values(effect_value)
 
                     if not is_fnv1a(effect_key):
                         spells_values[spell_id][hash_fnv1a(effect_key.lower())][spell_level] = spells_values[spell_id][effect_key.lower()][spell_level]
