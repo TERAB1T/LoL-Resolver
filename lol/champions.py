@@ -102,12 +102,12 @@ class ChampionsProcessor:
                     add_spell_value(spells_values[spell_id], m_name, m_values)
 
             m_item_calculations = getf(spell_data, 'mSpellCalculations', {})
-            for spell_level in range(7):
+            for spell_level in range(7): #7
                 spell_values_level = {key: value[spell_level] for key, value in spells_values[spell_id].items()}
 
                 for effect_key, effect_value in m_item_calculations.items():
                     if effect_key.lower() not in spells_values[spell_id]:
-                        add_spell_value(spells_values[spell_id], effect_key.lower(), [0] * 7)
+                       add_spell_value(spells_values[spell_id], effect_key.lower(), [0] * 7)
 
                     bin_definitions = BinDefinitions(self.strings_raw, spell_values_level, m_item_calculations)
                     spells_values[spell_id][effect_key.lower()][spell_level] = bin_definitions.calc_values(effect_value)

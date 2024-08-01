@@ -4,6 +4,7 @@ import ujson
 import re
 import os
 import redis
+from time import time
 
 def hash_xxhash64(key, bits=39):
     key_int = xxh64_intdigest(key.lower())
@@ -267,3 +268,12 @@ def gen_handler(input_version, output_dir, languages, alias, urls, generate_vers
                 processor.process_icons(input_version, output_dir)
         elif redis_cache[input_version]["status"] == patch_status:
             print(f"Version {input_version} is up to date. Skipping...")
+
+def timer_func(func):
+    def wrap_func(*args, **kwargs):
+        t1 = time()
+        result = func(*args, **kwargs)
+        t2 = time()
+        print(f'Function {func.__name__!r} executed in {(t2-t1):.4f}s')
+        return result
+    return wrap_func

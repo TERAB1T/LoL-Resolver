@@ -2,7 +2,7 @@ import argparse
 import os
 import shutil
 import re
-from utils import cd_get_versions_clean
+from utils import cd_get_versions_clean, timer_func
 from lol.atlas import AtlasProcessor
 from lol.generator import generate_lol_champions, generate_lol_items, generate_arena_augments, generate_swarm_augments
 from tft.generator import generate_tft_units, generate_tft_traits, generate_tft_items, generate_tft_augments
@@ -14,6 +14,7 @@ def rm_temp_cache(version=''):
     if os.path.exists(temp_cache_dir):
         shutil.rmtree(temp_cache_dir)
 
+#@timer_func
 def main():
     arg_parser = argparse.ArgumentParser()
     subparsers = arg_parser.add_subparsers(dest="cmd")
