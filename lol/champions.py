@@ -33,7 +33,7 @@ class ChampionsProcessor:
     def __get_string(self, string):
         return get_string(self.strings_raw, string)
     
-    def __desc_recursive_replace(self, desc, num_id):
+    def __desc_recursive_replace(self, desc, num_id, letter):
         def replace_callback(matches):
             key = matches[1].strip().lower()
             key = key.replace('@gamemodeinteger@', '1')
@@ -50,9 +50,15 @@ class ChampionsProcessor:
             if not str:
                 str = f'[[{key}]]'
 
-            return self.__desc_recursive_replace(str, num_id)
+            return self.__desc_recursive_replace(str, num_id, letter)
         
-        return re.sub(r'{{\s*(.*?)\s*}}', replace_callback, desc, flags=re.IGNORECASE)
+        if num_id == 523: # Aphelios
+            desc = re.sub(r'{{\s*apheliosgun_lorename_@f1@\s*}}', '{{apheliosgun_lorename_1}} / {{apheliosgun_lorename_2}} / {{apheliosgun_lorename_3}} / {{apheliosgun_lorename_4}} / {{apheliosgun_lorename_5}}', desc, flags=re.IGNORECASE)
+            desc = re.sub(r'{{\s*spell_apheliosr_weaponmod_@f1@\s*}}', '{{spell_apheliosr_weaponmod_1}}{{spell_apheliosr_weaponmod_2}}{{spell_apheliosr_weaponmod_3}}{{spell_apheliosr_weaponmod_4}}{{spell_apheliosr_weaponmod_5}}', desc, flags=re.IGNORECASE)
+        
+        desc = re.sub(r'{{\s*(.*?)\s*}}', replace_callback, desc, flags=re.IGNORECASE)
+        desc = self.__f_vars_replace(desc, num_id, letter)
+        return desc
     
     def __get_spells_values(self, champion_data):
         spells_values = {}
@@ -240,19 +246,19 @@ class ChampionsProcessor:
 
 
         spell_desc_scaling_raw = getf(m_lists, "LevelUp", {})
-        spell_desc_scaling = self.__process_spell_scaling(spell_desc_scaling_raw, spell_id, spells_values)
+        spell_desc_scaling = self.__process_spell_scaling(spell_desc_scaling_raw, spell_id, spells_values, letter)
 
 
         output_spell = {
             'name': spell_name,
             #'desc': self.__desc_recursive_replace(spell_desc_main, num_id),
-            'desc': self.__generate_desc(self.__desc_recursive_replace(spell_desc_main, num_id), spell_id, spells_values) + spell_desc_scaling,
+            'desc': self.__generate_desc(self.__desc_recursive_replace(spell_desc_main, num_id, letter), spell_id, spells_values) + spell_desc_scaling,
             'icons': spell_icons
         }
 
         self.output_dict[num_id]['abilities'][letter].append(output_spell)
 
-    def __process_spell_scaling(self, spell_desc_scaling_raw, spell_id, spells_values):
+    def __process_spell_scaling(self, spell_desc_scaling_raw, spell_id, spells_values, letter):
         scaling_elements = spell_desc_scaling_raw.get("elements")
         scaling_levels = 1 + spell_desc_scaling_raw.get("levelCount", 5)
         if not scaling_elements:
@@ -290,7 +296,7 @@ class ChampionsProcessor:
                 
 
             current_string = '<scalingcontainer><scalingblock>' + self.__get_string(name_override) + '</scalingblock>'
-            current_string = self.__desc_recursive_replace(current_string, 0)
+            current_string = self.__desc_recursive_replace(current_string, 0, letter)
 
             if '@AbilityResourceName@' in current_string:
                 ar_type = spells_values['ar_type']
@@ -362,3 +368,71 @@ class ChampionsProcessor:
         desc = re.sub(r'@SpellModifierDescriptionAppend@', '', desc, flags=re.IGNORECASE)
 
         return re.sub(r'(@)(.*?)(@)', replace_callback, desc, flags=re.IGNORECASE)
+    
+    def __f_vars_replace(self, desc, num_id, letter):
+
+        if num_id == 432: # Bard
+            if letter == 'p':
+                desc = desc.replace('@f1@', '20')
+                desc = desc.replace('@f4@', '1')
+                desc = desc.replace('@f5@', '@BaseMeepSpawnCD@')
+            elif letter == 'w':
+                desc = desc.replace('@f2@', '@MaxPacks@')
+
+        if num_id == 200: # Bel'Veth
+            if letter == 'q':
+                desc = desc.replace('@f1@', '@PerSideCooldown@')
+            elif letter == 'e':
+                desc = desc.replace('@f2.0@', '@NumberOfStrikes.0@') # '@TotalStrikes.0@')
+
+        if num_id == 245: # Ekko
+            if letter == 'p':
+                desc = desc.replace('@f5@', '@effect2amount*100@')
+
+        if num_id == 60: # Elise
+            if letter == 'p':
+                desc = desc.replace('@f3@', '@spell.eliser:effect5amount@')
+
+        if num_id == 41: # Gangplank
+            if letter == 'e':
+                desc = desc.replace('@f5@', '@effect2amount@')
+
+        if num_id == 86: # Garen
+            if letter == 'e':
+                desc = desc.replace('@f1@', '@NumTicks@')
+
+        if num_id == 420: # Illaoi
+            if letter == 'e':
+                desc = desc.replace('@f1@', '@{87aff6dd}@')
+
+        if num_id == 203: # Kindred
+            if letter == 'p':
+                desc = desc.replace('@f2@', '@effect1amount@')
+                desc = desc.replace('@f7@', '@effect3amount@')
+                desc = desc.replace('@f8@', '@effect2amount*3@')
+                desc = desc.replace('@f9@', '@effect2amount@')
+
+        if num_id == 133: # Quinn
+            if letter == 'p':
+                desc = desc.replace('@f1@', '@spell.quinnr:harriercooldown@')
+
+        if num_id == 33: # Rammus
+            if letter == 'w':
+                desc_temp = self.__get_string('number_formatting_percentage_format').replace('@NUMBER@', '@BonusArmorPercent*100@')
+                desc = desc.replace('@F1@',desc_temp)
+                desc_temp = self.__get_string('number_formatting_percentage_format').replace('@NUMBER@', '@BonusMRPercent*100@')
+                desc = desc.replace('@F2@', desc_temp)
+
+        if num_id == 134: # Syndra
+            if letter == 'w':
+                desc = desc.replace('@f2@', '@SlowDuration@')
+
+        if num_id == 498: # Xayah
+            if letter == 'p':
+                desc = desc.replace('@f14@', '@effect6amount@')
+                desc = desc.replace('@f16', '@effect8amount')
+                desc = desc.replace('@f12@', '@effect1amount@')
+
+        desc = re.sub(r'@f\d+[^@]{0,}@', '0', desc, flags=re.IGNORECASE)
+
+        return desc
