@@ -24,7 +24,7 @@ class RGMAugmentsProcessor:
             'status': 1,
             'data': dict(sorted(self.output_dict.items()))
         }
-        output_json = ujson.dumps(success_return, ensure_ascii=False, separators=(',', ':'), sort_keys=True, escape_forward_slashes=False)
+        output_json = ujson.dumps(success_return, ensure_ascii=False, separators=(',', ':'), sort_keys=True, escape_forward_slashes=False, indent=4)
 
         os.makedirs(self.output_dir, exist_ok=True)
         with open(self.output_filepath, 'w', encoding='utf-8') as output_file:

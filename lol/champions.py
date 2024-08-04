@@ -412,6 +412,12 @@ class ChampionsProcessor:
                 desc = desc.replace('@f8@', '@effect2amount*3@')
                 desc = desc.replace('@f9@', '@effect2amount@')
 
+        if num_id == 4: # Twisted Fate
+            if letter == 'w':
+                desc = desc.replace('@ttBlueDamage@', '0')
+                desc = desc.replace('@ttRedDamage@', '0')
+                desc = desc.replace('@ttGoldDamage@', '0')
+
         if num_id == 133: # Quinn
             if letter == 'p':
                 desc = desc.replace('@f1@', '@spell.quinnr:harriercooldown@')

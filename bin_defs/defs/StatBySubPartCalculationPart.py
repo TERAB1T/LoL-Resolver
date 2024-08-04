@@ -23,6 +23,13 @@ class StatBySubPartCalculationPart(BinCalculation):
         except:
             pass
 
+        if '%i:scaleLevel%' in str(value):
+            def callback_for_numbers(matches):
+                number = float(matches.group(1))
+                return round_number(number * 100, 5, True)
+            
+            value = re.sub(r'([0-9]+(\.[0-9]+)*)', callback_for_numbers, value)
+
         placeholders = {
             '@IconModifier@': icon_modifier,
             '@OpeningTag@': stats[current_stat]['openingTag'],

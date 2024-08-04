@@ -6,11 +6,15 @@ class SumOfSubPartsCalculationPart(BinCalculation):
 
     def calc_string(self, current_block, key):
         if len(current_block['mSubparts']) == 1:
-            return self.check_dict(self.calc_values(current_block['mSubparts'][0]))
+            return self.calc_values(current_block['mSubparts'][0])
         
         total_sum = 0
         for subpart in current_block['mSubparts']:
-            parsed_value = self.check_dict(self.calc_values(subpart))
+            parsed_value = self.calc_values(subpart)
+            subpart_type = getf(subpart, '__type')
+
+            if subpart_type == 'StatByCoefficientCalculationPart':
+                continue
 
             try:
                 parsed_value = float(parsed_value)
