@@ -16,6 +16,17 @@ class SumOfSubPartsCalculationPart(BinCalculation):
             if subpart_type == 'StatByCoefficientCalculationPart':
                 continue
 
+            if '*' in str(parsed_value):
+                continue
+
+            if '%i:scaleLevel%' in str(parsed_value) and isinstance(total_sum, (int, float)):
+                def callback_for_numbers(matches):
+                    number = float(matches.group(1))
+                    return round_number(number + total_sum, 5, True)
+                
+                total_sum = re.sub(r'([0-9]+(\.[0-9]+)*)', callback_for_numbers, parsed_value)
+                continue
+
             try:
                 parsed_value = float(parsed_value)
             except:
