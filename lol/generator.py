@@ -1,10 +1,11 @@
-import requests
 from concurrent.futures import ThreadPoolExecutor
 import ujson
 from lol.champions import ChampionsProcessor
 from lol.items import ItemsProcessor
 from lol.rgm_augments import RGMAugmentsProcessor
 from utils import *
+import aiohttp
+import asyncio
 
 ### COMMON ###
 
@@ -32,11 +33,13 @@ modes = {
 }
 @timer_func
 def get_all_maps(input_version):
+    loop = asyncio.get_event_loop()
     mode_list = list(modes)
-    with ThreadPoolExecutor() as executor:
-        return dict(executor.map(download_map, [input_version] * len(mode_list), mode_list))
-@timer_func
-def download_map(version, map_key):
+    tasks = [download_map(input_version, mode) for mode in mode_list]
+    results = loop.run_until_complete(asyncio.gather(*tasks))
+    return dict(results)
+
+async def download_map(version, map_key):
     map_id = modes[map_key]['id']
 
     temp_cache_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '_temp', version)
@@ -51,15 +54,17 @@ def download_map(version, map_key):
     
     map_url = f"https://raw.communitydragon.org/{version}/game/data/maps/shipping/map{map_id}/map{map_id}.bin.json"
     
-    response = requests.get(map_url)
-    if response.status_code == 200:
-        os.makedirs(temp_cache_dir, exist_ok=True)
-        with open(temp_cache_file, 'wb') as output_file:
-            output_file.write(response.content)
+    async with aiohttp.ClientSession() as session:
+        async with session.get(map_url) as response:
+            if response.status == 200:
+                data = await response.read()
+                os.makedirs(temp_cache_dir, exist_ok=True)
+                with open(temp_cache_file, 'wb') as output_file:
+                    output_file.write(data)
 
-        return (map_key, ujson.loads(response.content))
-    else:
-        return (map_key, {})
+                return (map_key, ujson.loads(data))
+            else:
+                return (map_key, {})
     
 ### CHAMPIONS ###
 @timer_func
@@ -127,10 +132,12 @@ def get_champion_ids(version):
     return champion_ids
 @timer_func
 def download_all_champions(input_version, champion_ids):
-    with ThreadPoolExecutor() as executor:
-        return dict(executor.map(download_champion, [input_version] * len(champion_ids), champion_ids))
+    loop = asyncio.get_event_loop()
+    tasks = [download_champion(input_version, champion_id) for champion_id in champion_ids]
+    results = loop.run_until_complete(asyncio.gather(*tasks))
+    return dict(results)
 
-def download_champion(input_version, champion_id):
+async def download_champion(input_version, champion_id):
     temp_cache_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '_temp', input_version, 'champions')
     temp_cache_file = f"{temp_cache_dir}/{champion_id.split('/')[1].lower()}.json"
 
@@ -143,15 +150,17 @@ def download_champion(input_version, champion_id):
 
     champion_url = f"https://raw.communitydragon.org/{input_version}/game/data/{champion_id.lower()}/{champion_id.split('/')[1].lower()}.bin.json"
 
-    response = urllib3.request("GET", champion_url)
-    if response.status == 200:
-        os.makedirs(temp_cache_dir, exist_ok=True)
-        with open(temp_cache_file, 'wb') as output_file:
-            output_file.write(response.data)
+    async with aiohttp.ClientSession() as session:
+        async with session.get(champion_url) as response:
+            if response.status == 200:
+                data = await response.read()
+                os.makedirs(temp_cache_dir, exist_ok=True)
+                with open(temp_cache_file, 'wb') as output_file:
+                    output_file.write(data)
 
-        return (champion_id, ujson.loads(response.data))
-    else:
-        return (champion_id, {})
+                return (champion_id, ujson.loads(data))
+            else:
+                return (champion_id, {})
 
 def generate_lol_champions(input_version, output_dir, languages, cache = False):
     alias = 'lol-champions'
