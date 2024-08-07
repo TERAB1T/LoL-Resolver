@@ -93,13 +93,13 @@ def get_last_modified(file_url):
 def get_final_url(version, urls):
     main_url = f"https://raw.communitydragon.org/{version}/game/"
     for url in urls:
-        #try:
+        try:
             return_url = main_url + url
             response = urllib3.request("HEAD", return_url)
             if response.status == 200:
                 return return_url
-        #except:
-        #    pass
+        except:
+            pass
     return None
 
 @timer_func
@@ -249,9 +249,7 @@ def gen_handler(input_version, output_dir, languages, alias, urls, generate_vers
                 "last_modified": ''
             }
 
-        final_url = get_final_url(input_version, urls)
-        last_modified = get_last_modified(final_url)
-        print(final_url, last_modified)
+        last_modified = get_last_modified(get_final_url(input_version, urls))
 
         if not last_modified:
             print(f"Version {input_version} for {alias} not found.")
