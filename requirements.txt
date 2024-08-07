@@ -1,4 +1,5 @@
 requests
+urllib3
 Pillow
 xxhash
 redis

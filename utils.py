@@ -5,6 +5,16 @@ import re
 import os
 import redis
 from time import time
+import urllib3
+
+def timer_func(func):
+    def wrap_func(*args, **kwargs):
+        t1 = time()
+        result = func(*args, **kwargs)
+        t2 = time()
+        print(f'Function {func.__name__!r} executed in {(t2-t1):.4f}s')
+        return result
+    return wrap_func
 
 def hash_xxhash64(key, bits=39):
     key_int = xxh64_intdigest(key.lower())
@@ -39,10 +49,10 @@ def image_to_png(url):
 
 def cd_get_languages(version):
     url = f"https://raw.communitydragon.org/json/{version}/game/"
-    response = requests.get(url)
+    response = urllib3.request("GET", url)
 
-    if response.status_code == 200:
-        langs_raw = ujson.loads(response.content)
+    if response.status == 200:
+        langs_raw = ujson.loads(response.data)
         languages = [file.get('name') for file in langs_raw if file.get('type') == 'directory' and re.match(r'^[a-z]{2}_[a-z]{2}$', file.get('name'))]
         if len(languages) != 0:
             if 'ar_ae' in languages:
@@ -50,21 +60,21 @@ def cd_get_languages(version):
             return languages
 
     url2 = f"https://raw.communitydragon.org/json/{version}/game/data/menu/"
-    response2 = requests.get(url2)
+    response2 = urllib3.request("GET", url2)
 
-    if response2.status_code == 200:
-        langs_raw = ujson.loads(response2.content)
+    if response2.status == 200:
+        langs_raw = ujson.loads(response2.data)
         languages = [re.search(r'(?<=_)([a-z]{2}_[a-z]{2})(?=\.(stringtable|txt)\.json)', file.get('name'), re.IGNORECASE).group(0) for file in langs_raw if file.get('name').endswith('.json')]
         if 'ar_ae' in languages:
             languages.remove('ar_ae')
         return languages
-    
+
 def cd_get_versions():
     url = "https://raw.communitydragon.org/json/"
-    response = requests.get(url)
+    response = urllib3.request("GET", url)
 
-    if response.status_code == 200:
-        versions_raw = ujson.loads(response.content)
+    if response.status == 200:
+        versions_raw = ujson.loads(response.data)
         versions = [file for file in versions_raw if re.match(r'^\d+\.\d+$', file.get('name')) and float(file.get('name').split(".")[0]) > 10]
         versions = sorted(versions, key = lambda version: float(re.sub(r'\.(\d)$', r'.0\1', version['name'])))
         return versions
@@ -75,9 +85,9 @@ def cd_get_versions_clean():
 
 def get_last_modified(file_url):
     try:
-        response = requests.head(file_url)
-        return response.headers.get('Last-Modified')
-    except requests.RequestException as e:
+        response = urllib3.request("HEAD", file_url)
+        return response.getheader('Last-Modified')
+    except:
         return False
 
 def get_final_url(version, urls):
@@ -85,13 +95,14 @@ def get_final_url(version, urls):
     for url in urls:
         try:
             return_url = main_url + url
-            response = requests.head(return_url)
-            if response.status_code == 200:
+            response = urllib3.request("HEAD", return_url)
+            if response.status == 200:
                 return return_url
-        except requests.RequestException:
+        except:
             pass
     return None
 
+@timer_func
 def cd_get_strings_file(version, lang, game='lol'):
     temp_cache_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '_temp', version, 'lang')
     temp_cache_file = f"{temp_cache_dir}/{game}_{lang}.json"
@@ -245,10 +256,10 @@ def gen_handler(input_version, output_dir, languages, alias, urls, generate_vers
             return
 
         input_version_modified = "live" if input_version == "latest" else input_version
-        response = requests.get(f"https://raw.communitydragon.org/status.{input_version_modified}.txt")
+        response = urllib3.request("GET", f"https://raw.communitydragon.org/status.{input_version_modified}.txt")
 
-        if response.status_code == 200:
-            patch_status = response.text
+        if response.status == 200:
+            patch_status = response.data.decode('utf-8')
         else:
             return
 
@@ -268,12 +279,3 @@ def gen_handler(input_version, output_dir, languages, alias, urls, generate_vers
                 processor.process_icons(input_version, output_dir)
         elif redis_cache[input_version]["status"] == patch_status:
             print(f"Version {input_version} is up to date. Skipping...")
-
-def timer_func(func):
-    def wrap_func(*args, **kwargs):
-        t1 = time()
-        result = func(*args, **kwargs)
-        t2 = time()
-        print(f'Function {func.__name__!r} executed in {(t2-t1):.4f}s')
-        return result
-    return wrap_func

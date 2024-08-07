@@ -36,6 +36,7 @@ class ItemsProcessor:
     def __get_string(self, string):
         return get_string(self.strings_raw, string)
     
+    @timer_func
     def __get_items_file(self):
         temp_cache_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '_temp', self.version)
         temp_cache_file = f"{temp_cache_dir}/items.bin.json"
