@@ -164,7 +164,6 @@ def generate_version_items(input_version, output_dir, languages):
     print(f"LoL Items: generating version {input_version}...")
 
     maps = get_all_maps(input_version)
-    return
     supported_langs = cd_get_languages(input_version)
     if languages[0] == 'all':
         languages = supported_langs

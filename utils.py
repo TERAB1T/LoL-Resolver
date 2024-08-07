@@ -249,7 +249,9 @@ def gen_handler(input_version, output_dir, languages, alias, urls, generate_vers
                 "last_modified": ''
             }
 
-        last_modified = get_last_modified(get_final_url(input_version, urls))
+        final_url = get_final_url(input_version, urls)
+        last_modified = get_last_modified(final_url)
+        print(final_url, last_modified)
 
         if not last_modified:
             print(f"Version {input_version} for {alias} not found.")
