@@ -93,13 +93,13 @@ def get_last_modified(file_url):
 def get_final_url(version, urls):
     main_url = f"https://raw.communitydragon.org/{version}/game/"
     for url in urls:
-        try:
+        #try:
             return_url = main_url + url
             response = urllib3.request("HEAD", return_url)
             if response.status == 200:
                 return return_url
-        except:
-            pass
+        #except:
+        #    pass
     return None
 
 @timer_func
