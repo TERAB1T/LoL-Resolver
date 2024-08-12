@@ -29,12 +29,10 @@ def hash_xxhash3(key, bits=39):
 def hash_fnv1a(key):
     hash_value = 0x811c9dc5
 
-    if len(key) > 0:
-        key = key.lower()
-        for char in key:
-            hash_value ^= ord(char)
-            hash_value *= 0x01000193
-            hash_value &= 0xFFFFFFFF
+    for char in key.lower():
+        hash_value ^= ord(char)
+        hash_value *= 0x01000193
+        hash_value &= 0xFFFFFFFF
 
     return '{' + f"{hash_value:08x}" + '}'
 
@@ -42,7 +40,7 @@ def is_fnv1a(hash):
     if not hash:
         return False
     
-    return re.match(r'^\{[0-9a-f]{8}\}$', hash)
+    return re.fullmatch(r'\{[0-9a-f]{8}\}', hash)
 
 def image_to_png(url):
     return re.sub(r'\.(tex|dds)', '.png', url, flags=re.IGNORECASE).lower()
@@ -147,19 +145,18 @@ def get_string(strings_array, id):
         return strings_array[id]
 
     hashed3_39 = hash_xxhash3(id, 39)
-    hashed3_40 = hash_xxhash3(id, 40)
-    hashed64_39 = hash_xxhash64(id, 39)
-    hashed64_40 = hash_xxhash64(id, 40)
-
     if hashed3_39 in strings_array:
         return strings_array[hashed3_39]
 
+    hashed3_40 = hash_xxhash3(id, 40)
     if hashed3_40 in strings_array:
         return strings_array[hashed3_40]
 
+    hashed64_39 = hash_xxhash64(id, 39)
     if hashed64_39 in strings_array:
         return strings_array[hashed64_39]
 
+    hashed64_40 = hash_xxhash64(id, 40)
     if hashed64_40 in strings_array:
         return strings_array[hashed64_40]
 
@@ -167,6 +164,15 @@ def get_string(strings_array, id):
         return get_string(strings_array, id.replace("_mod_1", "_mod_2"))
 
     return ''
+
+def is_number(num):
+    if isinstance(num, (int, float)):
+        return True
+    
+    if isinstance(num, str) and re.fullmatch(r'-?\d+(\.\d+)?', num):
+        return True
+        
+    return False
 
 def round_number(num, decimal, to_string=False):
     if isinstance(num, (int, float)):

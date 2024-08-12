@@ -33,6 +33,19 @@ class RGMAugmentsProcessor:
     def __get_string(self, string):
         return get_string(self.strings_raw, string)
     
+    def __desc_recursive_replace(self, desc):
+        def replace_callback(matches):
+            key = matches[1].strip().lower()
+            str = self.__get_string(key)
+
+            if not str:
+                str = f'[[{key}]]'
+
+            return self.__desc_recursive_replace(str)
+
+        desc = re.sub(r'{{\s*(.*?)\s*}}', replace_callback, desc, flags=re.IGNORECASE)
+        return desc
+    
     def __get_announcements(self):
         augment_entries = [value for key, value in self.data.items() if value.get('__type') == 'AnnouncementDefinition' or value.get('__type') == hash_fnv1a('AnnouncementDefinition')]
 
@@ -61,6 +74,7 @@ class RGMAugmentsProcessor:
 
     def __prepare_desc(self, spellobject_entries, augment):
         desc = self.__get_string(augment['DescriptionTra'])
+        desc = self.__desc_recursive_replace(desc)
 
         if '@spell.' in desc:
             desc = re.sub(r'@spell\.[^:]+:', '@', desc, flags=re.IGNORECASE)

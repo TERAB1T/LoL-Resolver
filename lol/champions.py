@@ -126,7 +126,7 @@ class ChampionsProcessor:
         return spells_values
     
     def __get_champion(self, champion_id, champion_data):
-        #if champion_id != 'Characters/AurelionSol':
+        #if champion_id != 'Characters/Annie':
         #    return
 
         #print(champion_id)
@@ -193,6 +193,11 @@ class ChampionsProcessor:
             self.__get_spell(num_id, champion_data, spells_values, 'Characters/Jayce/Spells/JayceAccelerationGateAbility/JayceAccelerationGate', 'e')
             self.__get_spell(num_id, champion_data, spells_values, 'Characters/Jayce/Spells/JayceStanceHtGAbility/JayceStanceGtH', 'r')
 
+        if num_id == 246: # Qiyana
+            self.__get_spell(num_id, champion_data, spells_values, 'Characters/Qiyana/Spells/QiyanaQAbility/QiyanaQ_Water', 'q')
+            self.__get_spell(num_id, champion_data, spells_values, 'Characters/Qiyana/Spells/QiyanaQAbility/QiyanaQ_Rock', 'q')
+            self.__get_spell(num_id, champion_data, spells_values, 'Characters/Qiyana/Spells/QiyanaQAbility/QiyanaQ_Grass', 'q')
+
     def __get_spell(self, num_id, champion_data, spells_values, spell_record_path, letter):
         #print(letter)
 
@@ -255,6 +260,16 @@ class ChampionsProcessor:
             'desc': self.__generate_desc(self.__desc_recursive_replace(spell_desc_main, num_id, letter), spell_id, spells_values) + spell_desc_scaling,
             'icons': spell_icons
         }
+
+        generic_cooldown_key = "spell_cooldown_generic"
+        desc_cooldown = getf(m_loc_keys, "keyCooldown", generic_cooldown_key)
+
+        if desc_cooldown == generic_cooldown_key and (not getf(spells_values[spell_id], 'cooldown') or spells_values[spell_id]['cooldown'][1] == 0):
+            desc_cooldown = 'spell_cooldown_nocooldown'
+
+        spell_desc_cooldown = self.__get_string(desc_cooldown)
+        if spell_desc_cooldown:
+            output_spell['cdTooltip'] = self.__generate_desc(spell_desc_cooldown, spell_id, spells_values)
 
         self.output_dict[num_id]['abilities'][letter].append(output_spell)
 

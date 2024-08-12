@@ -197,7 +197,7 @@ def generate_lol_items(input_version, output_dir, languages, cache = False, atla
     
 def generate_version_arena_augments(input_version, output_dir, languages):
     print(f"Arena Augments: generating version {input_version}...")
-    arena_data = download_map(input_version, 'Arena')[1]
+    arena_data = asyncio.run(download_map(input_version, 'Arena'))[1]
     if not arena_data:
         return
     
@@ -223,7 +223,7 @@ def generate_arena_augments(input_version, output_dir, languages, cache = False)
 
 def generate_version_swarm_augments(input_version, output_dir, languages):
     print(f"Swarm Augments: generating version {input_version}...")
-    swarm_data = download_map(input_version, 'Swarm')[1]
+    swarm_data = asyncio.run(download_map(input_version, 'Swarm'))[1]
     if not swarm_data:
         return
     
