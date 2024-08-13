@@ -85,8 +85,9 @@ def get_unit_ids(tft_data):
     unit_ids = []
 
     if set_root.get("tftCharacterLists"):
-        unit_list_id = set_root["tftCharacterLists"][0]
-        unit_ids = tft_data[unit_list_id]['characters']
+        unit_list_ids = set_root["tftCharacterLists"]
+        for unit_list_id in unit_list_ids:
+            unit_ids += tft_data[unit_list_id]['characters']
     else:
         lists = [tft_data[item]["characters"] for item in set_root["characterLists"]]
         unit_ids = max(lists, key=len)

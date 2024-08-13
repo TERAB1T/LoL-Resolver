@@ -100,7 +100,6 @@ def get_final_url(version, urls):
             pass
     return None
 
-@timer_func
 def cd_get_strings_file(version, lang, game='lol'):
     temp_cache_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '_temp', version, 'lang')
     temp_cache_file = f"{temp_cache_dir}/{game}_{lang}.json"
