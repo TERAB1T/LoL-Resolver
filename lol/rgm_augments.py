@@ -73,8 +73,11 @@ class RGMAugmentsProcessor:
             }
 
     def __prepare_desc(self, spellobject_entries, augment):
-        desc = self.__get_string(augment['DescriptionTra'])
+        desc_id = getf(augment, 'AugmentTooltipTra', getf(augment, 'DescriptionTra'))
+
+        desc = self.__get_string(desc_id)
         desc = self.__desc_recursive_replace(desc)
+        desc = re.sub(r'@f\d+@', '0', desc, flags=re.IGNORECASE)
 
         if '@spell.' in desc:
             desc = re.sub(r'@spell\.[^:]+:', '@', desc, flags=re.IGNORECASE)

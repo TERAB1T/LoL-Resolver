@@ -5,7 +5,7 @@ import re
 from utils import cd_get_versions_clean, timer_func
 from lol.atlas import AtlasProcessor
 from lol.generator import generate_lol_champions, generate_lol_items, generate_arena_augments, generate_swarm_augments
-from tft.generator import generate_tft_units, generate_tft_traits, generate_tft_items, generate_tft_augments
+from tft.generator import generate_tft_units, generate_tft_traits, generate_tft_items, generate_tft_augments, generate_tocker_rounds
 
 def rm_temp_cache(version=''):
     #return
@@ -16,6 +16,9 @@ def rm_temp_cache(version=''):
 
 @timer_func
 def main():
+    # TFT Tocker's Trials rounds
+    # generate_tocker_rounds('pbe', 'export', ['all'], False)
+
     arg_parser = argparse.ArgumentParser()
     subparsers = arg_parser.add_subparsers(dest="cmd")
 
