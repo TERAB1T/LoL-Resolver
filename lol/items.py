@@ -6,21 +6,18 @@ from stats import *
 from bin_defs.bin_main import BinDefinitions
 
 class ItemsProcessor:
-    def __init__(self, version, output_dir, lang, maps, modes, strings):
+    def __init__(self, version, output_dir, lang, items, strings):
         self.version = version
         self.lang = lang
-        self.maps = maps
-        self.modes = modes
+        self.items = items
         self.strings_raw = strings
 
-        self.items = {}
         self.output_dict = {}
 
         self.output_dir = os.path.join(output_dir, f"lol-items/{self.version}")
 
         self.output_filepath = f"{self.output_dir}/{lang}.json"
 
-        self.__populate_items()
         self.__process_values()
 
         success_return = {
@@ -35,89 +32,6 @@ class ItemsProcessor:
     
     def __get_string(self, string):
         return get_string(self.strings_raw, string)
-    
-    @timer_func
-    def __get_items_file(self):
-        temp_cache_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '_temp', self.version)
-        temp_cache_file = f"{temp_cache_dir}/items.bin.json"
-
-        if os.path.isfile(temp_cache_file):
-            try:
-                with open(temp_cache_file, encoding='utf-8') as f:
-                    return ujson.load(f)
-            except Exception as e:
-                pass
-
-        urls = ["items.cdtb.bin.json", "global/items/items.bin.json"]
-        final_url = get_final_url(self.version, urls)
-
-        if not final_url:
-            print(f"Items file not found: {self.version}.")
-            return
-        
-        try:
-            items_response = requests.get(final_url)
-
-            os.makedirs(temp_cache_dir, exist_ok=True)
-            with open(temp_cache_file, 'wb') as output_file:
-                output_file.write(items_response.content)
-
-            return ujson.loads(items_response.content)
-        except requests.RequestException as e:
-            print(f"An error occurred (item file): {e}")
-        return
-    
-    def __get_mode_items(self, map_key, current_map):
-        map_root_path = self.modes[map_key]['path']
-        map_root = getf(current_map, map_root_path, {})
-        item_lists = getf(map_root, "itemLists", [])
-
-        items = []
-
-        for item_list_id in item_lists:
-            item_list_root = getf(current_map, item_list_id, {})
-            item_list = getf(item_list_root, "mItems", [])
-            items = items + item_list
-
-        return list(set(items))
-    
-    def __populate_items(self):
-        items = self.__get_items_file()
-
-        if not items:
-            return
-        
-        item_list_with_modes = {}
-
-        for map_key in self.maps.keys():
-            current_map = self.maps[map_key]
-
-            if not current_map:
-                continue
-
-            mode_items = self.__get_mode_items(map_key, current_map)
-
-            for item in mode_items:
-                if item not in item_list_with_modes:
-                    item_list_with_modes[item] = []
-
-                item_list_with_modes[item].append(map_key)
-
-        for item_key, item_data in items.items():
-            item_id = getf(item_data, "itemID")
-
-            if not item_id:
-                continue
-
-            if re.match(r'^\{[0-9a-f]{8}\}$', item_key):
-                if hash_fnv1a(f'Items/{str(item_id)}') == item_key:
-                    item_key = f'Items/{str(item_id)}'
-
-            item_modes = getf(item_list_with_modes, item_key)
-
-            if item_modes:
-                item_data['lr_modes'] = item_modes
-                self.items[item_id] = item_data
     
     def __desc_recursive_replace(self, desc):
         def replace_callback(matches):

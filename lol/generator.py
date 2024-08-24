@@ -228,11 +228,93 @@ def generate_lol_champions(input_version, output_dir, languages, cache = False):
     gen_handler(input_version, output_dir, languages, alias, urls, generate_version_champions, cache)
 
 ### ITEMS ###
+
+def get_items_file(version):
+    temp_cache_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '_temp', version)
+    temp_cache_file = f"{temp_cache_dir}/items.bin.json"
+    if os.path.isfile(temp_cache_file):
+        try:
+            with open(temp_cache_file, encoding='utf-8') as f:
+                return ujson.load(f)
+        except Exception as e:
+            pass
+    urls = ["items.cdtb.bin.json", "global/items/items.bin.json"]
+    final_url = get_final_url(version, urls)
+    if not final_url:
+        print(f"Items file not found: {version}.")
+        return
+    
+    try:
+        items_response = urllib3.request("GET", final_url)
+        os.makedirs(temp_cache_dir, exist_ok=True)
+        with open(temp_cache_file, 'wb') as output_file:
+            output_file.write(items_response.data)
+        return ujson.loads(items_response.data)
+    except requests.RequestException as e:
+        print(f"An error occurred (item file): {e}")
+    return
+
+def get_mode_items(map_key, current_map):
+    map_root_path = modes[map_key]['path']
+    map_root = getf(current_map, map_root_path, {})
+    item_lists = getf(map_root, "itemLists", [])
+
+    items = []
+
+    for item_list_id in item_lists:
+        item_list_root = getf(current_map, item_list_id, {})
+        item_list = getf(item_list_root, "mItems", [])
+        items = items + item_list
+
+    return list(set(items))
+
+def populate_items(version, maps):
+    items = get_items_file(version)
+    output_items = {}
+
+    if not items:
+        return
+    
+    item_list_with_modes = {}
+
+    for map_key in maps.keys():
+        current_map = maps[map_key]
+
+        if not current_map:
+            continue
+
+        mode_items = get_mode_items(map_key, current_map)
+
+        for item in mode_items:
+            if item not in item_list_with_modes:
+                item_list_with_modes[item] = []
+
+            item_list_with_modes[item].append(map_key)
+
+    for item_key, item_data in items.items():
+        item_id = getf(item_data, "itemID")
+
+        if not item_id:
+            continue
+
+        if re.match(r'^\{[0-9a-f]{8}\}$', item_key):
+            if hash_fnv1a(f'Items/{str(item_id)}') == item_key:
+                item_key = f'Items/{str(item_id)}'
+
+        item_modes = getf(item_list_with_modes, item_key)
+
+        if item_modes:
+            item_data['lr_modes'] = item_modes
+            output_items[item_id] = item_data
+    
+    return output_items
+
 @timer_func 
 def generate_version_items(input_version, output_dir, languages):
     print(f"LoL Items: generating version {input_version}...")
 
     maps = get_all_maps(input_version)
+    items = populate_items(input_version, maps)
     supported_langs = cd_get_languages(input_version)
     if languages[0] == 'all':
         languages = supported_langs
@@ -245,7 +327,7 @@ def generate_version_items(input_version, output_dir, languages):
             continue
         else:
             strings = cd_get_strings_file(input_version, lang, 'lol')
-            processor = ItemsProcessor(input_version, output_dir, lang, maps, modes, strings)
+            processor = ItemsProcessor(input_version, output_dir, lang, items, strings)
             print(" — Done!")
 
 def generate_lol_items(input_version, output_dir, languages, cache = False, atlas = False):
