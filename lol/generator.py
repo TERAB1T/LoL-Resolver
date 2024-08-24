@@ -32,11 +32,10 @@ modes = {
     }
 }
 @timer_func
-def get_all_maps(input_version):
-    loop = asyncio.get_event_loop()
+async def get_all_maps(input_version):
     mode_list = list(modes)
     tasks = [download_map(input_version, mode) for mode in mode_list]
-    results = loop.run_until_complete(asyncio.gather(*tasks))
+    results = await asyncio.gather(*tasks)
     return dict(results)
 
 async def download_map(version, map_key):
@@ -72,10 +71,10 @@ def generate_version_champions(input_version, output_dir, languages):
     print(f"LoL Champions: generating version {input_version}...")
 
     champion_ids = get_champion_ids(input_version)
-    champion_list = download_all_champions(input_version, champion_ids)
+    champion_list = asyncio.run(download_all_champions(input_version, champion_ids))
 
     champion_ids_client = get_champion_ids_client(input_version)
-    champion_list_client = download_all_champions_client(input_version, champion_ids_client)
+    champion_list_client = asyncio.run(download_all_champions_client(input_version, champion_ids_client))
     
     supported_langs = cd_get_languages(input_version)
     if languages[0] == 'all':
@@ -121,11 +120,10 @@ def get_champion_ids(version):
     except:
         print(f"An error occurred (champions data file)")
         return
-    
-def download_all_champions(input_version, champion_ids):
-    loop = asyncio.get_event_loop()
+   
+async def download_all_champions(input_version, champion_ids):
     tasks = [download_champion(input_version, champion_id) for champion_id in champion_ids]
-    results = loop.run_until_complete(asyncio.gather(*tasks))
+    results = await asyncio.gather(*tasks)
     return dict(results)
 
 async def download_champion(input_version, champion_id):
@@ -191,10 +189,9 @@ def get_champion_file_client(version):
         print(f"An error occurred (champions data file - client)")
         return
     
-def download_all_champions_client(input_version, champion_ids):
-    loop = asyncio.get_event_loop()
+async def download_all_champions_client(input_version, champion_ids):
     tasks = [download_champion_client(input_version, champion_id) for champion_id in champion_ids]
-    results = loop.run_until_complete(asyncio.gather(*tasks))
+    results = await asyncio.gather(*tasks)
     return dict(results)
 
 async def download_champion_client(input_version, champion_id):
@@ -313,7 +310,7 @@ def populate_items(version, maps):
 def generate_version_items(input_version, output_dir, languages):
     print(f"LoL Items: generating version {input_version}...")
 
-    maps = get_all_maps(input_version)
+    maps = asyncio.run(get_all_maps(input_version))
     items = populate_items(input_version, maps)
     supported_langs = cd_get_languages(input_version)
     if languages[0] == 'all':
