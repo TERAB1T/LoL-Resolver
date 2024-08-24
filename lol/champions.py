@@ -6,10 +6,11 @@ from stats import *
 from bin_defs.bin_main import BinDefinitions
 
 class ChampionsProcessor:
-    def __init__(self, version, output_dir, lang, champion_list, strings):
+    def __init__(self, version, output_dir, lang, champion_list, champion_list_client, strings):
         self.version = version
         self.lang = lang
         self.champions = champion_list
+        self.champions_client = champion_list_client
         self.strings_raw = strings
 
         self.output_dict = {}
@@ -158,17 +159,35 @@ class ChampionsProcessor:
         spells_values = self.__get_spells_values(champion_data)
         spells_values['ar_type'] = ar_type
         
+        name_id = getf(root_record, "name").lower()
+        title_id = name_id.replace('displayname', 'description')
+        bio_id = name_id.replace('displayname', 'lore')
+
         self.output_dict[num_id] = {
             'id': champion_id.split("/")[1],
-            'name': self.__get_string(getf(root_record, "name")),
+            'name': self.__get_string(name_id),
+            'title': self.__get_string(title_id),
+            'bio': self.__get_string(bio_id),
             'abilities': {
-                'p': [],
-                'q': [],
-                'w': [],
-                'e': [],
-                'r': []
+                'p': {
+                    'data': []
+                },
+                'q': {
+                    'data': []
+                },
+                'w': {
+                    'data': []
+                },
+                'e': {
+                    'data': []
+                },
+                'r': {
+                    'data': []
+                },
             }
         }
+
+        self.__get_client_data(num_id)
 
         self.__get_spell(num_id, champion_data, spells_values, spell_names[0], 'p')
         self.__get_spell(num_id, champion_data, spells_values, spell_names[1], 'q')
@@ -197,6 +216,27 @@ class ChampionsProcessor:
             self.__get_spell(num_id, champion_data, spells_values, 'Characters/Qiyana/Spells/QiyanaQAbility/QiyanaQ_Water', 'q')
             self.__get_spell(num_id, champion_data, spells_values, 'Characters/Qiyana/Spells/QiyanaQAbility/QiyanaQ_Rock', 'q')
             self.__get_spell(num_id, champion_data, spells_values, 'Characters/Qiyana/Spells/QiyanaQAbility/QiyanaQ_Grass', 'q')
+
+    def __get_client_data(self, num_id):
+        main_url = 'https://d28xe8vt774jo5.cloudfront.net/'
+        current_champion = self.champions_client[num_id]
+        default_skin = current_champion['skins'][0]
+        abilities = current_champion['spells']
+
+        self.output_dict[num_id]['iconImage'] = current_champion['squarePortraitPath'].lower()
+        self.output_dict[num_id]['splashImage'] = default_skin['uncenteredSplashPath'].lower()
+        self.output_dict[num_id]['tileImage'] = default_skin['tilePath'].lower()
+        self.output_dict[num_id]['loadscreenImage'] = default_skin['loadScreenPath'].lower()
+
+        passive_video = current_champion['passive']['abilityVideoPath']
+        if passive_video:
+            self.output_dict[num_id]['abilities']['p']['video'] = main_url + passive_video
+
+        for ability in abilities:
+            key = ability['spellKey'].lower()
+            ability_video = ability['abilityVideoPath']
+            if ability_video:
+                self.output_dict[num_id]['abilities'][key]['video'] = main_url + ability_video
 
     def __get_spell(self, num_id, champion_data, spells_values, spell_record_path, letter):
         #print(letter)
@@ -257,7 +297,8 @@ class ChampionsProcessor:
         output_spell = {
             'name': spell_name,
             #'desc': self.__desc_recursive_replace(spell_desc_main, num_id),
-            'desc': self.__generate_desc(self.__desc_recursive_replace(spell_desc_main, num_id, letter), spell_id, spells_values) + spell_desc_scaling,
+            'desc': self.__generate_desc(self.__desc_recursive_replace(spell_desc_main, num_id, letter), spell_id, spells_values),
+            'scalings': spell_desc_scaling,
             'icons': spell_icons
         }
 
@@ -269,9 +310,9 @@ class ChampionsProcessor:
 
         spell_desc_cooldown = self.__get_string(desc_cooldown)
         if spell_desc_cooldown:
-            output_spell['cdTooltip'] = self.__generate_desc(spell_desc_cooldown, spell_id, spells_values)
+            output_spell['cooldown'] = self.__generate_desc(spell_desc_cooldown, spell_id, spells_values)
 
-        self.output_dict[num_id]['abilities'][letter].append(output_spell)
+        self.output_dict[num_id]['abilities'][letter]['data'].append(output_spell)
 
     def __process_spell_scaling(self, spell_desc_scaling_raw, spell_id, spells_values, letter):
         scaling_elements = spell_desc_scaling_raw.get("elements")
@@ -330,7 +371,7 @@ class ChampionsProcessor:
 
             return_array.append(current_string + '</scalingcontainer>')
 
-        return '<hr>' + ''.join(return_array)
+        return ''.join(return_array)
 
     def __generate_desc(self, desc, spell_id, effects):
         def replace_callback(matches):

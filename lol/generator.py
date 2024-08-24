@@ -73,6 +73,9 @@ def generate_version_champions(input_version, output_dir, languages):
 
     champion_ids = get_champion_ids(input_version)
     champion_list = download_all_champions(input_version, champion_ids)
+
+    champion_ids_client = get_champion_ids_client(input_version)
+    champion_list_client = download_all_champions_client(input_version, champion_ids_client)
     
     supported_langs = cd_get_languages(input_version)
     if languages[0] == 'all':
@@ -86,10 +89,9 @@ def generate_version_champions(input_version, output_dir, languages):
             continue
         else:
             strings = cd_get_strings_file(input_version, lang, 'lol')
-            processor = ChampionsProcessor(input_version, output_dir, lang, champion_list, strings)
+            processor = ChampionsProcessor(input_version, output_dir, lang, champion_list, champion_list_client, strings)
             print(" — Done!")
 
-@timer_func
 def get_champion_ids(version):
     temp_cache_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '_temp', version)
     temp_cache_file = f"{temp_cache_dir}/champions.bin.json"
@@ -107,9 +109,6 @@ def get_champion_ids(version):
     if not final_url:
         print(f"Champions data file not found: {version}.")
         return
-    
-    champions_file = {}
-    champion_ids = []
 
     try:
         champions_response = urllib3.request("GET", final_url)
@@ -118,19 +117,11 @@ def get_champion_ids(version):
         with open(temp_cache_file, 'wb') as output_file:
             output_file.write(champions_response.data)
 
-        champions_file = ujson.loads(champions_response.data)
+        return ujson.loads(champions_response.data)
     except:
         print(f"An error occurred (champions data file)")
         return
     
-    for champion in champions_file.values():
-        current_champion = getf(champion, "name")
-
-        if current_champion:
-            champion_ids.append(f"Characters/{current_champion}")
-
-    return champion_ids
-@timer_func
 def download_all_champions(input_version, champion_ids):
     loop = asyncio.get_event_loop()
     tasks = [download_champion(input_version, champion_id) for champion_id in champion_ids]
@@ -149,6 +140,75 @@ async def download_champion(input_version, champion_id):
             pass
 
     champion_url = f"https://raw.communitydragon.org/{input_version}/game/data/{champion_id.lower()}/{champion_id.split('/')[1].lower()}.bin.json"
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get(champion_url) as response:
+            if response.status == 200:
+                data = await response.read()
+                os.makedirs(temp_cache_dir, exist_ok=True)
+                with open(temp_cache_file, 'wb') as output_file:
+                    output_file.write(data)
+
+                return (champion_id, ujson.loads(data))
+            else:
+                return (champion_id, {})
+
+
+def get_champion_ids_client(version):
+    champions_file = get_champion_file_client(version)
+    champion_ids = []
+
+    for champion in champions_file:
+        current_champion = getf(champion, "id")
+
+        if current_champion:
+            champion_ids.append(current_champion)
+
+    return champion_ids
+
+def get_champion_file_client(version):
+    temp_cache_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '_temp', version)
+    temp_cache_file = f"{temp_cache_dir}/champions_client.json"
+
+    if os.path.isfile(temp_cache_file):
+        try:
+            with open(temp_cache_file, encoding='utf-8') as f:
+                return ujson.load(f)
+        except Exception as e:
+            pass
+
+    final_url = f"https://raw.communitydragon.org/{version}/plugins/rcp-be-lol-game-data/global/default/v1/champion-summary.json"
+
+    try:
+        champions_response = urllib3.request("GET", final_url)
+
+        os.makedirs(temp_cache_dir, exist_ok=True)
+        with open(temp_cache_file, 'wb') as output_file:
+            output_file.write(champions_response.data)
+
+        return ujson.loads(champions_response.data)
+    except:
+        print(f"An error occurred (champions data file - client)")
+        return
+    
+def download_all_champions_client(input_version, champion_ids):
+    loop = asyncio.get_event_loop()
+    tasks = [download_champion_client(input_version, champion_id) for champion_id in champion_ids]
+    results = loop.run_until_complete(asyncio.gather(*tasks))
+    return dict(results)
+
+async def download_champion_client(input_version, champion_id):
+    temp_cache_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '_temp', input_version, 'champions_client')
+    temp_cache_file = f"{temp_cache_dir}/{champion_id}.json"
+
+    if os.path.isfile(temp_cache_file):
+        try:
+            with open(temp_cache_file, encoding='utf-8') as f:
+                return (champion_id, ujson.load(f))
+        except Exception as e:
+            pass
+
+    champion_url = f"https://raw.communitydragon.org/{input_version}/plugins/rcp-be-lol-game-data/global/default/v1/champions/{champion_id}.json"
 
     async with aiohttp.ClientSession() as session:
         async with session.get(champion_url) as response:
