@@ -154,7 +154,7 @@ class ChampionsProcessor:
             return
         
         primary_ability_resource = getf(root_record, "primaryAbilityResource", {})
-        ar_type = getf(primary_ability_resource, "arType")
+        ar_type = getf(primary_ability_resource, "arType", 14)
         
         spells_values = self.__get_spells_values(champion_data)
         spells_values['ar_type'] = ar_type
@@ -310,7 +310,21 @@ class ChampionsProcessor:
 
         spell_desc_cooldown = self.__get_string(desc_cooldown)
         if spell_desc_cooldown:
+            spell_desc_cooldown = self.__desc_recursive_replace(spell_desc_cooldown, num_id, letter)
             output_spell['cooldown'] = self.__generate_desc(spell_desc_cooldown, spell_id, spells_values)
+
+
+        if letter != 'p':
+            generic_cost_key = "spell_default_cost"
+            desc_cost = getf(m_loc_keys, "keyCost", generic_cost_key)
+            spell_desc_cost = self.__get_string(desc_cost)
+
+            if '@AbilityResourceName@' in spell_desc_cost:
+                ar_type = spells_values['ar_type']
+                spell_desc_cost = spell_desc_cost.replace('@AbilityResourceName@', self.__get_string(f'game_ability_resource_{ability_resources.get(ar_type, 14)}'))
+            
+            spell_desc_cost = self.__desc_recursive_replace(spell_desc_cost, num_id, letter)
+            output_spell['cost'] = self.__generate_desc(spell_desc_cost, spell_id, spells_values)
 
         self.output_dict[num_id]['abilities'][letter]['data'].append(output_spell)
 
@@ -356,9 +370,7 @@ class ChampionsProcessor:
 
             if '@AbilityResourceName@' in current_string:
                 ar_type = spells_values['ar_type']
-                if ar_type != 0 and ar_type != 1:
-                    ar_type = 0
-                current_string = current_string.replace('@AbilityResourceName@', self.__get_string(f'game_ability_resource_{ability_resources[ar_type]}'))
+                current_string = current_string.replace('@AbilityResourceName@', self.__get_string(f'game_ability_resource_{ability_resources.get(ar_type, 14)}'))
 
 
             multiplier = element.get("multiplier", 1)
@@ -427,6 +439,10 @@ class ChampionsProcessor:
     
     def __f_vars_replace(self, desc, num_id, letter):
 
+        if num_id == 136: # Aurelion Sol
+            if letter == 'w':
+                desc = desc.replace('@f7.1@', '@CD@')
+
         if num_id == 432: # Bard
             if letter == 'p':
                 desc = desc.replace('@f1@', '20')
@@ -434,6 +450,7 @@ class ChampionsProcessor:
                 desc = desc.replace('@f5@', '@BaseMeepSpawnCD@')
             elif letter == 'w':
                 desc = desc.replace('@f2@', '@MaxPacks@')
+                desc = desc.replace('@f7@', '@Ammo_Cooldown@')
 
         if num_id == 200: # Bel'Veth
             if letter == 'q':
@@ -461,12 +478,24 @@ class ChampionsProcessor:
             if letter == 'e':
                 desc = desc.replace('@f1@', '@{87aff6dd}@')
 
+        if num_id == 39: # Irelia
+            if letter == 'q':
+                desc = desc.replace('@f1@', '@Cooldown@')
+
+        if num_id == 141: # Kayn
+            if letter == 'e':
+                desc = desc.replace('@f15@', '@Cooldown@')
+
         if num_id == 203: # Kindred
             if letter == 'p':
                 desc = desc.replace('@f2@', '@effect1amount@')
                 desc = desc.replace('@f7@', '@effect3amount@')
                 desc = desc.replace('@f8@', '@effect2amount*3@')
                 desc = desc.replace('@f9@', '@effect2amount@')
+
+        if num_id == 897: # K'Sante'
+            if letter == 'q':
+                desc = desc.replace('@f1.2@', '@BaseCD@')
 
         if num_id == 4: # Twisted Fate
             if letter == 'w':
@@ -477,6 +506,10 @@ class ChampionsProcessor:
         if num_id == 133: # Quinn
             if letter == 'p':
                 desc = desc.replace('@f1@', '@spell.quinnr:harriercooldown@')
+
+        if num_id == 497: # Rakan
+            if letter == 'e':
+                desc = desc.replace('@f2@', '@effect4amount@')
 
         if num_id == 33: # Rammus
             if letter == 'w':
@@ -489,11 +522,25 @@ class ChampionsProcessor:
             if letter == 'w':
                 desc = desc.replace('@f2@', '@SlowDuration@')
 
+        if num_id == 45: # Veigar
+            if letter == 'w':
+                desc = desc.replace('@f1@', '@effect3amount@')
+
         if num_id == 498: # Xayah
             if letter == 'p':
                 desc = desc.replace('@f14@', '@effect6amount@')
                 desc = desc.replace('@f16', '@effect8amount')
                 desc = desc.replace('@f12@', '@effect1amount@')
+
+        if num_id == 157: # Yasuo
+            if letter == 'q':
+                desc = desc.replace('@f1@', '@Cooldown@')
+
+        if num_id == 777: # Yone
+            if letter == 'q':
+                desc = desc.replace('@f1@', '@Cooldown@')
+            elif letter == 'w':
+                desc = desc.replace('@f1@', '@Cooldown@')
 
         desc = re.sub(r'@f\d+[^@]{0,}@', '0', desc, flags=re.IGNORECASE)
 

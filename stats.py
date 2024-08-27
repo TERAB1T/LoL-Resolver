@@ -42,5 +42,19 @@ stat_types = {
 
 ability_resources = {
     0: 'mp',
-    1: 'energy'
+    1: 'energy',
+    2: 'none',
+    3: 'shield',
+    4: 'battlefury',
+    5: 'dragonfury',
+    6: 'rage',
+    7: 'heat',
+    8: 'gnarfury',
+    9: 'ferocity',
+    10: 'bloodwell',
+    11: 'wind',
+    12: 'ammo',
+    13: 'moonlight',
+    14: 'other',
+    15: 'max'
 }
