@@ -83,7 +83,7 @@ def cd_get_versions_clean():
 
 def get_last_modified(file_url):
     try:
-        response = urllib3.request("HEAD", file_url)
+        response = urllib3.request("HEAD", file_url, headers={'Cache-Control': 'no-cache'})
         return response.getheader('Last-Modified')
     except:
         return False
