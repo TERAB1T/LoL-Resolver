@@ -82,8 +82,9 @@ def cd_get_versions_clean():
     return list(map(lambda x: x.get('name'), versions_raw))
 
 def get_last_modified(file_url):
+    http = urllib3.PoolManager()
     try:
-        response = urllib3.request("HEAD", file_url, headers={'Cache-Control': 'no-cache'})
+        response = http.request("HEAD", file_url, headers={'Cache-Control': 'no-cache'})
         print(response.headers)
         return response.getheader('Last-Modified')
     except:
