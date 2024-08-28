@@ -284,3 +284,7 @@ def gen_handler(input_version, output_dir, languages, alias, urls, generate_vers
                 processor.process_icons(input_version, output_dir)
         elif redis_cache[input_version]["status"] == patch_status:
             print(f"Version {input_version} is up to date. Skipping...")
+        elif "running" in patch_status:
+            print(f"Version {input_version}: CDragon is currently being updated. Please try again later.")
+        elif "error" in patch_status:
+            print(f"Version {input_version}: The latest CDragon update failed. Please try again later.")
