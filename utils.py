@@ -85,7 +85,6 @@ def get_last_modified(file_url):
     http = urllib3.PoolManager()
     try:
         response = http.request("HEAD", file_url, headers={'Cache-Control': 'no-cache'})
-        print(response.headers)
         return response.getheader('Last-Modified')
     except:
         return False
@@ -257,8 +256,6 @@ def gen_handler(input_version, output_dir, languages, alias, urls, generate_vers
             }
 
         last_modified = get_last_modified(get_final_url(input_version, urls))
-        print(get_final_url(input_version, urls))
-        print(last_modified)
 
         if not last_modified:
             print(f"Version {input_version} for {alias} not found.")
@@ -269,12 +266,10 @@ def gen_handler(input_version, output_dir, languages, alias, urls, generate_vers
 
         if response.status == 200:
             patch_status = response.data.decode('utf-8')
-            print(patch_status)
         else:
             return
 
         if redis_cache[input_version]["status"] != patch_status and "done" in patch_status:
-            return
             if redis_cache[input_version]["last_modified"] != last_modified:
                 generate_version(input_version, output_dir, languages)
 
