@@ -255,6 +255,7 @@ def gen_handler(input_version, output_dir, languages, alias, urls, generate_vers
             }
 
         last_modified = get_last_modified(get_final_url(input_version, urls))
+        print(get_final_url(input_version, urls))
         print(last_modified)
 
         if not last_modified:
