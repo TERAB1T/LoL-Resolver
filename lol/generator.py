@@ -134,7 +134,7 @@ async def download_champion(input_version, champion_id):
         try:
             with open(temp_cache_file, encoding='utf-8') as f:
                 return (champion_id, ujson.load(f))
-        except Exception as e:
+        except:
             pass
 
     champion_url = f"https://raw.communitydragon.org/{input_version}/game/data/{champion_id.lower()}/{champion_id.split('/')[1].lower()}.bin.json"
@@ -172,7 +172,7 @@ def get_champion_file_client(version):
         try:
             with open(temp_cache_file, encoding='utf-8') as f:
                 return ujson.load(f)
-        except Exception as e:
+        except:
             pass
 
     final_url = f"https://raw.communitydragon.org/{version}/plugins/rcp-be-lol-game-data/global/default/v1/champion-summary.json"
@@ -186,7 +186,7 @@ def get_champion_file_client(version):
 
         return ujson.loads(champions_response.data)
     except:
-        print(f"An error occurred (champions data file - client)")
+        print("An error occurred (champions data file - client)")
         return
     
 async def download_all_champions_client(input_version, champion_ids):
@@ -202,7 +202,7 @@ async def download_champion_client(input_version, champion_id):
         try:
             with open(temp_cache_file, encoding='utf-8') as f:
                 return (champion_id, ujson.load(f))
-        except Exception as e:
+        except:
             pass
 
     champion_url = f"https://raw.communitydragon.org/{input_version}/plugins/rcp-be-lol-game-data/global/default/v1/champions/{champion_id}.json"

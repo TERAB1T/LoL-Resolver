@@ -5,11 +5,11 @@ from utils import *
 from stats import *
 
 class TFTItemsProcessor:
-    def __init__(self, version, output_dir, lang, tft_data, items, type, unit_props, strings):
+    def __init__(self, version, output_dir, lang, tft_data, items, item_type, unit_props, strings):
         self.version = version
         self.lang = lang
         self.strings_raw = strings
-        self.type = type
+        self.type = item_type
         self.unit_props = unit_props
 
         self.tft_data = tft_data
@@ -155,7 +155,7 @@ class TFTItemsProcessor:
             if item_cost or item_cost == 0:
                 self.output_dict[item_id.lower()]['cost'] = item_cost
 
-            if len(item_recipe):
+            if item_recipe:
                 if item_recipe[0] in item_ids_lower and item_recipe[1] in item_ids_lower:
                     self.output_dict[item_id.lower()]['recipe'] = item_recipe
 
@@ -169,12 +169,12 @@ class TFTItemsProcessor:
                 self.output_dict[item_id.lower()]['type'] = item_type
             elif item_id.lower().endswith('spatulaitem'):
                 self.output_dict[item_id.lower()]['type'] = 'Emblem'
-            elif len(item_recipe):
+            elif item_recipe:
                 self.output_dict[item_id.lower()]['type'] = 'Completed'
             elif 'consumable' in item_id.lower():
                 self.output_dict[item_id.lower()]['type'] = 'Consumable'
 
-            if len(item_stats):
+            if item_stats:
                 self.output_dict[item_id.lower()]['stats'] = [self.__generate_desc(item_stat, item_effects) for item_stat in item_stats]
 
         for component in components:

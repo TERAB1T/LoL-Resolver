@@ -81,7 +81,8 @@ def cd_get_versions_clean():
     versions_raw = cd_get_versions()
     return list(map(lambda x: x.get('name'), versions_raw))
 
-def get_last_modified(file_url):
+def get_last_modified(input_version, file_url):
+    file_url = f'https://raw.communitydragon.org/{input_version}/content-metadata.json' # Temp solution! Re-write.
     http = urllib3.PoolManager()
     try:
         response = http.request("HEAD", file_url, headers={'Cache-Control': 'no-cache'})
@@ -105,7 +106,7 @@ def cd_get_strings_file(version, lang, game='lol'):
     temp_cache_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '_temp', version, 'lang')
     temp_cache_file = f"{temp_cache_dir}/{game}_{lang}.json"
 
-    if (os.path.isfile(temp_cache_file)):
+    if os.path.isfile(temp_cache_file):
         try:
             with open(temp_cache_file, encoding='utf-8') as f:
                 return ujson.load(f)["entries"]
@@ -255,7 +256,8 @@ def gen_handler(input_version, output_dir, languages, alias, urls, generate_vers
                 "last_modified": ''
             }
 
-        last_modified = get_last_modified(get_final_url(input_version, urls))
+        #last_modified = get_last_modified(input_version, get_final_url(input_version, urls))
+        last_modified = get_last_modified(input_version, '')
 
         if not last_modified:
             print(f"Version {input_version} for {alias} not found.")

@@ -297,7 +297,7 @@ class TFTUnitsProcessor:
                 if isinstance(current_spell_calc, (int, float)):
                     replacement = round_number(float(current_spell_calc) * var_mod, decimal_places, True)
                 else:
-                    if '/' in current_spell_calc and not '%' in current_spell_calc:
+                    if '/' in current_spell_calc and '%' not in current_spell_calc:
                         replacement = '/'.join([round_number(float(x) * var_mod, decimal_places, True) for x in current_spell_calc.split('/')])
                     elif '/' in current_spell_calc and '%' in current_spell_calc:
                         replacement = re.sub(' *%/', '/', current_spell_calc)

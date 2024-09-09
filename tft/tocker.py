@@ -1,5 +1,4 @@
 import os
-import re
 import ujson
 from utils import *
 from stats import *

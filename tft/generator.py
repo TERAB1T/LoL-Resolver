@@ -18,7 +18,7 @@ def get_tftmap_file(version):
         try:
             with open(temp_cache_file, encoding='utf-8') as f:
                 return ujson.load(f)
-        except Exception as e:
+        except:
             pass
 
     urls = ["data/maps/shipping/map22/map22.bin.json"]
@@ -27,7 +27,7 @@ def get_tftmap_file(version):
     if not final_url:
         print(f"TFT data file not found: {version}.")
         return
-    
+
     try:
         tftmap_response = requests.get(final_url)
 
