@@ -1,10 +1,10 @@
-from xxhash import xxh64_intdigest, xxh3_64_intdigest
-import requests
-import ujson
 import re
 import os
-import redis
 from time import time
+import ujson
+import requests
+import redis
+from xxhash import xxh64_intdigest, xxh3_64_intdigest
 import urllib3
 
 def timer_func(func):
@@ -16,17 +16,17 @@ def timer_func(func):
         return result
     return wrap_func
 
-def hash_xxhash64(key, bits=39):
+def hash_xxhash64(key: str, bits: int = 39) -> str:
     key_int = xxh64_intdigest(key.lower())
     masked_key = key_int & ((1 << bits) - 1)
     return "{" + f"{masked_key:010x}" + "}"
 
-def hash_xxhash3(key, bits=39):
+def hash_xxhash3(key: str, bits: int = 39) -> str:
     key_int = xxh3_64_intdigest(key.lower())
     masked_key = key_int & ((1 << bits) - 1)
     return "{" + f"{masked_key:010x}" + "}"
 
-def hash_fnv1a(key):
+def hash_fnv1a(key: str) -> str:
     hash_value = 0x811c9dc5
 
     for char in key.lower():
@@ -36,16 +36,16 @@ def hash_fnv1a(key):
 
     return '{' + f"{hash_value:08x}" + '}'
 
-def is_fnv1a(hash):
-    if not hash:
+def is_fnv1a(hash_string: str) -> bool:
+    if not hash_string:
         return False
     
-    return re.fullmatch(r'\{[0-9a-f]{8}\}', hash)
+    return re.fullmatch(r'\{[0-9a-f]{8}\}', hash_string)
 
-def image_to_png(url):
+def image_to_png(url: str) -> str:
     return re.sub(r'\.(tex|dds)', '.png', url, flags=re.IGNORECASE).lower()
 
-def cd_get_languages(version):
+def cd_get_languages(version: str) -> list[str]:
     url = f"https://raw.communitydragon.org/json/{version}/game/"
     response = urllib3.request("GET", url)
 
@@ -67,7 +67,9 @@ def cd_get_languages(version):
             languages.remove('ar_ae')
         return languages
 
-def cd_get_versions():
+    return []
+
+def cd_get_versions() -> list[str]:
     url = "https://raw.communitydragon.org/json/"
     response = urllib3.request("GET", url)
 
@@ -77,7 +79,9 @@ def cd_get_versions():
         versions = sorted(versions, key = lambda version: float(re.sub(r'\.(\d)$', r'.0\1', version['name'])))
         return versions
     
-def cd_get_versions_clean():
+    return []
+    
+def cd_get_versions_clean() -> list[str]:
     versions_raw = cd_get_versions()
     return list(map(lambda x: x.get('name'), versions_raw))
 
@@ -110,7 +114,7 @@ def cd_get_strings_file(version, lang, game='lol'):
         try:
             with open(temp_cache_file, encoding='utf-8') as f:
                 return ujson.load(f)["entries"]
-        except Exception as e:
+        except:
             pass
 
     if game == 'tft':
@@ -203,8 +207,8 @@ def normalize_game_version(version):
 
     return round_number(float(re.sub(r'\.(\d)$', r'.0\1', str_version)), 2)
 
-def getf(dict, val, default=None):
-    return dict.get(val, dict.get(hash_fnv1a(val), default))
+def getf(source_dict, val, default=None):
+    return source_dict.get(val, source_dict.get(hash_fnv1a(val), default))
 
 def gen_handler(input_version, output_dir, languages, alias, urls, generate_version, cache = False, atlas = False):
     from lol.atlas import AtlasProcessor

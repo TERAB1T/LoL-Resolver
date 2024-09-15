@@ -7,7 +7,7 @@ from lol.atlas import AtlasProcessor
 from lol.generator import generate_lol_champions, generate_lol_items, generate_arena_augments, generate_swarm_augments
 from tft.generator import generate_tft_units, generate_tft_traits, generate_tft_items, generate_tft_augments, generate_tocker_rounds
 
-def rm_temp_cache(version=''):
+def rm_temp_cache(version: str = '') -> None:
     #return
     temp_cache_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '_temp', version)
 
@@ -56,13 +56,13 @@ def main():
 
     rm_temp_cache()
 
-def add_common_args(parser_items):
+def add_common_args(parser_items: argparse.ArgumentParser) -> None:
     parser_items.add_argument("-v", "--version", nargs='+', metavar="VERSION", default=["pbe"], help="Version of the game (e.g., 11.1, 13.23, latest, pbe, all).")
     parser_items.add_argument("-l", "--lang", nargs='+', metavar="LANGUAGE", default=["all"], help="Language of the game (e.g., en_us, ru_ru, zh_cn, all).")
     parser_items.add_argument("-o", "--output", metavar="PATH", default="export", help="Output path.")
     parser_items.add_argument("--cache", action=argparse.BooleanOptionalAction, default=False, help="Use Redis cache.")
 
-def handle_versions(args):
+def handle_versions(args: argparse.Namespace) -> list[str]:
     if args.version[0] == 'all':
         args.version = cd_get_versions_clean()
     return args.version
