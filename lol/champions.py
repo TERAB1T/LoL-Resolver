@@ -189,6 +189,10 @@ class ChampionsProcessor:
 
         self.__get_client_data(num_id)
 
+        if not 'iconImage' in self.output_dict[num_id]:
+            del(self.output_dict[num_id])
+            return
+
         self.__get_spell(num_id, champion_data, spells_values, spell_names[0], 'p')
         self.__get_spell(num_id, champion_data, spells_values, spell_names[1], 'q')
         self.__get_spell(num_id, champion_data, spells_values, spell_names[2], 'w')
@@ -218,6 +222,9 @@ class ChampionsProcessor:
             self.__get_spell(num_id, champion_data, spells_values, 'Characters/Qiyana/Spells/QiyanaQAbility/QiyanaQ_Grass', 'q')
 
     def __get_client_data(self, num_id):
+        if not num_id in self.champions_client:
+            return
+
         main_url = 'https://d28xe8vt774jo5.cloudfront.net/'
         current_champion = self.champions_client[num_id]
         default_skin = current_champion['skins'][0]
