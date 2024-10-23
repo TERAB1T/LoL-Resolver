@@ -131,6 +131,9 @@ class ChampionsProcessor:
         #    return
 
         #print(champion_id)
+
+        if not '/' in champion_id:
+            return
         
         champion_id_trimmed = champion_id.split("/")[1].lower()
 

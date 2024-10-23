@@ -127,6 +127,9 @@ async def download_all_champions(input_version, champion_ids):
     return dict(results)
 
 async def download_champion(input_version, champion_id):
+    if not '/' in champion_id:
+        return (champion_id, {})
+    
     temp_cache_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '_temp', input_version, 'champions')
     temp_cache_file = f"{temp_cache_dir}/{champion_id.split('/')[1].lower()}.json"
 
