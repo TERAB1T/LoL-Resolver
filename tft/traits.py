@@ -52,12 +52,17 @@ class TFTTraitsProcessor:
 
             for effect in effects_main_raw:
                 effect_amounts = getf(effect, "effectAmounts", [])
+                effect_amounts_2 = getf(getf(effect, "constants", {}), '{df085b93}', {})
 
                 for amount in effect_amounts:
                     effect_name = getf(amount, "name")
                     effect_value = getf(amount, "value", 0)
                     effects_main[effect_name.lower()] = effect_value
+
+                for effect_name, effect_value in effect_amounts_2.items():
+                    effects_main[effect_name.lower()] = getf(effect_value, 'mValue', 0)
             
+
             effects_bonus_raw = getf(trait_data, "mConditionalTraitSets")
             if not effects_bonus_raw:
                 effects_bonus_raw = getf(trait_data, "mTraitSets", [])
@@ -75,6 +80,7 @@ class TFTTraitsProcessor:
                 effects_bonus[min_units] = {}
 
                 effect_amounts = getf(effect, "effectAmounts", [])
+                effect_amounts_2 = getf(getf(effect, "constants", {}), '{df085b93}', {})
 
                 for amount in effect_amounts:
                     effect_name = getf(amount, "name")
@@ -83,6 +89,12 @@ class TFTTraitsProcessor:
 
                     if is_first_effect:
                         effects_main[effect_name.lower()] = effect_value
+
+                for effect_name, effect_value in effect_amounts_2.items():
+                    effects_bonus[min_units][effect_name.lower()] = getf(effect_value, 'mValue', 0)
+
+                    if is_first_effect:
+                        effects_main[effect_name.lower()] = getf(effect_value, 'mValue', 0)
                 
                 is_first_effect = False
 

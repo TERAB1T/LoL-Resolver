@@ -48,6 +48,8 @@ class TFTItemsProcessor:
         components = []
         item_ids_lower = [id.lower() for id in self.items.keys()]
 
+        base_stat_format = getf(getf(self.tft_data, '{9fcfd7a6}', {}), '{b1725d57}', {})
+
         for item_id, item_data in self.items.items():
             item_name_id = getf(item_data, "mDisplayNameTra")
             item_name = self.__get_string(item_name_id)
@@ -120,6 +122,7 @@ class TFTItemsProcessor:
                             components.append(component_id)
 
             item_effects_raw = getf(item_data, "effectAmounts")
+            item_effects_raw_2 = getf(getf(item_data, "constants", {}), '{df085b93}')
             item_effects = self.unit_props.copy()
             item_stats = []
 
@@ -135,6 +138,13 @@ class TFTItemsProcessor:
                     
                     if effect_name:
                         item_effects[effect_name.lower()] = effect_value
+            elif item_effects_raw_2:
+                for effect_name, effect_value in item_effects_raw_2.items():
+                    item_effects[effect_name.lower()] = getf(effect_value, 'mValue', 0)
+
+                    if effect_name in base_stat_format:
+                        item_stat = re.sub(r'@Value', f'@{effect_name}', getf(base_stat_format, effect_name, ''), flags=re.IGNORECASE)
+                        item_stats.append(item_stat)
 
             self.output_dict[item_id.lower()] = {
                 'id': item_id,
@@ -211,6 +221,7 @@ class TFTItemsProcessor:
                     aug_tier = 3
 
             aug_effects_raw = getf(aug_data, "effectAmounts")
+            aug_effects_raw_2 = getf(getf(aug_data, "constants", {}), '{df085b93}')
             aug_effects = self.unit_props.copy()
 
             if aug_effects_raw:
@@ -220,6 +231,9 @@ class TFTItemsProcessor:
 
                     if effect_name:
                         aug_effects[effect_name.lower()] = effect_value
+            elif aug_effects_raw_2:
+                for effect_name, effect_value in aug_effects_raw_2.items():
+                    aug_effects[effect_name.lower()] = getf(effect_value, 'mValue', 0)
 
             self.output_dict[aug_id.lower()] = {
                 'id': aug_id,
