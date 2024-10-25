@@ -31,7 +31,7 @@ modes = {
         'path': 'Maps/Shipping/Map33/Modes/STRAWBERRY'
     }
 }
-@timer_func
+
 async def get_all_maps(input_version):
     mode_list = list(modes)
     tasks = [download_map(input_version, mode) for mode in mode_list]
@@ -48,7 +48,7 @@ async def download_map(version, map_key):
         try:
             with open(temp_cache_file, encoding='utf-8') as f:
                 return (map_key, ujson.load(f))
-        except Exception as e:
+        except:
             pass
     
     map_url = f"https://raw.communitydragon.org/{version}/game/data/maps/shipping/map{map_id}/map{map_id}.bin.json"
@@ -99,7 +99,7 @@ def get_champion_ids(version):
         try:
             with open(temp_cache_file, encoding='utf-8') as f:
                 return ujson.load(f)
-        except Exception as e:
+        except:
             pass
 
     urls = ["global/champions/champions.bin.json"]
@@ -118,29 +118,26 @@ def get_champion_ids(version):
 
         return ujson.loads(champions_response.data)
     except:
-        print(f"An error occurred (champions data file)")
+        print("An error occurred (champions data file)")
         return
    
 async def download_all_champions(input_version, champion_ids):
-    tasks = [download_champion(input_version, champion_id) for champion_id in champion_ids]
+    tasks = [download_champion(input_version, getf(champion_id, 'name')) for champion_id in champion_ids.values()]
     results = await asyncio.gather(*tasks)
     return dict(results)
 
-async def download_champion(input_version, champion_id):
-    if not '/' in champion_id:
-        return (champion_id, {})
-    
+async def download_champion(input_version, champion_id):    
     temp_cache_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '_temp', input_version, 'champions')
-    temp_cache_file = f"{temp_cache_dir}/{champion_id.split('/')[1].lower()}.json"
+    temp_cache_file = f"{temp_cache_dir}/{champion_id.lower()}.json"
 
     if os.path.isfile(temp_cache_file):
         try:
             with open(temp_cache_file, encoding='utf-8') as f:
-                return (champion_id, ujson.load(f))
+                return (f'Characters/{champion_id}', ujson.load(f))
         except:
             pass
 
-    champion_url = f"https://raw.communitydragon.org/{input_version}/game/data/{champion_id.lower()}/{champion_id.split('/')[1].lower()}.bin.json"
+    champion_url = f"https://raw.communitydragon.org/{input_version}/game/data/characters/{champion_id.lower()}/{champion_id.lower()}.bin.json"
 
     async with aiohttp.ClientSession() as session:
         async with session.get(champion_url) as response:
@@ -150,9 +147,9 @@ async def download_champion(input_version, champion_id):
                 with open(temp_cache_file, 'wb') as output_file:
                     output_file.write(data)
 
-                return (champion_id, ujson.loads(data))
+                return (f'Characters/{champion_id}', ujson.loads(data))
             else:
-                return (champion_id, {})
+                return (f'Characters/{champion_id}', {})
 
 
 def get_champion_ids_client(version):
@@ -236,7 +233,7 @@ def get_items_file(version):
         try:
             with open(temp_cache_file, encoding='utf-8') as f:
                 return ujson.load(f)
-        except Exception as e:
+        except:
             pass
     urls = ["items.cdtb.bin.json", "global/items/items.bin.json"]
     final_url = get_final_url(version, urls)
