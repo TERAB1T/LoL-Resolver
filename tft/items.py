@@ -92,6 +92,21 @@ class TFTItemsProcessor:
                     item_type = 'Charm'
                 elif 'tft12_item_faerie_' in item_id.lower():
                     item_type = 'Faerie'
+                elif 'junkerking' in item_id.lower():
+                    item_type = 'Junker King'
+                elif '{d3de812d}' in item_tags:
+                    item_type = 'Chem-Baron'
+
+                if '{05e9c2cd}' in item_tags:
+                    item_type = 'Chem-Baron (Consumable)'
+                elif '{7c5b9cc2}' in item_tags:
+                    item_type = 'Chem-Baron (Bronze)'
+                elif '{99d978bb}' in item_tags:
+                    item_type = 'Chem-Baron (Silver)'
+                elif '{b25b1dec}' in item_tags:
+                    item_type = 'Chem-Baron (Gold)'
+                elif '{d28853e6}' in item_tags:
+                    item_type = 'Chem-Baron (Prismatic)'
 
                 if item_type in ('Radiant', 'Shadow', 'Gadgeteen', 'Faerie'):
                     if not 'tft_item_seraphsembrace' in item_ids_lower:
