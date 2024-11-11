@@ -5,6 +5,8 @@ from io import BytesIO
 from PIL import Image
 import struct
 from utils import *
+import aiohttp
+import asyncio
 
 class AtlasProcessor:
     def __init__(self):
@@ -146,6 +148,21 @@ class AtlasProcessor:
         atlas_file = f"https://raw.communitydragon.org/{version}/game/assets/items/icons2d/autoatlas/largeicons/atlas_0.png"
         self.split_icons_from_atlas(atlas_file, parsed_data)
 
+    async def gather_staticons(self, version, icon_dict):
+        tasks = [self.download_staticon(version, icon_key, icon_data) for icon_key, icon_data in icon_dict.items()]
+        await asyncio.gather(*tasks)
+        
+    async def download_staticon(self, version, icon_key, icon_data):
+        icon_url = f"https://raw.communitydragon.org/{version}/plugins/rcp-be-lol-game-data/global/default/{icon_data["texture"].lower()}"
+        output_path = os.path.join(self.output_dir, f"{icon_key}.png")
+
+        async with aiohttp.ClientSession() as session:
+            async with session.get(icon_url) as response:
+                if response.status == 200:
+                    data = await response.read()
+                    with open(output_path, 'wb') as output_file:
+                        output_file.write(data)
+
     def process_staticons(self, version, output_dir):
         self.output_dir = os.path.join(output_dir, f"stats")
         os.makedirs(self.output_dir, exist_ok=True)
@@ -161,14 +178,17 @@ class AtlasProcessor:
         
         fonts_json = ujson.loads(response.content)
         
-        if not "{9c87124a}" in fonts_json or not "iconTexture" in fonts_json["{9c87124a}"] or not "icons" in fonts_json["{9c87124a}"]:
+        if not "{9c87124a}" in fonts_json or not "icons" in fonts_json["{9c87124a}"]:
             print(f"Atlas definitions not found: {version}")
             return
         
         fonts_json_def = fonts_json["{9c87124a}"]
 
-        atlas_file = f"https://raw.communitydragon.org/{version}/game/" + re.sub(r'(\.tex|\.dds)$', '.png', fonts_json_def["iconTexture"].lower())
-        self.split_staticons_from_atlas(atlas_file, fonts_json_def["icons"])
+        if "iconTexture" in fonts_json_def:
+            atlas_file = f"https://raw.communitydragon.org/{version}/game/" + re.sub(r'(\.tex|\.dds)$', '.png', fonts_json_def["iconTexture"].lower())
+            self.split_staticons_from_atlas(atlas_file, fonts_json_def["icons"])
+        else:
+            asyncio.run(self.gather_staticons(version, fonts_json_def["icons"]))
 
         styles = getf(fonts_json_def, "styles")
 
