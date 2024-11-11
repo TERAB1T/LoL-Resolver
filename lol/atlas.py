@@ -153,7 +153,7 @@ class AtlasProcessor:
         await asyncio.gather(*tasks)
         
     async def download_staticon(self, version, icon_key, icon_data):
-        icon_url = f"https://raw.communitydragon.org/{version}/plugins/rcp-be-lol-game-data/global/default/{icon_data["texture"].lower()}"
+        icon_url = f"https://raw.communitydragon.org/{version}/plugins/rcp-be-lol-game-data/global/default/{icon_data.get('texture', '').lower()}"
         output_path = os.path.join(self.output_dir, f"{icon_key}.png")
 
         async with aiohttp.ClientSession() as session:
