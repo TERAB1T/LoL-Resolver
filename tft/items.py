@@ -92,8 +92,6 @@ class TFTItemsProcessor:
                     item_type = 'Charm'
                 elif 'tft12_item_faerie_' in item_id.lower():
                     item_type = 'Faerie'
-                elif 'junkerking' in item_id.lower():
-                    item_type = 'Junker King'
                 elif '{d3de812d}' in item_tags:
                     item_type = 'Chem-Baron'
 
@@ -198,6 +196,9 @@ class TFTItemsProcessor:
                 self.output_dict[item_id.lower()]['type'] = 'Completed'
             elif 'consumable' in item_id.lower():
                 self.output_dict[item_id.lower()]['type'] = 'Consumable'
+
+            elif 'junkerking' in item_id.lower():
+                self.output_dict[item_id.lower()]['type'] = 'Junker King'
 
             if item_stats:
                 self.output_dict[item_id.lower()]['stats'] = [self.__generate_desc(item_stat, item_effects) for item_stat in item_stats]
