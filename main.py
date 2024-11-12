@@ -5,7 +5,7 @@ import re
 from utils import cd_get_versions_clean, timer_func
 from lol.atlas import AtlasProcessor
 from lol.generator import generate_lol_champions, generate_lol_items, generate_arena_augments, generate_swarm_augments
-from tft.generator import generate_tft_units, generate_tft_traits, generate_tft_items, generate_tft_augments, generate_tocker_rounds
+from tft.generator import generate_tft_units, generate_tft_traits, generate_tft_items, generate_tft_augments, generate_tocker_rounds, generate_tft_anomaly
 
 def rm_temp_cache(version: str = '') -> None:
     #return
@@ -31,6 +31,7 @@ def main():
         "tft-traits": {"help": "Generates Teamfight Tactics traits.", "func": generate_tft_traits},
         "tft-items": {"help": "Generates Teamfight Tactics items.", "func": generate_tft_items},
         "tft-augments": {"help": "Generates Teamfight Tactics augments.", "func": generate_tft_augments},
+        "tft-anomaly": {"help": "Generates Teamfight Tactics anomaly effects (set 13).", "func": generate_tft_anomaly},
         "arena-augments": {"help": "Generates Arena augments.", "func": generate_arena_augments},
         "swarm-augments": {"help": "Generates Swarm augments.", "func": generate_swarm_augments},
         "staticons": {"help": "Generates stat icons used in tooltips for abilities, items, etc.", "func": process_staticons}
@@ -86,6 +87,7 @@ def generate_tft_all(version, output_dir, lang, cache):
     generate_tft_traits(version, output_dir, lang, cache)
     generate_tft_items(version, output_dir, lang, cache)
     generate_tft_augments(version, output_dir, lang, cache)
+    generate_tft_anomaly(version, output_dir, lang, cache)
 
 def process_staticons(version, output_dir, lang, cache):
     AtlasProcessor().process_staticons(version, output_dir)

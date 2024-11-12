@@ -6,6 +6,7 @@ from tft.units import TFTUnitsProcessor
 from tft.traits import TFTTraitsProcessor
 from tft.items import TFTItemsProcessor
 from tft.tocker import TFTTockerRoundsProcessor
+from tft.anomaly import TFTAnomalyProcessor
 from utils import *
 
 ### COMMON ###
@@ -333,3 +334,31 @@ def generate_tocker_rounds(input_version, output_dir, languages, cache = False):
     alias = 'tft-tocker-rounds'
     urls = ["data/maps/shipping/map22/map22.bin.json"]
     gen_handler(input_version, output_dir, languages, alias, urls, generate_version_tocker, cache)
+
+### SET 13 ANOMALY ###
+
+def generate_version_anomaly(input_version, output_dir, languages):
+    print(f"TFT Anomaly: generating version {input_version}...")
+    tft_data = get_tftmap_file(input_version)
+    if not tft_data:
+        return
+
+    supported_langs = cd_get_languages(input_version)
+    if languages[0] == 'all':
+        languages = supported_langs
+
+    for lang in languages:
+        print(f"  {lang}", end="")
+
+        if not lang in supported_langs:
+            print(f" — This language is not supported. Supported languages: {', '.join(supported_langs)}.")
+            continue
+        else:
+            strings = cd_get_strings_file(input_version, lang, 'tft')
+            processor = TFTAnomalyProcessor(input_version, output_dir, lang, tft_data, strings)
+            print(" — Done!")
+
+def generate_tft_anomaly(input_version, output_dir, languages, cache = False):
+    alias = 'tft-anomaly'
+    urls = ["data/maps/shipping/map22/map22.bin.json"]
+    gen_handler(input_version, output_dir, languages, alias, urls, generate_version_anomaly, cache)

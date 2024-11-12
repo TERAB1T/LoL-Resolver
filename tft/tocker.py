@@ -33,7 +33,7 @@ class TFTTockerRoundsProcessor:
         return get_string(self.strings_raw, string)
     
     def __get_flavors(self):
-        flavors = self.tft_data['{672641f1}']['mConstants']
+        flavors = self.tft_data['{5d32c638}']['mConstants']
 
         for id, flavor in flavors.items():
             id = id.replace('_Spawn', '')
@@ -42,7 +42,7 @@ class TFTTockerRoundsProcessor:
             self.round_flavors[id] = flavor
     
     def __get_rounds(self):
-        round_ids = self.tft_data['{9e967f60}']['{d1edd5db}']
+        round_ids = self.tft_data['{f8f86709}']['{d1edd5db}']
         
         for round_id in round_ids:
             self.__get_round(round_id)
