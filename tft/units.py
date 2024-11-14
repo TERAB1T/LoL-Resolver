@@ -39,10 +39,19 @@ class TFTUnitsProcessor:
 
 
     def __get_string(self, string):
+        print(string)
         return get_string(self.strings_raw, string)
+
+    def __desc_recursive_replace(self, desc):
+        def replace_callback(matches):
+            key = matches[1].strip().lower()
+            str = self.__get_string(key)
+            return self.__desc_recursive_replace(str)
+        
+        return re.sub(r'{{\s*(.*?)\s*}}', replace_callback, desc, flags=re.IGNORECASE)
     
     def __get_unit(self, unit_id, unit_data):
-        #if unit_id != 'Characters/TFT12_Zilean':
+        #if unit_id != 'Characters/TFT13_Lieutenant':
         #    return
 
         #print(unit_id)
@@ -158,6 +167,7 @@ class TFTUnitsProcessor:
         
         spell_name = self.__get_string(getf(m_loc_keys, "keyName"))
         spell_desc_main = self.__get_string(getf(m_loc_keys, "keyTooltip"))
+        spell_desc_main = self.__desc_recursive_replace(spell_desc_main)
 
         if 'TFT10_Headliner_TRA@' in spell_desc_main:
             headliner_id = f'tft10_headliner_{unit_id_trimmed}'

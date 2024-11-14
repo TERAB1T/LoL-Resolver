@@ -43,6 +43,14 @@ class TFTItemsProcessor:
     
     def __get_string(self, string):
         return get_string(self.strings_raw, string)
+
+    def __desc_recursive_replace(self, desc):
+        def replace_callback(matches):
+            key = matches[1].strip().lower()
+            str = self.__get_string(key)
+            return self.__desc_recursive_replace(str)
+        
+        return re.sub(r'{{\s*(.*?)\s*}}', replace_callback, desc, flags=re.IGNORECASE)
     
     def __get_items(self):
         components = []
@@ -56,6 +64,7 @@ class TFTItemsProcessor:
 
             item_desc_id = getf(item_data, "mDescriptionNameTra")
             item_desc = self.__get_string(item_desc_id)
+            item_desc = self.__desc_recursive_replace(item_desc)
 
             item_icon = getf(item_data, "mIconPath")
             item_unit = getf(item_data, "AssociatedCharacterName")
@@ -218,6 +227,7 @@ class TFTItemsProcessor:
 
             aug_desc_id = getf(aug_data, "mDescriptionNameTra")
             aug_desc = self.__get_string(aug_desc_id)
+            aug_desc = self.__desc_recursive_replace(aug_desc)
 
             aug_icon = getf(aug_data, "mIconPath")
             aug_icon_large = getf(aug_data, "mArmoryIconOverridePath", aug_icon)
