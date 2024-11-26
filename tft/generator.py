@@ -285,7 +285,7 @@ def get_set_items(tft_data):
     }
 
     for item_list in set_root["itemLists"]:
-        for item_link in tft_data[item_list]["mItems"]:
+        for item_link in getf(tft_data[item_list], "mItems", []):
             current_item = tft_data[item_link]
 
             item_id =   getf(current_item, "mName")
