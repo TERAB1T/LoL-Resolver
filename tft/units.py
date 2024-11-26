@@ -39,7 +39,6 @@ class TFTUnitsProcessor:
 
 
     def __get_string(self, string):
-        print(string)
         return get_string(self.strings_raw, string)
 
     def __desc_recursive_replace(self, desc):
