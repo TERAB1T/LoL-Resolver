@@ -50,7 +50,7 @@ class TFTUnitsProcessor:
         return re.sub(r'{{\s*(.*?)\s*}}', replace_callback, desc, flags=re.IGNORECASE)
     
     def __get_unit(self, unit_id, unit_data):
-        #if unit_id != 'Characters/TFT13_Lieutenant':
+        #if unit_id != 'Characters/TFT13_Elise':
         #    return
 
         #print(unit_id)
@@ -141,9 +141,22 @@ class TFTUnitsProcessor:
         self.output_dict[unit_id_trimmed]['abilities'] = []
 
         for spell_name in spell_names:
-            if spell_name != 'BaseSpell':
+            if spell_name != 'BaseSpell' and spell_name != '':
                 spell_record_path = f'{unit_id}/Spells/{spell_name}'
                 self.__get_spell(unit_id_trimmed, unit_data, spell_record_path, unit_stats)
+
+                if unit_id == 'Characters/TFT13_Jayce':
+                    spell_record_path = '{113c9b5d}'
+                    self.__get_spell(unit_id_trimmed, unit_data, spell_record_path, unit_stats)
+                if unit_id == 'Characters/TFT13_Gangplank':
+                    spell_record_path = '{63408f43}'
+                    self.__get_spell(unit_id_trimmed, unit_data, spell_record_path, unit_stats)
+                if unit_id == 'Characters/TFT13_Swain':
+                    spell_record_path = '{f06a42c9}'
+                    self.__get_spell(unit_id_trimmed, unit_data, spell_record_path, unit_stats)
+                if unit_id == 'Characters/TFT13_Elise':
+                    spell_record_path = '{c00bdaf9}'
+                    self.__get_spell(unit_id_trimmed, unit_data, spell_record_path, unit_stats)
 
         if getf(unit_shop_data, 'AbilityIconPath'):
             self.output_dict[unit_id_trimmed]['abilityIcon'] = image_to_png(getf(unit_shop_data, 'AbilityIconPath').lower())
