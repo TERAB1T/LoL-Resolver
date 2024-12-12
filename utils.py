@@ -55,6 +55,8 @@ def cd_get_languages(version: str) -> list[str]:
         if len(languages) != 0:
             if 'ar_ae' in languages:
                 languages.remove('ar_ae')
+            if 'id_id' in languages:
+                languages.remove('id_id')
             return languages
 
     url2 = f"https://raw.communitydragon.org/json/{version}/game/data/menu/"
@@ -65,6 +67,8 @@ def cd_get_languages(version: str) -> list[str]:
         languages = [re.search(r'(?<=_)([a-z]{2}_[a-z]{2})(?=\.(stringtable|txt)\.json)', file.get('name'), re.IGNORECASE).group(0) for file in langs_raw if file.get('name').endswith('.json')]
         if 'ar_ae' in languages:
             languages.remove('ar_ae')
+        if 'id_id' in languages:
+                languages.remove('id_id')
         return languages
 
     return []
