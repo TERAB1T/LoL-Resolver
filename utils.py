@@ -153,6 +153,10 @@ def get_string(strings_array, id):
     if id in strings_array:
         return strings_array[id]
 
+    hashed3_38 = hash_xxhash3(id, 38)
+    if hashed3_38 in strings_array:
+        return strings_array[hashed3_38]
+    
     hashed3_39 = hash_xxhash3(id, 39)
     if hashed3_39 in strings_array:
         return strings_array[hashed3_39]
@@ -160,6 +164,10 @@ def get_string(strings_array, id):
     hashed3_40 = hash_xxhash3(id, 40)
     if hashed3_40 in strings_array:
         return strings_array[hashed3_40]
+
+    hashed64_38 = hash_xxhash64(id, 38)
+    if hashed64_38 in strings_array:
+        return strings_array[hashed64_38]
 
     hashed64_39 = hash_xxhash64(id, 39)
     if hashed64_39 in strings_array:
