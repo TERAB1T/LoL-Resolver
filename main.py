@@ -3,7 +3,8 @@ import os
 import shutil
 import re
 from utils import cd_get_versions_clean, timer_func
-from lol.atlas import AtlasProcessor
+from img_process.atlas import AtlasProcessor
+from img_process.thumbs import ThumbGenerator
 from lol.generator import generate_lol_champions, generate_lol_items, generate_arena_augments, generate_swarm_augments
 from tft.generator import generate_tft_units, generate_tft_traits, generate_tft_items, generate_tft_augments, generate_tocker_rounds, generate_tft_anomaly
 
@@ -34,7 +35,8 @@ def main():
         "tft-anomaly": {"help": "Generates Teamfight Tactics anomaly effects (set 13).", "func": generate_tft_anomaly},
         "arena-augments": {"help": "Generates Arena augments.", "func": generate_arena_augments},
         "swarm-augments": {"help": "Generates Swarm augments.", "func": generate_swarm_augments},
-        "staticons": {"help": "Generates stat icons used in tooltips for abilities, items, etc.", "func": process_staticons}
+        "staticons": {"help": "Generates stat icons used in tooltips for abilities, items, etc.", "func": process_staticons},
+        "thumbs": {"help": "Generates thumbnails for various image categories (LoL: skins, icons, emotes, wards; TFT: tactics, arenas, booms).", "func": generate_thumbs}
     }
 
     for cmd, config in cmd_configs.items():
@@ -91,6 +93,9 @@ def generate_tft_all(version, output_dir, lang, cache):
 
 def process_staticons(version, output_dir, lang, cache):
     AtlasProcessor().process_staticons(version, output_dir)
+
+def generate_thumbs(version, output_dir, lang, cache):
+    ThumbGenerator(version, output_dir, cache)
 
 if __name__ == "__main__":
     main()

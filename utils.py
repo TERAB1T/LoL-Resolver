@@ -223,7 +223,7 @@ def getf(source_dict, val, default=None):
     return source_dict.get(val, source_dict.get(hash_fnv1a(val), default))
 
 def gen_handler(input_version, output_dir, languages, alias, urls, generate_version, cache = False, atlas = False):
-    from lol.atlas import AtlasProcessor
+    from img_process.atlas import AtlasProcessor
 
     redis_cache = {}
     redis_con = None
@@ -246,7 +246,7 @@ def gen_handler(input_version, output_dir, languages, alias, urls, generate_vers
             version_name = version.get('name')
             last_modified = version.get('mtime')
 
-            if not version_name in redis_cache or not 'last_modified' in redis_cache[version_name]:
+            if version_name not in redis_cache or 'last_modified' not in redis_cache[version_name]:
                 redis_cache[version_name] = {
                     "last_modified": ''
                 }
@@ -266,7 +266,7 @@ def gen_handler(input_version, output_dir, languages, alias, urls, generate_vers
         else:
             print(f"Version {input_version} not found.")
     elif input_version in ['latest', 'pbe']:
-        if not input_version in redis_cache or not 'status' in redis_cache[input_version] or not 'last_modified' in redis_cache[input_version]:
+        if input_version not in redis_cache or 'status' not in redis_cache[input_version] or 'last_modified' not in redis_cache[input_version]:
             redis_cache[input_version] = {
                 "status": '',
                 "last_modified": ''
