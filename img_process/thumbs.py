@@ -11,6 +11,7 @@ class ThumbGenerator:
         self.version = version
         self.output_dir = os.path.join(output_dir, f"thumbs") # TEMP!!!
         self.cache = cache
+        self.semaphore = asyncio.Semaphore(10)
 
         self.last_modified = None
         self.redis_con = None
@@ -141,29 +142,30 @@ class ThumbGenerator:
         await asyncio.gather(*tasks)
 
     async def _process_image(self, url, sizes, output_dir):
-        async def inner_process_image(session):
-            async with session.get(url) as response:
-                if response.status == 200:
-                    for size in sizes:
-                        img = await response.read()
-                        img = Image.open(BytesIO(img))
-                        img.thumbnail(size)
-                        img.save(f"{output_dir}/{url.split('/')[-1]}_{size[0]}x{size[1]}.webp", "WEBP")
-                        img.close()
+        async with self.semaphore:
+            async def inner_process_image(session):
+                async with session.get(url) as response:
+                    if response.status == 200:
+                        for size in sizes:
+                            img = await response.read()
+                            img = Image.open(BytesIO(img))
+                            img.thumbnail(size)
+                            img.save(f"{output_dir}/{url.split('/')[-1]}_{size[0]}x{size[1]}.webp", "WEBP")
+                            img.close()
 
-        async with aiohttp.ClientSession() as session:
-            if self.cache:
-                async with session.head(url, headers={'Cache-Control': 'no-cache'}) as head_response:
-                    if head_response.status == 200:
-                        image_last_modified = head_response.headers.get('Last-Modified')
-                        image_name = url.split('/')[-1]
+            async with aiohttp.ClientSession() as session:
+                if self.cache:
+                    async with session.head(url, headers={'Cache-Control': 'no-cache'}) as head_response:
+                        if head_response.status == 200:
+                            image_last_modified = head_response.headers.get('Last-Modified')
+                            image_name = url.split('/')[-1]
 
-                        cache_last_modified = self.redis_images.get(image_name, '')
+                            cache_last_modified = self.redis_images.get(image_name, '')
 
-                        if cache_last_modified != image_last_modified:
-                            self.redis_images[image_name] = image_last_modified
+                            if cache_last_modified != image_last_modified:
+                                self.redis_images[image_name] = image_last_modified
 
-                            await inner_process_image(session)
-                            
-            else:        
-                await inner_process_image(session)
+                                await inner_process_image(session)
+                                
+                else:        
+                    await inner_process_image(session)
