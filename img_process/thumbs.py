@@ -149,6 +149,7 @@ class ThumbGenerator:
                         img = Image.open(BytesIO(img))
                         img.thumbnail(size)
                         img.save(f"{output_dir}/{url.split('/')[-1]}_{size[0]}x{size[1]}.webp", "WEBP")
+                        img.close()
 
         async with aiohttp.ClientSession() as session:
             if self.cache:
