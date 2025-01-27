@@ -112,11 +112,12 @@ class ThumbGenerator:
                 print(f"Version {self.version}: The latest CDragon update failed. Please try again later.")
 
     def _process_lol_skins(self):
+        alias = "lol-skins"
         url = f"https://raw.communitydragon.org/{self.version}/plugins/rcp-be-lol-game-data/global/default/v1/skins.json"
         response = urllib3.request("GET", url)
 
         if response.status == 200:
-            output_dir = os.path.join(self.output_dir, f"lol-skins")
+            output_dir = os.path.join(self.output_dir, alias)
             os.makedirs(output_dir, exist_ok=True)
 
             skins_raw = ujson.loads(response.data)
@@ -135,13 +136,13 @@ class ThumbGenerator:
                         img_path = alt_version.get("tilePath", "").lower().replace("/lol-game-data/assets/assets/", f"https://raw.communitydragon.org/{self.version}/plugins/rcp-be-lol-game-data/global/default/assets/")
                         skin_list.add(img_path)
 
-            asyncio.run(self._process_urls(skin_list, [[50, 50], [100, 100]], output_dir))
+            asyncio.run(self._process_urls(skin_list, [[50, 50], [100, 100]], output_dir, alias))
     
-    async def _process_urls(self, urls, sizes, output_dir):
-        tasks = [self._process_image(url, sizes, output_dir) for url in urls]
+    async def _process_urls(self, urls, sizes, output_dir, alias):
+        tasks = [self._process_image(url, sizes, output_dir, alias) for url in urls]
         await asyncio.gather(*tasks)
 
-    async def _process_image(self, url, sizes, output_dir):
+    async def _process_image(self, url, sizes, output_dir, alias):
         async with self.semaphore:
             async def inner_process_image(session):
                 async with session.get(url) as response:
@@ -150,7 +151,7 @@ class ThumbGenerator:
                             img = await response.read()
                             img = Image.open(BytesIO(img))
                             img.thumbnail(size)
-                            img.save(f"{output_dir}/{url.split('/')[-1]}_{size[0]}x{size[1]}.webp", "WEBP")
+                            img.save(f"{output_dir}/{url.split('/')[-1].split('.')[0]}_{size[0]}x{size[1]}.webp", "WEBP")
                             img.close()
 
             async with aiohttp.ClientSession() as session:
@@ -158,7 +159,7 @@ class ThumbGenerator:
                     async with session.head(url, headers={'Cache-Control': 'no-cache'}) as head_response:
                         if head_response.status == 200:
                             image_last_modified = head_response.headers.get('Last-Modified')
-                            image_name = url.split('/')[-1]
+                            image_name = f"{alias}:{url.split('/')[-1].split('.')[0]}"
 
                             cache_last_modified = self.redis_images.get(image_name, '')
 
