@@ -143,6 +143,7 @@ class ThumbGenerator:
         await asyncio.gather(*tasks)
 
     async def _process_image(self, url, sizes, output_dir, alias):
+        img_without_extension = os.path.splitext(os.path.basename(url))[0]
         async with self.semaphore:
             async def inner_process_image(session):
                 async with session.get(url) as response:
@@ -151,7 +152,7 @@ class ThumbGenerator:
                             img = await response.read()
                             img = Image.open(BytesIO(img))
                             img.thumbnail(size)
-                            img.save(f"{output_dir}/{url.split('/')[-1].split('.')[0]}_{size[0]}x{size[1]}.webp", "WEBP")
+                            img.save(f"{output_dir}/{img_without_extension}_{size[0]}x{size[1]}.webp", "WEBP")
                             img.close()
 
             async with aiohttp.ClientSession() as session:
@@ -159,7 +160,7 @@ class ThumbGenerator:
                     async with session.head(url, headers={'Cache-Control': 'no-cache'}) as head_response:
                         if head_response.status == 200:
                             image_last_modified = head_response.headers.get('Last-Modified')
-                            image_name = f"{alias}:{url.split('/')[-1].split('.')[0]}"
+                            image_name = f"{alias}:{img_without_extension}"
 
                             cache_last_modified = self.redis_images.get(image_name, '')
 
