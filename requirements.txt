@@ -5,3 +5,4 @@ Pillow
 xxhash
 redis
 ujson
+tqdm
