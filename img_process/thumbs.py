@@ -29,7 +29,7 @@ class ThumbGenerator:
                 print(f"Version {self.version} not found.")
                 return
         elif self.version in ['latest', 'pbe']:
-            if cache:
+            if self.cache:
                 self.last_modified = get_last_modified(self.version, '')
 
                 if not self.last_modified:
@@ -39,7 +39,7 @@ class ThumbGenerator:
             print("Invalid version.")
             return
 
-        if cache:
+        if self.cache:
             self._get_global_cache()
 
         if not self.is_cached:
@@ -48,9 +48,10 @@ class ThumbGenerator:
             self._process_tft_booms()
             self._process_tft_tactics()
 
-        if cache:
+        if self.cache:
             if self.redis_con:
                 self.redis_con.set("thumb-images", ujson.dumps(self.redis_images))
+                self.redis_con.set("thumb-versions", ujson.dumps(self.redis_global))
     
     def _get_global_cache(self):
         try:
@@ -76,9 +77,7 @@ class ThumbGenerator:
                 self.is_cached = True
                 print(f"Version {self.version} is up to date. Skipping...")
             else:
-                if self.redis_con:
-                    self.redis_global[self.version]["last_modified"] = self.last_modified
-                    self.redis_con.set("thumb-versions", ujson.dumps(self.redis_global))
+                self.redis_global[self.version]["last_modified"] = self.last_modified
         elif self.version in ['latest', 'pbe']:
             if self.version not in self.redis_global or 'status' not in self.redis_global[self.version] or 'last_modified' not in self.redis_global[self.version]:
                 self.redis_global[self.version] = {
@@ -96,11 +95,8 @@ class ThumbGenerator:
             
             if self.redis_global[self.version]["status"] != patch_status and "done" in patch_status:
                 if self.redis_global[self.version]["last_modified"] != self.last_modified:
-
-                    if self.redis_con:
-                        self.redis_global[self.version]["status"] = patch_status
-                        self.redis_global[self.version]["last_modified"] = self.last_modified
-                        self.redis_con.set("thumb-versions", ujson.dumps(self.redis_global))
+                    self.redis_global[self.version]["status"] = patch_status
+                    self.redis_global[self.version]["last_modified"] = self.last_modified
                 else:
                     self.is_cached = True
                     print(f"Version {self.version} is up to date. Skipping...")
