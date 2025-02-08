@@ -14,7 +14,7 @@ class StatBySubPartCalculationPart(BinCalculation):
         stat_formula = current_block.get('mStatFormula')
 
         if stat_formula:
-            icon_modifier = self.get_string(f'tooltip_statsuidata_{stat_types[stat_formula]}iconmodifier')
+            icon_modifier = self.get_string(f'tooltip_statsuidata_{STAT_TYPES[stat_formula]}iconmodifier')
 
         value = self.check_dict(self.calc_values(current_block['mSubpart'], key))
 
@@ -32,9 +32,9 @@ class StatBySubPartCalculationPart(BinCalculation):
 
         placeholders = {
             '@IconModifier@': icon_modifier,
-            '@OpeningTag@': stats[current_stat]['openingTag'],
-            '@Icon@': stats[current_stat]['icon'],
-            '@ClosingTag@': stats[current_stat]['closingTag'],
+            '@OpeningTag@': STATS[current_stat]['openingTag'],
+            '@Icon@': STATS[current_stat]['icon'],
+            '@ClosingTag@': STATS[current_stat]['closingTag'],
             '@Value@': round_number(value, 5)
         }
 

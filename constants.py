@@ -1,4 +1,4 @@
-stats = {
+STATS = {
     0: {'name': 'AbilityPower', 'icon': '%i:scaleAP%', 'openingTag': '<scaleAP>', 'closingTag': '</scaleAP>'},
     1: {'name': 'Armor', 'icon': '%i:scaleArmor%', 'openingTag': '<scalearmor>', 'closingTag': '</scalearmor>'},
     2: {'name': 'Attack', 'icon': '%i:scaleAD%', 'openingTag': '<scaleAD>', 'closingTag': '</scaleAD>'},
@@ -35,12 +35,12 @@ stats = {
     33: {'name': 'DodgeChance', 'icon': '%i:?%', 'openingTag': '<noscale>', 'closingTag': '</noscale>'}
 }
 
-stat_types = {
+STAT_TYPES = {
     1: 'base',
     2: 'bonus'
 }
 
-ability_resources = {
+RESOURCE_TYPES = {
     0: 'mp',
     1: 'energy',
     2: 'none',
@@ -58,3 +58,7 @@ ability_resources = {
     14: 'other',
     15: 'max'
 }
+
+REDIS_PREFIX = 'lolres'
+REDIS_HOST = 'localhost'
+REDIS_PORT = 6379

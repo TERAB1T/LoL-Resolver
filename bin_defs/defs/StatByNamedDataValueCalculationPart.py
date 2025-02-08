@@ -14,7 +14,7 @@ class StatByNamedDataValueCalculationPart(BinCalculation):
         stat_formula = current_block.get('mStatFormula')
 
         if stat_formula:
-            icon_modifier = self.get_string(f'tooltip_statsuidata_{stat_types[stat_formula]}iconmodifier')
+            icon_modifier = self.get_string(f'tooltip_statsuidata_{STAT_TYPES[stat_formula]}iconmodifier')
 
         value = self.var_values.get(current_block['mDataValue'].lower())
 
@@ -25,9 +25,9 @@ class StatByNamedDataValueCalculationPart(BinCalculation):
 
         placeholders = {
             '@IconModifier@': icon_modifier,
-            '@OpeningTag@': stats[current_stat]['openingTag'],
-            '@Icon@': stats[current_stat]['icon'],
-            '@ClosingTag@': stats[current_stat]['closingTag'],
+            '@OpeningTag@': STATS[current_stat]['openingTag'],
+            '@Icon@': STATS[current_stat]['icon'],
+            '@ClosingTag@': STATS[current_stat]['closingTag'],
             '@Value@': round_number(value, 5)
         }
 
@@ -47,6 +47,6 @@ class StatByNamedDataValueCalculationPart(BinCalculation):
         
         return {
             'value': current_stat * current_value,
-            'tag': re.sub(r'[<>]', '', stats[stat_type]['openingTag']),
-            'icon': re.sub(r'%i:(.*?)%', '\\1', stats[stat_type]['icon'])
+            'tag': re.sub(r'[<>]', '', STATS[stat_type]['openingTag']),
+            'icon': re.sub(r'%i:(.*?)%', '\\1', STATS[stat_type]['icon'])
         }

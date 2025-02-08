@@ -2,7 +2,7 @@ import os
 import re
 import ujson
 from utils import *
-from stats import *
+from constants import *
 from bin_defs.bin_main import BinDefinitions
 
 class ItemsProcessor:

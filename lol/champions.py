@@ -2,7 +2,7 @@ import os
 import re
 import ujson
 from utils import *
-from stats import *
+from constants import *
 from bin_defs.bin_main import BinDefinitions
 
 class ChampionsProcessor:
@@ -331,7 +331,7 @@ class ChampionsProcessor:
 
             if '@AbilityResourceName@' in spell_desc_cost:
                 ar_type = spells_values['ar_type']
-                spell_desc_cost = spell_desc_cost.replace('@AbilityResourceName@', self.__get_string(f'game_ability_resource_{ability_resources.get(ar_type, 14)}'))
+                spell_desc_cost = spell_desc_cost.replace('@AbilityResourceName@', self.__get_string(f'game_ability_resource_{RESOURCE_TYPES.get(ar_type, 14)}'))
             
             spell_desc_cost = self.__desc_recursive_replace(spell_desc_cost, num_id, letter)
             output_spell['cost'] = self.__generate_desc(spell_desc_cost, spell_id, spells_values)
@@ -380,7 +380,7 @@ class ChampionsProcessor:
 
             if '@AbilityResourceName@' in current_string:
                 ar_type = spells_values['ar_type']
-                current_string = current_string.replace('@AbilityResourceName@', self.__get_string(f'game_ability_resource_{ability_resources.get(ar_type, 14)}'))
+                current_string = current_string.replace('@AbilityResourceName@', self.__get_string(f'game_ability_resource_{RESOURCE_TYPES.get(ar_type, 14)}'))
 
 
             multiplier = element.get("multiplier", 1)

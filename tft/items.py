@@ -2,7 +2,7 @@ import os
 import re
 import ujson
 from utils import *
-from stats import *
+from constants import *
 
 class TFTItemsProcessor:
     def __init__(self, version, output_dir, lang, tft_data, items, item_type, unit_props, strings):

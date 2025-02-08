@@ -14,9 +14,9 @@ class SubPartScaledProportionalToStat(BinCalculation):
 
         placeholders = {
             '@IconModifier@': '',
-            '@OpeningTag@': stats[current_stat]['openingTag'],
-            '@Icon@': stats[current_stat]['icon'],
-            '@ClosingTag@': stats[current_stat]['closingTag'],
+            '@OpeningTag@': STATS[current_stat]['openingTag'],
+            '@Icon@': STATS[current_stat]['icon'],
+            '@ClosingTag@': STATS[current_stat]['closingTag'],
             '@Value@': round_number(current_subpart * current_ratio, 5)
         }
 

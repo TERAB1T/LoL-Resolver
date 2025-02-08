@@ -1,7 +1,7 @@
 import os
 import ujson
 from utils import *
-from stats import *
+from constants import *
 
 class TFTTockerRoundsProcessor:
     def __init__(self, version, output_dir, lang, tft_data, strings):

@@ -1,5 +1,5 @@
 from utils import *
-from stats import *
+from constants import *
 from .bin_main import BinDefinitions
 
 class BinCalculation:

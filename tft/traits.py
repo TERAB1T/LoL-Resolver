@@ -2,7 +2,7 @@ import os
 import re
 import ujson
 from utils import *
-from stats import *
+from constants import *
 
 class TFTTraitsProcessor:
     def __init__(self, version, output_dir, lang, tft_data, traits, trait_units, unit_props, strings):

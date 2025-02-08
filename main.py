@@ -6,7 +6,7 @@ from utils import cd_get_versions_clean, timer_func
 from img_process.atlas import AtlasProcessor
 from img_process.thumbs import ThumbGenerator
 from lol.generator import generate_lol_champions, generate_lol_items, generate_arena_augments, generate_swarm_augments
-from tft.generator import generate_tft_units, generate_tft_traits, generate_tft_items, generate_tft_augments, generate_tocker_rounds, generate_tft_anomaly
+from tft.generator import generate_tft_units, generate_tft_traits, generate_tft_items, generate_tft_augments, generate_tft_anomaly, generate_tocker_rounds  # noqa: F401
 
 def rm_temp_cache(version: str = '') -> None:
     #return

@@ -11,7 +11,7 @@ class AbilityResourceByCoefficientCalculationPart(BinCalculation):
         icon_modifier = ''
         stat_formula = current_block.get('mStatFormula')
         if stat_formula:
-            icon_modifier = self.get_string(f'tooltip_statsuidata_{stat_types[stat_formula]}iconmodifier')
+            icon_modifier = self.get_string(f'tooltip_statsuidata_{STAT_TYPES[stat_formula]}iconmodifier')
 
         value = current_block['mCoefficient']
         try:

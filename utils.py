@@ -95,7 +95,7 @@ def get_last_modified(input_version, file_url):
     try:
         response = http.request("HEAD", file_url, headers={'Cache-Control': 'no-cache'})
         return response.getheader('Last-Modified')
-    except:
+    except Exception:
         return False
 
 def get_final_url(version, urls):
@@ -106,7 +106,7 @@ def get_final_url(version, urls):
             response = urllib3.request("HEAD", return_url)
             if response.status == 200:
                 return return_url
-        except:
+        except Exception:
             pass
     return None
 
@@ -118,7 +118,7 @@ def cd_get_strings_file(version, lang, game='lol'):
         try:
             with open(temp_cache_file, encoding='utf-8') as f:
                 return ujson.load(f)["entries"]
-        except:
+        except Exception:
             pass
 
     if game == 'tft':
@@ -232,7 +232,7 @@ def gen_handler(input_version, output_dir, languages, alias, urls, generate_vers
         if cache:
             redis_con = redis.Redis(host='localhost', port=6379, decode_responses=True)
             redis_con.ping()
-    except:
+    except Exception:
         redis_con = None
 
     if redis_con and redis_con.exists(alias):
