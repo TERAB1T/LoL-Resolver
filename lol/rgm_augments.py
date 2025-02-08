@@ -67,8 +67,8 @@ class RGMAugmentsProcessor:
                 'id': augment['AugmentNameId'],
                 'name': self.__get_string(augment['NameTra']),
                 'desc': self.__prepare_desc(spellobject_entries, augment),
-                'icon': image_to_png(augment['AugmentSmallIconPath'].lower()),
-                'iconLarge': image_to_png(augment['AugmentLargeIconPath'].lower()),
+                'icon': image_to_png(getf(augment, 'AugmentSmallIconPath', '').lower()),
+                'iconLarge': image_to_png(getf(augment, 'AugmentLargeIconPath', '').lower()),
                 'tier': getf(augment, "rarity", 0)
             }
 

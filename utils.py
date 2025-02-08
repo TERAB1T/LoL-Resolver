@@ -5,6 +5,7 @@ import ujson
 import requests
 import redis
 from xxhash import xxh64_intdigest, xxh3_64_intdigest
+from constants import REDIS_PREFIX, REDIS_HOST, REDIS_PORT
 import urllib3
 
 def timer_func(func):
@@ -222,88 +223,81 @@ def normalize_game_version(version):
 def getf(source_dict, val, default=None):
     return source_dict.get(val, source_dict.get(hash_fnv1a(val), default))
 
-def gen_handler(input_version, output_dir, languages, alias, urls, generate_version, cache = False, atlas = False):
+def gen_handler(version, output_dir, languages, alias, urls, generate_version, cache = False, atlas = False):
     from img_process.atlas import AtlasProcessor
 
     redis_cache = {}
     redis_con = None
+    redis_key = f"{REDIS_PREFIX}:{alias.replace('-', ':')}"
+
+    alias_fixed = alias.replace('-', ' ').title().replace('Tft', 'TFT').replace('Lol', 'LoL')
 
     try:
         if cache:
-            redis_con = redis.Redis(host='localhost', port=6379, decode_responses=True)
+            redis_con = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
             redis_con.ping()
     except Exception:
         redis_con = None
 
-    if redis_con and redis_con.exists(alias):
-        redis_cache = ujson.loads(redis_con.get(alias))
+    if redis_con and redis_con.exists(redis_key):
+        redis_cache = redis_con.hgetall(redis_key)
 
-    if re.match(r'^\d+\.\d+$', input_version):
+    if re.match(r'^\d+\.\d+$', version):
         versions = cd_get_versions()
-        version = next((element for element in versions if element['name'] == input_version), None)
+        version_info = next((element for element in versions if element['name'] == version), None)
 
-        if version:
-            version_name = version.get('name')
-            last_modified = version.get('mtime')
+        if version_info:
+            last_modified = version_info.get('mtime')
 
-            if version_name not in redis_cache or 'last_modified' not in redis_cache[version_name]:
-                redis_cache[version_name] = {
-                    "last_modified": ''
-                }
+            if version not in redis_cache:
+                redis_cache[version] = ''
 
-            if redis_cache[version_name]["last_modified"] != last_modified:
-                generate_version(version_name, output_dir, languages)
+            if redis_cache[version] != last_modified:
+                generate_version(version, output_dir, languages)
 
                 if redis_con:
-                    redis_cache[version_name]["last_modified"] = last_modified
-                    redis_con.set(alias, ujson.dumps(redis_cache))
+                    redis_cache[version] = last_modified
+                    redis_con.hset(redis_key, mapping=redis_cache)
 
                 if atlas:
                     processor = AtlasProcessor()
-                    processor.process_icons(version_name, output_dir)
+                    processor.process_icons(version, output_dir)
             else:
-                print(f"Version {version_name} is up to date. Skipping...")
+                print(f"{alias_fixed}: version {version} is up to date. Skipping...")
         else:
-            print(f"Version {input_version} not found.")
-    elif input_version in ['latest', 'pbe']:
-        if input_version not in redis_cache or 'status' not in redis_cache[input_version] or 'last_modified' not in redis_cache[input_version]:
-            redis_cache[input_version] = {
-                "status": '',
-                "last_modified": ''
-            }
+            print(f"Version {version} not found.")
+    elif version in ['latest', 'pbe']:
+        if version not in redis_cache:
+            redis_cache[version] = ''
 
-        #last_modified = get_last_modified(input_version, get_final_url(input_version, urls))
-        last_modified = get_last_modified(input_version, '')
+        last_modified = get_last_modified(version, '')
 
         if not last_modified:
-            print(f"Version {input_version} for {alias} not found.")
+            print(f"{alias_fixed}: version {version} not found.")
             return
 
-        input_version_modified = "live" if input_version == "latest" else input_version
-        response = urllib3.request("GET", f"https://raw.communitydragon.org/status.{input_version_modified}.txt")
+        version_modified = "live" if version == "latest" else version
+        response = urllib3.request("GET", f"https://raw.communitydragon.org/status.{version_modified}.txt")
 
         if response.status == 200:
             patch_status = response.data.decode('utf-8')
         else:
             return
 
-        if redis_cache[input_version]["status"] != patch_status and "done" in patch_status:
-            if redis_cache[input_version]["last_modified"] != last_modified:
-                generate_version(input_version, output_dir, languages)
+        if "done" in patch_status:
+            if redis_cache[version] != last_modified:
+                generate_version(version, output_dir, languages)
 
                 if redis_con:
-                    redis_cache[input_version]["status"] = patch_status
-                    redis_cache[input_version]["last_modified"] = last_modified
-                    redis_con.set(alias, ujson.dumps(redis_cache))
+                    redis_cache[version] = last_modified
+                    redis_con.hset(redis_key, mapping=redis_cache)
             else:
-                print(f"Version {input_version} is up to date. Skipping...")
+                print(f"{alias_fixed}: version {version} is up to date. Skipping...")
 
             if atlas:
                 processor = AtlasProcessor()
-                processor.process_icons(input_version, output_dir)
-        elif redis_cache[input_version]["status"] == patch_status:
-            print(f"Version {input_version} is up to date. Skipping...")
+                processor.process_icons(version, output_dir)
         elif "running" in patch_status:
-            print(f"Version {input_version}: CDragon is currently being updated. Please try again later.")
+            print(f"{alias_fixed} - version {version}: CDragon is currently being updated. Please try again later.")
         elif "error" in patch_status:
-            print(f"Version {input_version}: The latest CDragon update failed. Please try again later.")
+            print(f"{alias_fixed} - version {version}: The latest CDragon update failed. Please try again later.")

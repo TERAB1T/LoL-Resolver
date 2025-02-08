@@ -333,12 +333,11 @@ def generate_lol_items(input_version, output_dir, languages, cache = False, atla
     gen_handler(input_version, output_dir, languages, alias, urls, generate_version_items, cache, atlas)
 
 ### ARENA AUGMENTS ###
-    
+
+@timer_func
 def generate_version_arena_augments(input_version, output_dir, languages):
     print(f"Arena Augments: generating version {input_version}...")
     arena_data = asyncio.run(download_map(input_version, 'Arena'))[1]
-    if not arena_data:
-        return
     
     supported_langs = cd_get_languages(input_version)
     if languages[0] == 'all':
@@ -360,11 +359,10 @@ def generate_arena_augments(input_version, output_dir, languages, cache = False)
     urls = ["data/maps/shipping/map30/map30.bin.json"]
     gen_handler(input_version, output_dir, languages, alias, urls, generate_version_arena_augments, cache)
 
+@timer_func
 def generate_version_swarm_augments(input_version, output_dir, languages):
     print(f"Swarm Augments: generating version {input_version}...")
     swarm_data = asyncio.run(download_map(input_version, 'Swarm'))[1]
-    if not swarm_data:
-        return
     
     supported_langs = cd_get_languages(input_version)
     if languages[0] == 'all':

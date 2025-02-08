@@ -93,7 +93,7 @@ class ThumbGenerator:
         if re.match(r'^\d+\.\d+$', self.version):
             if self.redis_versions[self.version] == self.last_modified:
                 self.is_cache_exists = True
-                print(f"Version {self.version} is up to date. Skipping...")
+                print(f"Thumbnails: version {self.version} is up to date. Skipping...")
             else:
                 self.redis_versions[self.version] = self.last_modified
         elif self.version in ['latest', 'pbe']:
@@ -110,13 +110,13 @@ class ThumbGenerator:
                     self.redis_versions[self.version] = self.last_modified
                 else:
                     self.is_cache_exists = True
-                    print(f"Version {self.version} is up to date. Skipping...")
+                    print(f"Thumbnails: version {self.version} is up to date. Skipping...")
             elif "running" in patch_status:
                 self.is_cache_exists = True
-                print(f"Version {self.version}: CDragon is currently being updated. Please try again later.")
+                print(f"Thumbnails - version {self.version}: CDragon is currently being updated. Please try again later.")
             elif "error" in patch_status:
                 self.is_cache_exists = True
-                print(f"Version {self.version}: The latest CDragon update failed. Please try again later.")
+                print(f"Thumbnails - version {self.version}: The latest CDragon update failed. Please try again later.")
     
 
     def __process_thumbnails(self, categories: Tuple[str, str, List[Tuple[int, int]]]) -> None:
