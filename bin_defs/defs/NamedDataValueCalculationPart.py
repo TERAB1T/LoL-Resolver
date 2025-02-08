@@ -16,11 +16,11 @@ class NamedDataValueCalculationPart(BinCalculation):
             '@IconModifier@': '',
             '@Icon@': '',
             '@ClosingTag@': '',
-            '@Value@': formatted_value
+            '@Value@': str(formatted_value)
         }
 
         for placeholder, replacement in placeholders.items():
-            return_value = str_ireplace(placeholder, replacement, return_value)
+            return_value = re.sub(placeholder, replacement, return_value, flags=re.IGNORECASE)
 
         return return_value
     

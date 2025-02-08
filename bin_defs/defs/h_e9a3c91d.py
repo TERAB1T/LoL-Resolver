@@ -17,12 +17,12 @@ class h_e9a3c91d(BinCalculation):
         ranged_value = game_calculation.calc_string(current_block_ranged, key)
 
         placeholders = {
-            '@MeleeItemCalcValue@': melee_value,
-            '@RangedItemCalcValue@': ranged_value
+            '@MeleeItemCalcValue@': str(melee_value),
+            '@RangedItemCalcValue@': str(ranged_value)
         }
 
         for placeholder, replacement in placeholders.items():
-            return_value = str_ireplace(placeholder, replacement, return_value)
+            return_value = re.sub(placeholder, replacement, return_value, flags=re.IGNORECASE)
 
         return return_value
     

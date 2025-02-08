@@ -389,7 +389,7 @@ class ChampionsProcessor:
             if not element_style:
                 current_string += f"<scalingblock>[{'/'.join(values)}]</scalingblock>"
             elif element_style == 1:
-                current_string += f"<scalingblock>[{str_ireplace('@NUMBER@', '/'.join(values), self.__get_string('number_formatting_percentage_format'))}]</scalingblock>"
+                current_string += f"<scalingblock>[{re.sub('@NUMBER@', '/'.join(values), self.__get_string('number_formatting_percentage_format'), flags=re.IGNORECASE)}]</scalingblock>"
 
             return_array.append(current_string + '</scalingcontainer>')
 

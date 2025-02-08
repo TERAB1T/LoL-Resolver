@@ -28,11 +28,11 @@ class StatByCoefficientCalculationPart(BinCalculation):
             '@OpeningTag@': STATS[current_stat]['openingTag'],
             '@Icon@': STATS[current_stat]['icon'],
             '@ClosingTag@': STATS[current_stat]['closingTag'],
-            '@Value@': round_number(value, 5)
+            '@Value@': round_number(value, 5, True)
         }
 
         for placeholder, replacement in placeholders.items():
-            return_value = str_ireplace(placeholder, replacement, return_value)
+            return_value = re.sub(placeholder, replacement, return_value, flags=re.IGNORECASE)
 
         return return_value
     

@@ -27,11 +27,11 @@ class BuffCounterByCoefficientCalculationPart(BinCalculation):
             '@IconModifier@': '',
             '@Icon@': m_icon_key,
             '@ClosingTag@': closing_tag,
-            '@Value@': round_number(m_coefficient * 100, 5)
+            '@Value@': round_number(m_coefficient * 100, 5, True)
         }
 
         for placeholder, replacement in placeholders.items():
-            return_value = str_ireplace(placeholder, replacement, return_value)
+            return_value = re.sub(placeholder, replacement, return_value, flags=re.IGNORECASE)
 
         return return_value
     

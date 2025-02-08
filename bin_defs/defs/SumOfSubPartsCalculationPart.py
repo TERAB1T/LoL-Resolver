@@ -77,7 +77,7 @@ class SumOfSubPartsCalculationPart(BinCalculation):
             }
 
             for placeholder, replacement in placeholders.items():
-                return_value = str_ireplace(placeholder, replacement, return_value)
+                return_value = re.sub(placeholder, replacement, return_value, flags=re.IGNORECASE)
                 
             total_sum += return_value if total_sum == '' else ' ' + return_value
         

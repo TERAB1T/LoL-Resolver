@@ -42,14 +42,14 @@ class GameCalculation(BinCalculation):
 
         if 'mDisplayAsPercent' in current_block:
             if is_number(return_value):
-                return_value = str_ireplace('@NUMBER@', round_number(float(return_value) * 100, getf(current_block, 'mPrecision', 5)), self.get_string('number_formatting_percentage_format'))
+                return_value = re.sub('@NUMBER@', round_number(float(return_value) * 100, getf(current_block, 'mPrecision', 5), True), self.get_string('number_formatting_percentage_format'), flags=re.IGNORECASE)
             elif '%i:scaleLevel%' in return_value:
                 def callback_for_numbers(matches):
                     number = float(matches.group(1))
                     return round_number(number * 100, 5, True)
                 
                 return_value = re.sub(r'([0-9]+(\.[0-9]+)*)', callback_for_numbers, return_value)
-                return_value = str_ireplace('@NUMBER@', return_value.split('%i:scaleLevel%')[0], self.get_string('number_formatting_percentage_format')) + '%i:scaleLevel%' + return_value.split('%i:scaleLevel%')[1]
+                return_value = re.sub('@NUMBER@', return_value.split('%i:scaleLevel%')[0], self.get_string('number_formatting_percentage_format'), flags=re.IGNORECASE) + '%i:scaleLevel%' + return_value.split('%i:scaleLevel%')[1]
             else:
                 def callback_for_numbers(matches):
                     number = float(matches.group(1))
@@ -57,7 +57,7 @@ class GameCalculation(BinCalculation):
 
                 return_value = re.sub(r'^([0-9]+(\.[0-9]+)*)', callback_for_numbers, return_value)
                 #return_value = f'({return_value})'
-                return_value = str_ireplace('@NUMBER@', return_value, self.get_string('number_formatting_percentage_format'))
+                return_value = re.sub('@NUMBER@', return_value, self.get_string('number_formatting_percentage_format'), flags=re.IGNORECASE)
                 
                 #return_value = f'({return_value} * 100)%'
 
@@ -107,18 +107,18 @@ class GameCalculation(BinCalculation):
 
         if 'mDisplayAsPercent' in current_block:
             if isinstance(return_value, (int, float)):
-                return_value = str_ireplace('@NUMBER@', round_number(return_value * 100, getf(current_block, 'mPrecision', 5)), self.get_string('number_formatting_percentage_format'))
+                return_value = re.sub('@NUMBER@', round_number(return_value * 100, getf(current_block, 'mPrecision', 5), True), self.get_string('number_formatting_percentage_format'), flags=re.IGNORECASE)
             elif '%i:scaleLevel%' in return_value:
                 def callback_for_numbers(matches):
                     number = float(matches.group(1))
                     return round_number(number * 100, 5, True)
                 
                 return_value = re.sub(r'([0-9]+(\.[0-9]+)*)', callback_for_numbers, return_value)
-                return_value = str_ireplace('@NUMBER@', return_value.split('%i:scaleLevel%')[0], self.get_string('number_formatting_percentage_format')) + '%i:scaleLevel%' + return_value.split('%i:scaleLevel%')[1]
+                return_value = re.sub('@NUMBER@', return_value.split('%i:scaleLevel%')[0], self.get_string('number_formatting_percentage_format'), flags=re.IGNORECASE) + '%i:scaleLevel%' + return_value.split('%i:scaleLevel%')[1]
             else:
                 def callback_for_numbers(matches):
                     number = float(matches.group(1))
-                    return str_ireplace('@NUMBER@', round_number(number * 100, 5, True), self.get_string('number_formatting_percentage_format'))
+                    return re.sub('@NUMBER@', round_number(number * 100, 5, True), self.get_string('number_formatting_percentage_format'), flags=re.IGNORECASE)
 
                 return_value = re.sub(r'^([0-9]+(\.[0-9]+)*)', callback_for_numbers, return_value)
                 #return_value = f'({return_value} * 100)%'

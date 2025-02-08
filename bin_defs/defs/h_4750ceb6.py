@@ -31,12 +31,12 @@ class h_4750ceb6(BinCalculation):
                 ranged_value = self.calc_values(temp_block)
 
         placeholders = {
-            '@MeleeItemCalcValue@': melee_value,
-            '@RangedItemCalcValue@': ranged_value
+            '@MeleeItemCalcValue@': str(melee_value),
+            '@RangedItemCalcValue@': str(ranged_value)
         }
 
         for placeholder, replacement in placeholders.items():
-            return_value = str_ireplace(placeholder, replacement, return_value)
+            return_value = re.sub(placeholder, replacement, return_value, flags=re.IGNORECASE)
 
         return return_value
     

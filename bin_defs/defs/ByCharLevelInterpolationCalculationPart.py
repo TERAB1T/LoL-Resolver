@@ -13,14 +13,14 @@ class ByCharLevelInterpolationCalculationPart(BinCalculation):
 
         placeholders = {
             '@OpeningTag@': '<scaleLevel>',
-            '@RangeStart@': round_number(float(current_block['mStartValue']), 5),
-            '@RangeEnd@': round_number(float(current_block['mEndValue']), 5),
+            '@RangeStart@': round_number(float(current_block['mStartValue']), 5, True),
+            '@RangeEnd@': round_number(float(current_block['mEndValue']), 5, True),
             '@Icon@': '%i:scaleLevel%',
             '@ClosingTag@': '</scaleLevel>'
         }
 
         for placeholder, value in placeholders.items():
-            return_value = str_ireplace(placeholder, value, return_value)
+            return_value = re.sub(placeholder, value, return_value, flags=re.IGNORECASE)
 
         return return_value
     

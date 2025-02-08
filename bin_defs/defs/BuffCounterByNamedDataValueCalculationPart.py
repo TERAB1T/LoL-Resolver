@@ -16,11 +16,11 @@ class BuffCounterByNamedDataValueCalculationPart(BinCalculation):
             '@OpeningTag@': '',
             '@Icon@': icon,
             '@ClosingTag@': '',
-            '@Value@': round_number(value * 100, 5)
+            '@Value@': round_number(value * 100, 5, True)
         }
 
         for placeholder, replacement in placeholders.items():
-            return_value = str_ireplace(placeholder, replacement, return_value)
+            return_value = re.sub(placeholder, replacement, return_value, flags=re.IGNORECASE)
 
         return return_value
     

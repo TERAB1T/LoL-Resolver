@@ -7,9 +7,10 @@ import redis
 from xxhash import xxh64_intdigest, xxh3_64_intdigest
 from constants import REDIS_PREFIX, REDIS_HOST, REDIS_PORT
 import urllib3
+from typing import Callable, Any, List, Dict, Optional, Union
 
-def timer_func(func):
-    def wrap_func(*args, **kwargs):
+def timer_func(func: Callable) -> Callable:
+    def wrap_func(*args: Any, **kwargs: Any) -> Any:
         t1 = time()
         result = func(*args, **kwargs)
         t2 = time()
@@ -41,77 +42,73 @@ def is_fnv1a(hash_string: str) -> bool:
     if not hash_string:
         return False
     
-    return re.fullmatch(r'\{[0-9a-f]{8}\}', hash_string)
+    return bool(re.fullmatch(r'\{[0-9a-f]{8}\}', hash_string))
 
 def image_to_png(url: str) -> str:
     return re.sub(r'\.(tex|dds)', '.png', url, flags=re.IGNORECASE).lower()
 
-def cd_get_languages(version: str) -> list[str]:
+def cd_get_languages(version: str) -> List[str]:
     url = f"https://raw.communitydragon.org/json/{version}/game/"
-    response = urllib3.request("GET", url)
+    http = urllib3.PoolManager()
+    response = http.request("GET", url)
 
     if response.status == 200:
         langs_raw = ujson.loads(response.data)
         languages = [file.get('name') for file in langs_raw if file.get('type') == 'directory' and re.match(r'^[a-z]{2}_[a-z]{2}$', file.get('name'))]
-        if len(languages) != 0:
-            if 'ar_ae' in languages:
-                languages.remove('ar_ae')
-            if 'id_id' in languages:
-                languages.remove('id_id')
-            return languages
+        languages = [lang for lang in languages if lang not in ['ar_ae', 'id_id']]
+        return languages
 
     url2 = f"https://raw.communitydragon.org/json/{version}/game/data/menu/"
-    response2 = urllib3.request("GET", url2)
+    response2 = http.request("GET", url2)
 
     if response2.status == 200:
         langs_raw = ujson.loads(response2.data)
         languages = [re.search(r'(?<=_)([a-z]{2}_[a-z]{2})(?=\.(stringtable|txt)\.json)', file.get('name'), re.IGNORECASE).group(0) for file in langs_raw if file.get('name').endswith('.json')]
-        if 'ar_ae' in languages:
-            languages.remove('ar_ae')
-        if 'id_id' in languages:
-                languages.remove('id_id')
+        languages = [lang for lang in languages if lang not in ['ar_ae', 'id_id']]
         return languages
 
     return []
 
-def cd_get_versions() -> list[str]:
+def cd_get_versions() -> List[Dict[str, Any]]:
     url = "https://raw.communitydragon.org/json/"
-    response = urllib3.request("GET", url)
+    http = urllib3.PoolManager()
+    response = http.request("GET", url)
 
     if response.status == 200:
         versions_raw = ujson.loads(response.data)
         versions = [file for file in versions_raw if re.match(r'^\d+\.\d+$', file.get('name')) and float(file.get('name').split(".")[0]) > 10]
-        versions = sorted(versions, key = lambda version: float(re.sub(r'\.(\d)$', r'.0\1', version['name'])))
+        versions = sorted(versions, key=lambda version: float(re.sub(r'\.(\d)$', r'.0\1', version['name'])))
         return versions
     
     return []
-    
-def cd_get_versions_clean() -> list[str]:
-    versions_raw = cd_get_versions()
-    return list(map(lambda x: x.get('name'), versions_raw))
 
-def get_last_modified(input_version, file_url):
-    file_url = f'https://raw.communitydragon.org/{input_version}/content-metadata.json' # Temp solution! Re-write.
+def cd_get_versions_clean() -> List[str]:
+    versions_raw = cd_get_versions()
+    return [x.get('name') for x in versions_raw]
+
+def get_last_modified(input_version: str, file_url: str) -> Optional[str]:
+    file_url = f'https://raw.communitydragon.org/{input_version}/content-metadata.json'  # Temp solution! Re-write.
     http = urllib3.PoolManager()
     try:
         response = http.request("HEAD", file_url, headers={'Cache-Control': 'no-cache'})
         return response.getheader('Last-Modified')
     except Exception:
-        return False
+        return None
 
-def get_final_url(version, urls):
+def get_final_url(version: str, urls: List[str]) -> Optional[str]:
     main_url = f"https://raw.communitydragon.org/{version}/game/"
+    http = urllib3.PoolManager()
     for url in urls:
         try:
             return_url = main_url + url
-            response = urllib3.request("HEAD", return_url)
+            response = http.request("HEAD", return_url)
             if response.status == 200:
                 return return_url
         except Exception:
             pass
     return None
 
-def cd_get_strings_file(version, lang, game='lol'):
+def cd_get_strings_file(version: str, lang: str, game: str = 'lol') -> Optional[Dict[str, str]]:
     temp_cache_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '_temp', version, 'lang')
     temp_cache_file = f"{temp_cache_dir}/{game}_{lang}.json"
 
@@ -131,7 +128,7 @@ def cd_get_strings_file(version, lang, game='lol'):
 
     if not final_url:
         print(f"Strings file not found: {version}:{lang}.")
-        return
+        return None
     
     try:
         items_response = requests.get(final_url)
@@ -143,9 +140,9 @@ def cd_get_strings_file(version, lang, game='lol'):
         return ujson.loads(items_response.content)["entries"]
     except requests.RequestException as e:
         print(f"An error occurred (strings file): {e}")
-        return
+        return None
 
-def get_string(strings_array, id):
+def get_string(strings_array: Dict[str, str], id: str) -> str:
     if not id:
         return ''
     
@@ -154,36 +151,21 @@ def get_string(strings_array, id):
     if id in strings_array:
         return strings_array[id]
 
-    hashed3_38 = hash_xxhash3(id, 38)
-    if hashed3_38 in strings_array:
-        return strings_array[hashed3_38]
-    
-    hashed3_39 = hash_xxhash3(id, 39)
-    if hashed3_39 in strings_array:
-        return strings_array[hashed3_39]
+    for bits in [38, 39, 40]:
+        hashed3 = hash_xxhash3(id, bits)
+        if hashed3 in strings_array:
+            return strings_array[hashed3]
 
-    hashed3_40 = hash_xxhash3(id, 40)
-    if hashed3_40 in strings_array:
-        return strings_array[hashed3_40]
-
-    hashed64_38 = hash_xxhash64(id, 38)
-    if hashed64_38 in strings_array:
-        return strings_array[hashed64_38]
-
-    hashed64_39 = hash_xxhash64(id, 39)
-    if hashed64_39 in strings_array:
-        return strings_array[hashed64_39]
-
-    hashed64_40 = hash_xxhash64(id, 40)
-    if hashed64_40 in strings_array:
-        return strings_array[hashed64_40]
+        hashed64 = hash_xxhash64(id, bits)
+        if hashed64 in strings_array:
+            return strings_array[hashed64]
 
     if "_mod_1" in id:
         return get_string(strings_array, id.replace("_mod_1", "_mod_2"))
 
     return ''
 
-def is_number(num):
+def is_number(num: Union[int, float, str]) -> bool:
     if isinstance(num, (int, float)):
         return True
     
@@ -192,7 +174,7 @@ def is_number(num):
         
     return False
 
-def round_number(num, decimal, to_string=False):
+def round_number(num: Union[int, float], decimal: int, to_string: bool = False) -> Union[int, float, str]:
     if isinstance(num, (int, float)):
         if decimal == 0:
             temp_result = int(num + 0.5)
@@ -201,33 +183,24 @@ def round_number(num, decimal, to_string=False):
         
         temp_result = int(temp_result) if isinstance(temp_result, float) and temp_result.is_integer() else temp_result
 
-        
-        if to_string is True:
-            return str(temp_result)
-        else:
-            return temp_result
+        return str(temp_result) if to_string else temp_result
     else:
         return num
 
-def str_ireplace(before, after, string):
-    return re.sub(str(before), str(after), str(string), flags=re.IGNORECASE)
+def normalize_game_version(version: str) -> str:
+    if not re.match(r'^\d+\.\d+$', version):
+        return version
 
-def normalize_game_version(version):
-    str_version = str(version)
+    return round_number(float(re.sub(r'\.(\d)$', r'.0\1', version)), 2, True)
 
-    if not re.match(r'^\d+\.\d+$', str_version):
-        return str_version
-
-    return round_number(float(re.sub(r'\.(\d)$', r'.0\1', str_version)), 2)
-
-def getf(source_dict, val, default=None):
+def getf(source_dict: Dict[str, Any], val: str, default: Any = None) -> Any:
     return source_dict.get(val, source_dict.get(hash_fnv1a(val), default))
 
-def gen_handler(version, output_dir, languages, alias, urls, generate_version, cache = False, atlas = False):
+def gen_handler(version: str, output_dir: str, languages: List[str], alias: str, urls: List[str], generate_version: Callable, cache: bool = False, atlas: bool = False) -> None:
     from img_process.atlas import AtlasProcessor
 
-    redis_cache = {}
-    redis_con = None
+    redis_cache: Dict[str, str] = {}
+    redis_con: Optional[redis.Redis] = None
     redis_key = f"{REDIS_PREFIX}:{alias.replace('-', ':')}"
 
     alias_fixed = alias.replace('-', ' ').title().replace('Tft', 'TFT').replace('Lol', 'LoL')
@@ -277,7 +250,8 @@ def gen_handler(version, output_dir, languages, alias, urls, generate_version, c
             return
 
         version_modified = "live" if version == "latest" else version
-        response = urllib3.request("GET", f"https://raw.communitydragon.org/status.{version_modified}.txt")
+        http = urllib3.PoolManager()
+        response = http.request("GET", f"https://raw.communitydragon.org/status.{version_modified}.txt")
 
         if response.status == 200:
             patch_status = response.data.decode('utf-8')

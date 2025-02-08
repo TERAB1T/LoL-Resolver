@@ -47,14 +47,14 @@ class ByCharLevelBreakpointsCalculationPart(BinCalculation):
 
         placeholders = {
             '@OpeningTag@': '<scaleLevel>',
-            '@RangeStart@': round_number(float(level1_value), 5),
+            '@RangeStart@': round_number(float(level1_value), 5, True),
             '@Icon@': '%i:scaleLevel%',
-            '@RangeEnd@': round_number(float(range_end), 5),
+            '@RangeEnd@': round_number(float(range_end), 5, True),
             '@ClosingTag@': '</scaleLevel>'
         }
 
         for placeholder, replacement in placeholders.items():
-            return_value = str_ireplace(placeholder, replacement, return_value)
+            return_value = re.sub(placeholder, replacement, return_value, flags=re.IGNORECASE)
 
         return return_value
     

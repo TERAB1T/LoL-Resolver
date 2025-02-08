@@ -268,7 +268,7 @@ class TFTUnitsProcessor:
             elif style == 1:
                 multiplier = element.get("multiplier", 1)
                 values = [str(round_number(var_values[element["type"].lower()][i] * multiplier, 2)) for i in range(1, scaling_levels)]
-                current_string += f"<scalingblock>[{str_ireplace('@NUMBER@', '/'.join(values), self.__get_string('number_formatting_percentage_format'))}]</scalingblock>"
+                current_string += f"<scalingblock>[{re.sub('@NUMBER@', '/'.join(values), self.__get_string('number_formatting_percentage_format'), flags=re.IGNORECASE)}]</scalingblock>"
 
             return_array.append(current_string + '</scalingcontainer>')
 
@@ -337,7 +337,7 @@ class TFTUnitsProcessor:
             return replacement
         
         if '@TFTUnitProperty.' in spell_desc_main:
-            spell_desc_main = str_ireplace('@TFTUnitProperty.unit:', '@', spell_desc_main)
-            spell_desc_main = str_ireplace('@TFTUnitProperty.:', '@', spell_desc_main)
+            spell_desc_main = re.sub('@TFTUnitProperty.unit:', '@', spell_desc_main, flags=re.IGNORECASE)
+            spell_desc_main = re.sub('@TFTUnitProperty.:', '@', spell_desc_main, flags=re.IGNORECASE)
 
         return re.sub(r'(@)(.*?)(@)', replace_callback, spell_desc_main, flags=re.IGNORECASE)
