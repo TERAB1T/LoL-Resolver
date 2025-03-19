@@ -313,7 +313,7 @@ class TFTUnitsProcessor:
                     decimal_places = 2
 
                 if isinstance(current_spell_calc, str) and '|' in current_spell_calc:
-                    decimal_places = int(spell_calc[var_name].split('|')[1])
+                    decimal_places = int(spell_calc[var_name].split('|')[1]) if isinstance(spell_calc[var_name], (int, float)) else 0
                     current_spell_calc = float(current_spell_calc.split('|')[0])
 
                 if isinstance(current_spell_calc, (int, float)):
