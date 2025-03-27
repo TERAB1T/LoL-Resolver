@@ -59,8 +59,21 @@ class RGMAugmentsProcessor:
             }
     
     def __get_augments(self):
-        augment_entries = [value for key, value in self.data.items() if value.get('__type') == 'AugmentData' or value.get('__type') == hash_fnv1a('AugmentData')]
-        spellobject_entries = {key: value for key, value in self.data.items() if value.get('__type') == 'SpellObject' or value.get('__type') == hash_fnv1a('SpellObject')}
+        augment_entries = []
+
+        for key, value in self.data.items():
+            if not isinstance(value, list) and (
+                value.get('__type') == 'AugmentData' or value.get('__type') == hash_fnv1a('AugmentData')
+            ):
+                augment_entries.append(value)
+
+        spellobject_entries = {}
+
+        for key, value in self.data.items():
+            if not isinstance(value, list) and (
+                value.get('__type') == 'SpellObject' or value.get('__type') == hash_fnv1a('SpellObject')
+            ):
+                spellobject_entries[key] = value
 
         for augment in augment_entries:
             self.output_dict[augment['AugmentNameId'].lower()] = {

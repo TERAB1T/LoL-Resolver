@@ -289,6 +289,9 @@ def populate_items(version, maps):
             item_list_with_modes[item].append(map_key)
 
     for item_key, item_data in items.items():
+        if isinstance(item_data, list):
+            continue
+
         item_id = getf(item_data, "itemID")
 
         if not item_id:

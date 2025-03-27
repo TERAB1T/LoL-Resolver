@@ -9,7 +9,7 @@ from lol.generator import generate_lol_champions, generate_lol_items, generate_a
 from tft.generator import generate_tft_units, generate_tft_traits, generate_tft_items, generate_tft_augments, generate_tft_anomaly, generate_tocker_rounds  # noqa: F401
 
 def rm_temp_cache(version: str = '') -> None:
-    #return
+    return
     temp_cache_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '_temp', version)
 
     if os.path.exists(temp_cache_dir):

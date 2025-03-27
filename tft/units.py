@@ -73,19 +73,36 @@ class TFTUnitsProcessor:
         
         unit_shop_data = getf(self.tft_data, m_shop_data)
 
-        unit_stats = {
-            0:  [100.0] * 5, # ability power
-            1:  [round(getf(root_record, 'baseArmor', 0), 5)] * 5, # armor
-            2:  [round(getf(root_record, 'baseDamage', 0) * self.ad_coef[i], 5) for i in range(5)], # attack damage
-            3:  [round(getf(root_record, 'attackSpeed', 0), 5)] * 5, # attack speed
-            5:  [round(getf(root_record, 'baseSpellBlock', 0), 5)] * 5, # magic resistance
-            6:  [round(getf(root_record, 'baseMoveSpeed', 0), 5)] * 5, # move speed
-            7:  [round(getf(root_record, 'baseCritChance', 0), 5)] * 5, # crit chance
-            8:  [round(getf(root_record, 'critDamageMultiplier', 0), 5)] * 5, # crit damage
-            11: [round(getf(root_record, 'baseHP', 0) * self.hp_coef[i], 5) for i in range(5)], # max health
-            28: [round(getf(root_record, 'attackRange', 0), 5)] * 5, # attack range
-            33: [1] * 5, # dodge chance
-        }
+        unit_stats = {}
+
+        if re.match(r'^\d+\.\d+$', str(self.version)) and normalize_game_version(self.version) < 15.07:
+            unit_stats = {
+                0:  [100.0] * 5, # ability power
+                1:  [round(getf(root_record, 'baseArmor', 0), 5)] * 5, # armor
+                2:  [round(getf(root_record, 'baseDamage', 0) * self.ad_coef[i], 5) for i in range(5)], # attack damage
+                3:  [round(getf(root_record, 'attackSpeed', 0), 5)] * 5, # attack speed
+                5:  [round(getf(root_record, 'baseSpellBlock', 0), 5)] * 5, # magic resistance
+                6:  [round(getf(root_record, 'baseMoveSpeed', 0), 5)] * 5, # move speed
+                7:  [round(getf(root_record, 'baseCritChance', 0), 5)] * 5, # crit chance
+                8:  [round(getf(root_record, 'critDamageMultiplier', 0), 5)] * 5, # crit damage
+                11: [round(getf(root_record, 'baseHP', 0) * self.hp_coef[i], 5) for i in range(5)], # max health
+                28: [round(getf(root_record, 'attackRange', 0), 5)] * 5, # attack range
+                33: [1] * 5, # dodge chance
+            }
+        else:
+            unit_stats = {
+                0:  [100.0] * 5, # ability power
+                1:  [round(getf(root_record, 'baseArmor', 0), 5)] * 5, # armor
+                2:  [round(getf(root_record, 'baseDamage', 0) * self.ad_coef[i], 5) for i in range(5)], # attack damage
+                4:  [round(getf(root_record, 'attackSpeed', 0), 5)] * 5, # attack speed
+                6:  [round(getf(root_record, 'baseSpellBlock', 0), 5)] * 5, # magic resistance
+                7:  [round(getf(root_record, 'baseMoveSpeed', 0), 5)] * 5, # move speed
+                8:  [round(getf(root_record, 'baseCritChance', 0), 5)] * 5, # crit chance
+                9:  [round(getf(root_record, 'critDamageMultiplier', 0), 5)] * 5, # crit damage
+                12: [round(getf(root_record, 'baseHP', 0) * self.hp_coef[i], 5) for i in range(5)], # max health
+                29: [round(getf(root_record, 'attackRange', 0), 5)] * 5, # attack range
+                34: [1] * 5, # dodge chance
+            }
 
         self.output_dict[unit_id_trimmed] = {
             'id': unit_id.split("/")[1],
@@ -117,17 +134,30 @@ class TFTUnitsProcessor:
             if character_role_name:
                 self.output_dict[unit_id_trimmed]['role'] = self.__get_string(character_role_name)
 
-        self.output_dict[unit_id_trimmed]['stats'] = {
-            'health': round_number(unit_stats[11][1], 2),
-            'startingMana': round_number(getf(root_record, 'mInitialMana', 0), 2),
-            'maxMana': round_number(getf(getf(root_record, "primaryAbilityResource", {}), "arBase", 100), 2),
-            'attackDamage': round_number(unit_stats[2][1], 2),
-            'abilityPower': round_number(unit_stats[0][1], 2),
-            'armor': round_number(unit_stats[1][1], 2),
-            'magicResist': round_number(unit_stats[5][1], 2),
-            'attackSpeed': round_number(unit_stats[3][1], 2),
-            'range': int(unit_stats[28][1] / 180)
-        }
+        if re.match(r'^\d+\.\d+$', str(self.version)) and normalize_game_version(self.version) < 15.07:
+            self.output_dict[unit_id_trimmed]['stats'] = {
+                'health': round_number(unit_stats[11][1], 2),
+                'startingMana': round_number(getf(root_record, 'mInitialMana', 0), 2),
+                'maxMana': round_number(getf(getf(root_record, "primaryAbilityResource", {}), "arBase", 100), 2),
+                'attackDamage': round_number(unit_stats[2][1], 2),
+                'abilityPower': round_number(unit_stats[0][1], 2),
+                'armor': round_number(unit_stats[1][1], 2),
+                'magicResist': round_number(unit_stats[5][1], 2),
+                'attackSpeed': round_number(unit_stats[3][1], 2),
+                'range': int(unit_stats[28][1] / 180)
+            }
+        else:
+            self.output_dict[unit_id_trimmed]['stats'] = {
+                'health': round_number(unit_stats[12][1], 2),
+                'startingMana': round_number(getf(root_record, 'mInitialMana', 0), 2),
+                'maxMana': round_number(getf(getf(root_record, "primaryAbilityResource", {}), "arBase", 100), 2),
+                'attackDamage': round_number(unit_stats[2][1], 2),
+                'abilityPower': round_number(unit_stats[0][1], 2),
+                'armor': round_number(unit_stats[1][1], 2),
+                'magicResist': round_number(unit_stats[6][1], 2),
+                'attackSpeed': round_number(unit_stats[4][1], 2),
+                'range': int(unit_stats[29][1] / 180)
+            }
 
         m_linked_traits = getf(root_record, 'mLinkedTraits', [])
         for trait in m_linked_traits:

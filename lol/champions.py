@@ -71,8 +71,7 @@ class ChampionsProcessor:
                 spell_dict[hash_fnv1a(key)] = value
 
         for spell_record in champion_data.values():
-            spell_type = getf(spell_record, '__type', '')
-            if spell_type != 'SpellObject':
+            if isinstance(spell_record, list):
                 continue
 
             spell_data = getf(spell_record, 'mSpell')

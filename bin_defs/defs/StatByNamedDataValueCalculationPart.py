@@ -30,6 +30,9 @@ class StatByNamedDataValueCalculationPart(BinCalculation):
             '@ClosingTag@': STATS[current_stat]['closingTag'],
             '@Value@': round_number(value, 5, True)
         }
+        
+        if value is None:
+            return 0
 
         for placeholder, replacement in placeholders.items():
             return_value = re.sub(placeholder, replacement, return_value, flags=re.IGNORECASE)

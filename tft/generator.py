@@ -54,6 +54,9 @@ def filter_unit_props(tft_data):
     unit_props = {}
 
     for key, value in tft_data.items():
+        if isinstance(value, list):
+            continue
+        
         if value.get('__type') == 'TftUnitPropertyDefinition' and value.get('name') and value.get('DefaultValue') and (value['DefaultValue'].get("__type") == "TftUnitPropertyValueInteger" or value['DefaultValue'].get("__type") == "TftUnitPropertyValueFloat"):
             unit_props[value["name"].lower()] = value["DefaultValue"].get("value", 0)
 
