@@ -187,11 +187,11 @@ def round_number(num: Union[int, float], decimal: int, to_string: bool = False) 
     else:
         return num
 
-def normalize_game_version(version: str) -> str:
+def normalize_game_version(version: str) -> float:
     if not re.match(r'^\d+\.\d+$', version):
         return version
 
-    return round_number(float(re.sub(r'\.(\d)$', r'.0\1', version)), 2, True)
+    return round_number(float(re.sub(r'\.(\d)$', r'.0\1', version)), 2)
 
 def getf(source_dict: Dict[str, Any], val: str, default: Any = None) -> Any:
     return source_dict.get(val, source_dict.get(hash_fnv1a(val), default))
