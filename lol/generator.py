@@ -122,7 +122,7 @@ def get_champion_ids(version):
         return
    
 async def download_all_champions(input_version, champion_ids):
-    tasks = [download_champion(input_version, getf(champion_id, 'name')) for champion_id in champion_ids.values()]
+    tasks = [download_champion(input_version, getf(champion_id, 'name')) for champion_id in champion_ids.values() if not isinstance(champion_id, list)]
     results = await asyncio.gather(*tasks)
     return dict(results)
 
