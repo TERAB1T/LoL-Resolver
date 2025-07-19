@@ -94,6 +94,7 @@ class TFTUnitsProcessor:
                 0:  [100.0] * 5, # ability power
                 1:  [round(getf(root_record, 'baseArmor', 0), 5)] * 5, # armor
                 2:  [round(getf(root_record, 'baseDamage', 0) * self.ad_coef[i], 5) for i in range(5)], # attack damage
+                3:  [1] * 5, # attack damage percent
                 4:  [round(getf(root_record, 'attackSpeed', 0), 5)] * 5, # attack speed
                 6:  [round(getf(root_record, 'baseSpellBlock', 0), 5)] * 5, # magic resistance
                 7:  [round(getf(root_record, 'baseMoveSpeed', 0), 5)] * 5, # move speed
