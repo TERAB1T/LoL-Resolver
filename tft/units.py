@@ -102,6 +102,7 @@ class TFTUnitsProcessor:
                 9:  [round(getf(root_record, 'critDamageMultiplier', 0), 5)] * 5, # crit damage
                 12: [round(getf(root_record, 'baseHP', 0) * self.hp_coef[i], 5) for i in range(5)], # max health
                 29: [round(getf(root_record, 'attackRange', 0), 5)] * 5, # attack range
+                31: [round(getf(root_record, 'attackRange', 0), 5)] * 5, # attack range
                 34: [1] * 5, # dodge chance
             }
 
