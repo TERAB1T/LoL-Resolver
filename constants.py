@@ -32,7 +32,8 @@ STATS = {
     30: {'name': 'ResourceRegenRate', 'icon': '%i:scalePARR%', 'openingTag': '<noscale>', 'closingTag': '</noscale>'},
     31: {'name': 'HealShieldPower', 'icon': '%i:scaleHealShield%', 'openingTag': '<noscale>', 'closingTag': '</noscale>'},
     32: {'name': 'Unknown32', 'icon': '%i:?%', 'openingTag': '<noscale>', 'closingTag': '</noscale>'},
-    33: {'name': 'DodgeChance', 'icon': '%i:?%', 'openingTag': '<noscale>', 'closingTag': '</noscale>'}
+    33: {'name': 'DodgeChance', 'icon': '%i:?%', 'openingTag': '<noscale>', 'closingTag': '</noscale>'},
+	34: {'name': 'HealShieldPower', 'icon': '%i:scaleHealShield%', 'openingTag': '<noscale>', 'closingTag': '</noscale>'}
 }
 
 STAT_TYPES = {

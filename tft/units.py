@@ -203,7 +203,7 @@ class TFTUnitsProcessor:
         m_tooltip_data = getf(m_client_data, "mTooltipData", {})
         m_loc_keys = getf(m_tooltip_data, "mLocKeys")
         m_lists = getf(m_tooltip_data, "mLists", {})
-        m_data_values = getf(m_spell, "mDataValues", [])
+        m_data_values = getf(m_spell, "mDataValues", getf(m_spell, "DataValues", []))
         m_spell_calc = getf(m_spell, "mSpellCalculations")
 
         if not m_loc_keys:

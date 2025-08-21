@@ -100,7 +100,7 @@ class ChampionsProcessor:
                 values = getf(effect_value, 'value', [0] * 7)
                 add_spell_value(spells_values[spell_id], effect_name, values)
 
-            m_data_values = getf(spell_data, 'mDataValues', [])
+            m_data_values = getf(spell_data, 'mDataValues', getf(spell_data, 'DataValues', []))
             for data_value in m_data_values:
                 m_name = getf(data_value, 'mName', '').lower()
                 m_values = getf(data_value, 'mValues', [0] * 7)
@@ -131,7 +131,7 @@ class ChampionsProcessor:
 
         #print(champion_id)
 
-        if not '/' in champion_id:
+        if not '/' in champion_id or "Ruby_" in champion_id:
             return
         
         champion_id_trimmed = champion_id.split("/")[1].lower()
