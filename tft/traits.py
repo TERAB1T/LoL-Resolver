@@ -122,11 +122,14 @@ class TFTTraitsProcessor:
             nonlocal count
             return_value = matches[1]
             
-            min_units = list(effects_bonus)[count]
-            effects = list(effects_bonus.values())[count]
+            try:
+                min_units = list(effects_bonus)[count]
+                effects = list(effects_bonus.values())[count]
 
-            return_value = re.sub(r'@MinUnits@', round_number(min_units, 0, True), return_value, flags=re.IGNORECASE)
-            return_value = self.__generate_desc(return_value, effects)
+                return_value = re.sub(r'@MinUnits@', round_number(min_units, 0, True), return_value, flags=re.IGNORECASE)
+                return_value = self.__generate_desc(return_value, effects)
+            except:
+                pass
 
             count += 1
             return return_value
@@ -134,7 +137,7 @@ class TFTTraitsProcessor:
         trait_desc = re.sub(r'@TFTUnitProperty\.[a-z]*:TFT11_Trait_Fortune7Tooltip@', self.__get_string('tft11_fortune_tooltip_tra'), trait_desc, flags=re.IGNORECASE)
         trait_desc = re.sub(r'(?=<row>)(.*?)(?<=<\/row>)', replace_callback, trait_desc, flags=re.IGNORECASE)
         try:
-        	trait_desc = re.sub(r'@MinUnits@', round_number(breakpoints[0], 0, True), trait_desc, flags=re.IGNORECASE)
+            trait_desc = re.sub(r'@MinUnits@', round_number(breakpoints[0], 0, True), trait_desc, flags=re.IGNORECASE)
         except:
             pass
         return self.__generate_desc(trait_desc, effects_main)
