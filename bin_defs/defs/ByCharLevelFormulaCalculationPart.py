@@ -5,7 +5,7 @@ class ByCharLevelFormulaCalculationPart(BinCalculation):
         super().__init__(strings, var_values, all_calculations, champion_stats)
 
     def calc_string(self, current_block, key):
-        m_values = getf(current_block, 'mValues', [0] * 18)
+        m_values = getf(current_block, 'mValues', [0] * 19)
         start_value = m_values[1]
         end_value = m_values[18]
 

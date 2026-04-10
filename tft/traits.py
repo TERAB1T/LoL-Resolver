@@ -133,7 +133,10 @@ class TFTTraitsProcessor:
 
         trait_desc = re.sub(r'@TFTUnitProperty\.[a-z]*:TFT11_Trait_Fortune7Tooltip@', self.__get_string('tft11_fortune_tooltip_tra'), trait_desc, flags=re.IGNORECASE)
         trait_desc = re.sub(r'(?=<row>)(.*?)(?<=<\/row>)', replace_callback, trait_desc, flags=re.IGNORECASE)
-        trait_desc = re.sub(r'@MinUnits@', round_number(breakpoints[0], 0, True), trait_desc, flags=re.IGNORECASE)
+        try:
+        	trait_desc = re.sub(r'@MinUnits@', round_number(breakpoints[0], 0, True), trait_desc, flags=re.IGNORECASE)
+        except:
+            pass
         return self.__generate_desc(trait_desc, effects_main)
     
     def __generate_desc(self, desc, effects):
